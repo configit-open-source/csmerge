@@ -64,7 +64,7 @@ namespace CsMerge {
 
       
       logger.Info( "Removing package references from conflicting .csproj file to enable better merge" );
-      logger.Info( "Please remember to re-install nuget packages after the merge is complete!" );
+      logger.Info( "*** Please remember to re-install nuget packages after the merge is complete! ***" );
 
       XDocument localDocument = XDocument.Load( @local );
       XDocument theirDocument = XDocument.Load( @theirs );
@@ -142,7 +142,7 @@ namespace CsMerge {
       var localRefs = localDoc.Descendants( localDoc.Root.Name.Namespace.GetName("Reference" )).ToArray();
       var theirRefs = theirDoc.Descendants( theirDoc.Root.Name.Namespace.GetName("Reference" ) ).ToArray();
 
-      IEnumerable<XElement> combinedRefs = MergeElements( baseRefs, localRefs, theirRefs ).ToArray();
+      IEnumerable<XElement> combinedRefs = CombineElementChanges( baseRefs, localRefs, theirRefs ).ToArray();
 
       foreach ( var oldRef in baseRefs.Concat( localRefs ).Concat( theirRefs )) {
         oldRef.Remove();
@@ -173,7 +173,11 @@ namespace CsMerge {
       }
     }
 
-    public static IEnumerable<XElement> MergeElements(
+    public static void MergeElements( XDocument baseDoc, XDocument localDoc, XDocument theirDoc, string element, string parentElement ) {
+
+    }
+
+    public static IEnumerable<XElement> CombineElementChanges(
       IEnumerable<XElement> baseElements,
       IEnumerable<XElement> localElements,
       IEnumerable<XElement> theirElements ) {
@@ -203,10 +207,8 @@ namespace CsMerge {
         if ( inBase && !inLocal ) {
           logger.Info( "Discarding " + baseIndex[elementKey] );
           continue; // was in base and local deleted
-        }
-        logger.Info( "Keeping " + elementKey );  // added by one of the branches  
+        } 
         if ( inTheirs ) {
-
           yield return theirIndex[elementKey];
         }
         else {
@@ -215,7 +217,7 @@ namespace CsMerge {
       }
     }
 
-    public static void RemovePackageReferences( string packagesPrefix, XDocument document ) {
+    private static void RemovePackageReferences( string packagesPrefix, XDocument document ) {
       var logger = LogManager.GetCurrentClassLogger();
       //logger.Debug( "Removing nuget references from " + document.ToString() );
 

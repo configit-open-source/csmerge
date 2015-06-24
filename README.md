@@ -56,7 +56,7 @@ branches modified the package, the highest version will be used. If only one bra
 Local is used to refer to the current working copy state, being "mine" if merging, and "theirs" if rebasing, while "patch" refers to the changes being applied (which is a patch with your changes if rebasing). 
 
 ### Project files
-Pending completion of a full csproj merge tool, the custom merge driver for csproj files strips the base and two branch project files of all references pointing to the folder where nuget packages are stored, and then passes those files to the configured mergetool (ie, same as running git mergetool, but not showing nuget related conflicts).
+Pending completion of a full csproj merge tool, the custom merge driver for csproj files strips the base and two branch project files of all references pointing to the folder where nuget packages are stored, and then passes those files to the configured mergetool (ie, same as running git mergetool, but not showing nuget related conflicts). It will also resolve conflicts in other references by combining the reference changes.
 
 After the two merge drivers have run any project files affected will be missing their references to nuget package assemblies. The easiest way to fix this is to make sure that all packages are restored, and then re-install all packages in the solution using the following command on the NuGet console:
 
