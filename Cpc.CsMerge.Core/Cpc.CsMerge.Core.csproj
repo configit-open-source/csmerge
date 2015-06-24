@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Compile.cs" />
+    <Compile Include="Core\Conflict.cs" />
     <Compile Include="Core\Item.cs" />
     <Compile Include="Core\ItemGroup.cs" />
     <Compile Include="Core\ProjectReference.cs" />

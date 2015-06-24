@@ -6,7 +6,7 @@ namespace Cpc.CsMerge.Core {
     public override string Key {
       get { return Folder + "\\" + FileName; }
     }
-
+    
     public Compile( string folder, string fileName ) {
       Folder = folder;
       FileName = fileName;
