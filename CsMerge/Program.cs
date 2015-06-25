@@ -7,6 +7,8 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
+using GitSharp;
+
 using NLog;
 
 namespace CsMerge {
@@ -34,7 +36,8 @@ namespace CsMerge {
       return GetConfigValue( "mergetool." + mergetool + ".cmd" );
     }
 
-    private static string FindRelativePathOfPackagesFolder() {
+    private static string FindRelativePathOfPackagesFolder( string folder = null ) {
+      folder = folder ?? Directory.GetCurrentDirectory();
       DirectoryInfo current = new DirectoryInfo( Directory.GetCurrentDirectory() );
 
       int depth = 0;
@@ -48,6 +51,41 @@ namespace CsMerge {
       }
 
       return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
+    }
+
+    static void Main2( string[] args ) {
+      if ( args.Length != 1 ) {
+        Console.WriteLine( "Usage: <folder to scan>" );
+      }
+
+      var logger = LogManager.GetCurrentClassLogger();
+
+      DirectoryInfo folder = new DirectoryInfo( args[0] );
+
+      Repository gitRepo = new Repository( folder.FullName );
+
+      // :<n>:<path>, e.g. :0:README, :README
+      //A colon, optionally followed by a stage number (0 to 3) and a colon, 
+      // followed by a path, names a blob object in the index at the given path.
+      // A missing stage number (and the colon that follows it) names a stage 0 entry. 
+      // During a merge, stage 1 is the common ancestor, stage 2 is the target branch’s version 
+      // (typically the current branch), and stage 3 is the version from the branch which is being merged.
+
+      
+
+      foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => p.EndsWith( "*.csproj" ) ) ) {
+        var baseContent = gitRepo.Index.GetContent( ":1:" + conflict );
+        var localContent = gitRepo.Index.GetContent( ":2:" + conflict );
+        var theirContent = gitRepo.Index.GetContent( ":3:" + conflict );
+
+        string relativePackagePath = FindRelativePathOfPackagesFolder();
+
+        // TODO: Find packages.config file
+
+        XDocument localDocument = XDocument.Parse( localContent );
+        XDocument theirDocument = XDocument.Load( theirContent );
+        XDocument baseDocument = XDocument.Load( baseContent );
+      }
     }
 
     static int Main( string[] args ) {
