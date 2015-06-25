@@ -69,11 +69,19 @@ namespace PackagesMerge {
           packages.Add( t );
         }
         else {
-          // TODO: Handle the semver intervals correctly!
-          // Merge intervals if it not deleted compared to base.
-          var mineHigher = m.AllowedVersions.Upper.CompareTo( t.AllowedVersions.Upper ) >= 0;
-          logger.Info( "Both modified, picking " + ( mineHigher ? m : t ) + " over " + ( mineHigher ? t : m ) );
-          packages.Add( mineHigher ? m : t );
+          var mineNotComparingOnVersion = new Package( m.Id, t.Version, t.TargetFramework, t.AllowedVersions );
+
+          if ( mineNotComparingOnVersion == m ) {
+            var mineHigher = m.Version.CompareTo( t.Version ) >= 0;
+            logger.Info( "Both modified, picking " + ( mineHigher ? m : t ) + " over " + ( mineHigher ? t : m ) );
+            packages.Add( mineHigher ? m : t );
+          }
+          else {
+            var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
+            if ( resolved != null ) {
+              packages.Add( resolved );
+            }
+          }
         }
       }
 

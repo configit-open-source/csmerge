@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Text;
 
+using Cpc.CsMerge.Core;
+
 using NUnit.Framework;
 
 namespace PackagesMerge.Test {

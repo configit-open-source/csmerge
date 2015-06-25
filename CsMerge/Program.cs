@@ -7,35 +7,19 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
+using Cpc.CsMerge.Core;
+using Cpc.CsMerge.Core.Parsing;
+
 using GitSharp;
 
 using NLog;
 
+using SharpGit;
+using SharpGit.Plumbing;
+
 namespace CsMerge {
   public class Program {
-
-    private static string GetConfigValue( string key ) {
-      var processStartInfo = new ProcessStartInfo( "git", "config " + key );
-      processStartInfo.RedirectStandardOutput = true;
-      processStartInfo.UseShellExecute = false;
-
-      var process = Process.Start( processStartInfo );
-
-      if ( process == null ) {
-        throw new Exception( "Could not execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
-      }
-
-      string result = process.StandardOutput.ReadLine();
-      process.WaitForExit();
-      Console.WriteLine(key + " =  " + result);
-      return result;
-    }
-
-    private static string GetMergeCmdLine() {
-      string mergetool = GetConfigValue( "merge.tool" );
-      return GetConfigValue( "mergetool." + mergetool + ".cmd" );
-    }
-
+   
     private static string FindRelativePathOfPackagesFolder( string folder = null ) {
       folder = folder ?? Directory.GetCurrentDirectory();
       DirectoryInfo current = new DirectoryInfo( Directory.GetCurrentDirectory() );
@@ -53,96 +37,143 @@ namespace CsMerge {
       return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
     }
 
-    static void Main2( string[] args ) {
+    static void Main( string[] args ) {
       if ( args.Length != 1 ) {
-        Console.WriteLine( "Usage: <folder to scan>" );
+        args = new[] { Directory.GetCurrentDirectory() };
       }
 
-      var logger = LogManager.GetCurrentClassLogger();
-
       DirectoryInfo folder = new DirectoryInfo( args[0] );
+      var logger = LogManager.GetCurrentClassLogger();
+      logger.Debug( "Scanning " + folder );
 
       Repository gitRepo = new Repository( folder.FullName );
 
+      foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => p.EndsWith( ".csproj" ) ) ) {
+        var fullConflictPath = Path.Combine( folder.FullName, conflict );
+        logger.Info( "Examining conflict for " + fullConflictPath );
+
+        var baseContent = GetContent( 1, conflict, folder.FullName );
+        var localContent = GetContent( 2, conflict, folder.FullName );
+        var theirContent = GetContent( 3, conflict, folder.FullName );
+
+        var conflictFolder = Path.GetDirectoryName( conflict );
+
+        XDocument localDocument = XDocument.Parse( localContent );
+        XDocument theirDocument = XDocument.Parse( theirContent );
+        XDocument baseDocument = XDocument.Parse( baseContent );
+
+        var projFileName = Path.GetFileName( conflict );
+
+        var projectFolder = Path.Combine( folder.FullName, conflictFolder );
+
+        var packageIndex = new PackagesInfo( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
+
+        Item[] items = ProjectMerger.Merge( projFileName, packageIndex, baseDocument, localDocument, theirDocument, UserResolve ).ToArray();
+
+        DeleteItemsWithAction( localDocument, ProjectMerger.HandledItems );
+        DeleteItemsWithAction( theirDocument, ProjectMerger.HandledItems );
+        DeleteItemsWithAction( baseDocument, ProjectMerger.HandledItems );
+
+        AddItems( baseDocument, items );
+        AddItems( localDocument, items );
+        AddItems( theirDocument, items );
+
+        if ( localDocument.ToString() == theirDocument.ToString() ) {
+          // We handled all the differences
+          using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
+            Package.WriteXml( textWriter, localDocument );
+          }
+          new GitClient().Stage( conflict );
+        }
+        else {
+          ResolveWithStandardMergetool( fullConflictPath, baseContent, localContent, theirContent, logger, gitRepo, conflict );
+        }
+      }
+    }
+
+    private static void ResolveWithStandardMergetool(
+      string fullConflictPath,
+      string baseContent,
+      string localContent,
+      string theirContent,
+      Logger logger,
+      Repository gitRepo,
+      string conflict ) {
+      // Run the standard mergetool to deal with any remaining issues.
+      var basePath = fullConflictPath + "_base";
+      var localPath = fullConflictPath + "_local";
+      var theirsPath = fullConflictPath + "_theirs";
+
+      File.WriteAllText( basePath, baseContent );
+
+      File.WriteAllText( localPath, localContent );
+
+      File.WriteAllText( theirsPath, theirContent );
+      if ( RunStandardMergetool( basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
+        // The merge tool reports that the conflict was resolved
+        new GitClient().Stage( conflict );
+        logger.Info( "Manually resolved " + fullConflictPath );
+      }
+      else {
+        logger.Info( "Did not resolve " + fullConflictPath );
+      }
+    }
+
+    private static void AddItems( XDocument localDocument, Item[] items ) {
+      var itemGroupName = localDocument.Root.Name.Namespace.GetName( "ItemGroup" );
+
+      var emptyGroups = new Stack<XElement>( localDocument.Descendants( itemGroupName ).Where( ig => ig.IsEmpty ) );
+
+      foreach ( var itemGroup in items.GroupBy( r => r.Action ) ) {
+        if ( emptyGroups.Count == 0 ) {
+          emptyGroups.Push( new XElement( itemGroupName ) );
+        }
+        var group = emptyGroups.Pop();
+        foreach ( var item in itemGroup ) {
+          @group.Add( item.ToElement( @group.Name.Namespace ) );
+        }
+      }
+    }
+
+    private static void DeleteItemsWithAction( XDocument document, params string[] actions ) {
+      // TODO: If we completely parse the project file we dont need this
+      var root = document.Root;
+      Debug.Assert( root != null );
+      actions.Select( a => root.Descendants( root.Name.Namespace.GetName( a ) ) ).ToList().ForEach( e => e.Remove() );
+    }
+
+    // TODO: This is re-usable
+    private static Reference UserResolve( Conflict<Reference> conflict ) {
+      Console.WriteLine( "(b)ase: " + conflict.Base );
+      Console.WriteLine( "(l)ocal: " + conflict.Local );
+      Console.WriteLine( "(p)atch: " + conflict.Patch );
+      while ( true ) {
+        var key = Console.ReadKey();
+        switch ( key.KeyChar ) {
+          case 'b': return conflict.Base;
+          case 'l': return conflict.Local;
+          case 'p': return conflict.Patch;
+        }
+      }
+    }
+
+    private static string GetContent( int stage, string path, string folder ) {
       // :<n>:<path>, e.g. :0:README, :README
       //A colon, optionally followed by a stage number (0 to 3) and a colon, 
       // followed by a path, names a blob object in the index at the given path.
       // A missing stage number (and the colon that follows it) names a stage 0 entry. 
       // During a merge, stage 1 is the common ancestor, stage 2 is the target branch’s version 
       // (typically the current branch), and stage 3 is the version from the branch which is being merged.
-
-      
-
-      foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => p.EndsWith( "*.csproj" ) ) ) {
-        var baseContent = gitRepo.Index.GetContent( ":1:" + conflict );
-        var localContent = gitRepo.Index.GetContent( ":2:" + conflict );
-        var theirContent = gitRepo.Index.GetContent( ":3:" + conflict );
-
-        string relativePackagePath = FindRelativePathOfPackagesFolder();
-
-        // TODO: Find packages.config file
-
-        XDocument localDocument = XDocument.Parse( localContent );
-        XDocument theirDocument = XDocument.Load( theirContent );
-        XDocument baseDocument = XDocument.Load( baseContent );
-      }
+      return GitHelper.GetGitValue( cmd : "show", gitCmdArgs : ":" + stage + ":" + path, workingDir: folder );
     }
 
-    static int Main( string[] args ) {
-      if ( args.Length != 4 ) {
-        Console.WriteLine( "Usage: <base file> <local file> <remote file> <output file>" );
-        return -2;
-      }
-      var logger = LogManager.GetCurrentClassLogger();
-      
-      string @base = Path.GetFullPath(args[0]);
-      string local = Path.GetFullPath( args[1] );
-      string theirs = Path.GetFullPath( args[2] );
-      string resolved = Path.GetFullPath( args[3] );
-
-      
-      logger.Info( "Removing package references from conflicting .csproj file to enable better merge" );
-      logger.Info( "*** Please remember to re-install nuget packages after the merge is complete! ***" );
-
-      XDocument localDocument = XDocument.Load( @local );
-      XDocument theirDocument = XDocument.Load( @theirs );
-      XDocument baseDocument = XDocument.Load( @base );
-
-      string relativePackagePath = FindRelativePathOfPackagesFolder();
-
-      RemovePackageReferences( relativePackagePath, localDocument );
-      RemovePackageReferences( relativePackagePath, theirDocument );
-      RemovePackageReferences( relativePackagePath, baseDocument );
-      Merge( baseDocument, localDocument, theirDocument );
-
-      logger.Debug( "Found packages folder at " + relativePackagePath );
-
-      if ( localDocument.ToString().Equals( theirDocument.ToString() ) ) {
-        logger.Info( "Match after removing references" );
-        using ( var writer = CreateWriter( resolved ) ) {
-          localDocument.WriteTo( writer );
-        }
-        return 0;
-      }
-
-      // Setup for calling the normal git merge tool
-      using ( var writer = CreateWriter( @local ) ) {
-        localDocument.WriteTo( writer );
-      }
-
-      using ( var writer = CreateWriter( theirs ) ) {
-        theirDocument.WriteTo( writer );
-      }
-
-      using ( var writer = CreateWriter( @base ) ) {
-        baseDocument.WriteTo( writer );
-      }
-
-      string cmdLine = GetMergeCmdLine()
-                        .Replace( "$BASE", @base )
-                        .Replace( "$LOCAL", local )
-                        .Replace( "$MERGED", resolved )
-                        .Replace( "$REMOTE", theirs );
+    private static int RunStandardMergetool( string @base, string local, string resolved, string theirs, Logger logger ) {
+      string cmdLine =
+        GitHelper.GetMergeCmdLine()
+          .Replace( "$BASE", @base )
+          .Replace( "$LOCAL", local )
+          .Replace( "$MERGED", resolved )
+          .Replace( "$REMOTE", theirs );
 
       logger.Debug( "Invoking:\n" + cmdLine );
 
@@ -172,47 +203,44 @@ namespace CsMerge {
       } );
     }
 
-    public static void Merge( XDocument baseDoc, XDocument localDoc, XDocument theirDoc ) {
+    public static XDocument Merge( XDocument baseDoc, XDocument localDoc, XDocument theirDoc ) {
       if ( localDoc.ToString().Equals( theirDoc.ToString() ) ) {
-        return;
+        return localDoc;
       }
-      var baseRefs = baseDoc.Descendants( baseDoc.Root.Name.Namespace.GetName("Reference" )).ToArray();
-      var localRefs = localDoc.Descendants( localDoc.Root.Name.Namespace.GetName("Reference" )).ToArray();
-      var theirRefs = theirDoc.Descendants( theirDoc.Root.Name.Namespace.GetName("Reference" ) ).ToArray();
+
+      var baseRefs = baseDoc.Descendants( baseDoc.Root.Name.Namespace.GetName( "Reference" ) ).ToArray();
+      var localRefs = localDoc.Descendants( localDoc.Root.Name.Namespace.GetName( "Reference" ) ).ToArray();
+      var theirRefs = theirDoc.Descendants( theirDoc.Root.Name.Namespace.GetName( "Reference" ) ).ToArray();
 
       IEnumerable<XElement> combinedRefs = CombineElementChanges( baseRefs, localRefs, theirRefs ).ToArray();
 
-      foreach ( var oldRef in baseRefs.Concat( localRefs ).Concat( theirRefs )) {
+      foreach ( var oldRef in baseRefs.Concat( localRefs ).Concat( theirRefs ) ) {
         oldRef.Remove();
       }
+      XDocument merged = new XDocument( localDoc );
 
-      foreach ( var document in new[] { baseDoc, localDoc, theirDoc } ) {
-        var root = document.Root;
-        if ( root == null ) {
-          throw new Exception( "null root!" );
-        }
-
-        var someReference = root.Descendants( root.Name.Namespace.GetName( "Reference" ) ).FirstOrDefault();
-
-        XElement parentElement;
-        if( someReference != null) {
-          parentElement = someReference.Parent;
-          Debug.Assert( parentElement != null );
-        }
-        else{
-          // Create an item group to store the reference
-          parentElement = new XElement( root.Name.Namespace.GetName( "ItemGroup" ) );
-          root.Add( parentElement );
-        }
-
-        foreach ( var cRef in combinedRefs ) {
-          parentElement.Add( cRef );
-        }
+      var root = merged.Root;
+      if ( root == null ) {
+        throw new Exception( "null root!" );
       }
-    }
 
-    public static void MergeElements( XDocument baseDoc, XDocument localDoc, XDocument theirDoc, string element, string parentElement ) {
+      var someReference = root.Descendants( root.Name.Namespace.GetName( "Reference" ) ).FirstOrDefault();
 
+      XElement parentElement;
+      if ( someReference != null ) {
+        parentElement = someReference.Parent;
+        Debug.Assert( parentElement != null );
+      }
+      else {
+        // Create an item group to store the reference
+        parentElement = new XElement( root.Name.Namespace.GetName( "ItemGroup" ) );
+        root.Add( parentElement );
+      }
+
+      foreach ( var cRef in combinedRefs ) {
+        parentElement.Add( cRef );
+      }
+      return merged;
     }
 
     public static IEnumerable<XElement> CombineElementChanges(

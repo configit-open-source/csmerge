@@ -1,5 +1,7 @@
 ﻿namespace Cpc.CsMerge.Core {
 
+  public delegate T ConflictResolver<T>(Conflict<T> conflict);
+ 
   public class Conflict<T> {
     public Conflict( T @base, T local, T patch ) {
       Base = @base;

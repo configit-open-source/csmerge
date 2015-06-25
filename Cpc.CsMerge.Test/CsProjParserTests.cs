@@ -67,7 +67,7 @@ namespace Cpc.CsMerge.Test {
     public void Can_parse_compile_elements_in_root() {
       var proj = Project( ItemGroup( Compile( "testFile.cs" ) ) );
 
-      var item = proj.ItemGroups.Single().Items.OfType<Compile>().Single();
+      var item = proj.ItemGroups.Single().Items.OfType<FileIncludeItem>().Single();
 
       Assert.That( item.FileName, Is.EqualTo( "testFile.cs" ) );
       Assert.That( item.Folder, Is.Empty );
@@ -77,7 +77,7 @@ namespace Cpc.CsMerge.Test {
     public void Can_parse_compile_elements_in_directory() {
       var proj = Project( ItemGroup( Compile( "test\\testFile.cs" ) ) );
 
-      var item = proj.ItemGroups.Single().Items.OfType<Compile>().Single();
+      var item = proj.ItemGroups.Single().Items.OfType<FileIncludeItem>().Single();
 
       Assert.That( item.FileName, Is.EqualTo( "testFile.cs" ) );
       Assert.That( item.Folder, Is.EqualTo( "test" ) );
@@ -87,7 +87,7 @@ namespace Cpc.CsMerge.Test {
     public void Can_parse_compile_elements_in_nested_directories() {
       var proj = Project( ItemGroup( Compile( "test\\test\\testFile.cs" ) ) );
 
-      var item = proj.ItemGroups.Single().Items.OfType<Compile>().Single();
+      var item = proj.ItemGroups.Single().Items.OfType<FileIncludeItem>().Single();
 
       Assert.That( item.FileName, Is.EqualTo( "testFile.cs" ) );
       Assert.That( item.Folder, Is.EqualTo( "test\\test" ) );
@@ -102,7 +102,7 @@ namespace Cpc.CsMerge.Test {
         )
       );
 
-      var items = proj.ItemGroups.Single().Items.OfType<Compile>().ToList();
+      var items = proj.ItemGroups.Single().Items.OfType<FileIncludeItem>().ToList();
 
       Assert.That( items, Has.Count.EqualTo( 2 ) );
 

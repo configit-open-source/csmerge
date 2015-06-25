@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackagesMerge", "PackagesMe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackagesMerge.Test", "PackagesMerge.Test\PackagesMerge.Test.csproj", "{3E77C34D-EAF5-420F-9306-A3A0F776536B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DumpDriver", "DumpDriver\DumpDriver.csproj", "{DD02A3B2-1338-4149-B056-942422D33EA8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,10 +37,6 @@ Global
 		{3E77C34D-EAF5-420F-9306-A3A0F776536B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E77C34D-EAF5-420F-9306-A3A0F776536B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E77C34D-EAF5-420F-9306-A3A0F776536B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DD02A3B2-1338-4149-B056-942422D33EA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD02A3B2-1338-4149-B056-942422D33EA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD02A3B2-1338-4149-B056-942422D33EA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD02A3B2-1338-4149-B056-942422D33EA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

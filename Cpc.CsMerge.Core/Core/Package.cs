@@ -7,9 +7,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
-using Configit.Base.Intervals;
-
-namespace PackagesMerge {
+namespace Cpc.CsMerge.Core {
   public class Package {
     protected bool Equals( Package other ) {
       return string.Equals( TargetFramework, other.TargetFramework ) &&
@@ -51,6 +49,7 @@ namespace PackagesMerge {
         hashCode = ( hashCode * 397 ) ^ ( Id != null ? Id.GetHashCode() : 0 );
         hashCode = ( hashCode * 397 ) ^ ( AllowedVersions != null ? AllowedVersions.GetHashCode() : 0 );
         hashCode = ( hashCode * 397 ) ^ ( UserInstalled != null ? UserInstalled.GetHashCode() : 0 );
+        hashCode = ( hashCode * 397 ) ^ ( Version != null ? Version.GetHashCode() : 0 );
         return hashCode;
       }
     }
@@ -63,8 +62,13 @@ namespace PackagesMerge {
       RegexOptions.IgnorePatternWhitespace | 
       RegexOptions.Singleline );
 
-    public Package( string id, Interval<PackageVersion> allowedVersions, string targetFramework, string userInstalled = null ) {
+    public Package( string id,
+      PackageVersion version,
+      string targetFramework,
+      string allowedVersions = null,
+      string userInstalled = null ) {
       Id = id;
+      Version = version;
       AllowedVersions = allowedVersions;
       TargetFramework = targetFramework;
 
@@ -96,14 +100,16 @@ namespace PackagesMerge {
       var xml = XElement.Load( reader );
 
       return from packageXml in xml.Elements( "package" )
-        let versionAttribute = packageXml.Attribute( "version" )
-        let targetFrameworkAttribute = packageXml.Attribute( "targetFramework" )
-        let userInstalledAttribute = packageXml.Attribute( "userInstalled" )
-        let id = packageXml.Attribute( "id" ).Value
-             let versions = versionAttribute != null ? GetAllowedVersion( versionAttribute.Value ) : null
+             let versionAttribute = packageXml.Attribute( "version" )
+             let allowedVersionAttribute = packageXml.Attribute( "allowedVersions" )
+             let targetFrameworkAttribute = packageXml.Attribute( "targetFramework" )
+             let userInstalledAttribute = packageXml.Attribute( "userInstalled" )
+             let id = packageXml.Attribute( "id" ).Value
+             let versions = versionAttribute != null ? PackageVersion.Parse( versionAttribute.Value ) : null
+             let allowedVersions = allowedVersionAttribute != null ? allowedVersionAttribute.Value : null
              let targetFramework = targetFrameworkAttribute != null ? targetFrameworkAttribute.Value : null
              let userInstalled = userInstalledAttribute != null ? userInstalledAttribute.Value : null
-             select new Package( id, versions, targetFramework, userInstalled );
+             select new Package( id, versions, targetFramework, allowedVersions, userInstalled );
     }
 
     public static void Write( IEnumerable<Package> packages, TextWriter writer, XmlWriterSettings settings = null ) {
@@ -116,9 +122,14 @@ namespace PackagesMerge {
 
         var packagesElement = new XElement( "package", new XAttribute( "id", package.Id ) );
 
-        if ( package.AllowedVersions != null ) {
-          packagesElement.Add( new XAttribute( "version", SemVersionIntervalToString( package.AllowedVersions ) ) );
+        if ( package.Version != null ) {
+          packagesElement.Add( new XAttribute( "version", package.Version ) );
         }
+
+        if ( package.AllowedVersions != null ) {
+          packagesElement.Add( new XAttribute( "allowedVersions", package.AllowedVersions ) );
+        }
+
         if ( !string.IsNullOrEmpty( package.TargetFramework ) ) {
           packagesElement.Add( new XAttribute( "targetFramework", package.TargetFramework ) );
         }
@@ -130,74 +141,81 @@ namespace PackagesMerge {
         element.Add( packagesElement );
       }
 
-      var xmlWriterSettings = settings ?? new XmlWriterSettings {
-        Encoding = Encoding.UTF8,
+      WriteXml( writer, element, settings );
+    }
 
-        CloseOutput = true,
-        NewLineChars = "\n",
-        Indent = true
-      };
+    public static void WriteXml( TextWriter writer, XNode element, XmlWriterSettings settings = null ) {
+      var xmlWriterSettings = settings
+                              ?? new XmlWriterSettings {
+                                Encoding = Encoding.UTF8,
+                                CloseOutput = true,
+                                NewLineChars = "\n",
+                                Indent = true
+                              };
 
       using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
         element.WriteTo( xmlWriter );
       }
     }
 
-    private static string SemVersionIntervalToString( Interval<PackageVersion> interval ) {
-      if ( interval.Lower == interval.Upper ) {
-        return string.Format( "[{0}]", interval.Lower );
-      }
+    //private static string SemVersionIntervalToString( Interval<PackageVersion> interval ) {
+    //  if ( interval.Lower == interval.Upper ) {
+    //    return string.Format( "[{0}]", interval.Lower );
+    //  }
 
-      if ( interval.Upper == PackageVersion.MaxValue ) {
-        // x.y notation shortcut
-        return interval.Lower.ToString();
-      }
+    //  if ( interval.Upper == PackageVersion.MaxValue ) {
+    //    // x.y notation shortcut
+    //    return interval.Lower.ToString();
+    //  }
 
-      string lower = interval.Lower == PackageVersion.MinValue ? string.Empty : interval.Lower.ToString();
-      string upper = interval.Upper == PackageVersion.MaxValue ? string.Empty : interval.Upper.ToString();
+    //  string lower = interval.Lower == PackageVersion.MinValue ? string.Empty : interval.Lower.ToString();
+    //  string upper = interval.Upper == PackageVersion.MaxValue ? string.Empty : interval.Upper.ToString();
 
-      return string.Format( "{0}{1},{2}{3}", interval.LowerOpen ? "(" : "[", lower, upper, interval.LowerOpen ? ")" : "]" );
-    }
+    //  return string.Format( "{0}{1},{2}{3}", interval.LowerOpen ? "(" : "[", lower, upper, interval.LowerOpen ? ")" : "]" );
+    //}
 
-    private static Interval<PackageVersion> GetAllowedVersion( string versionString ) {
-      if ( string.IsNullOrEmpty( versionString ) ) {
-        return null;
-      }
+    //private static Interval<PackageVersion> GetAllowedVersion( string versionString ) {
+    //  if ( string.IsNullOrEmpty( versionString ) ) {
+    //    return null;
+    //  }
 
-      Match matches = AllowedVersionRegex.Match( versionString );
+    //  Match matches = AllowedVersionRegex.Match( versionString );
 
-      string lowerStr = matches.Groups["lower"].Value;
-      string upperStr = matches.Groups["upper"].Value;
+    //  string lowerStr = matches.Groups["lower"].Value;
+    //  string upperStr = matches.Groups["upper"].Value;
 
-      bool lowerOpen = matches.Groups["l"].Value == "(";
-      bool upperOpen = matches.Groups["u"].Value != "]";
+    //  bool lowerOpen = matches.Groups["l"].Value == "(";
+    //  bool upperOpen = matches.Groups["u"].Value != "]";
 
-      Interval<PackageVersion> allowedVersions;
+    //  Interval<PackageVersion> allowedVersions;
 
-      if ( string.IsNullOrEmpty( lowerStr ) && !string.IsNullOrEmpty( upperStr ) ) {
-        allowedVersions = new Interval<PackageVersion>( PackageVersion.MinValue, upperStr );
-      }
-      else if ( string.IsNullOrEmpty( upperStr ) && !string.IsNullOrEmpty( lowerStr ) ) {
-        allowedVersions = new Interval<PackageVersion>( lowerStr, PackageVersion.MaxValue );
-      }
-      else {
-        allowedVersions = new Interval<PackageVersion>( lowerStr, upperStr );
-      }
+    //  if ( string.IsNullOrEmpty( lowerStr ) && !string.IsNullOrEmpty( upperStr ) ) {
+    //    allowedVersions = new Interval<PackageVersion>( PackageVersion.MinValue, upperStr );
+    //  }
+    //  else if ( string.IsNullOrEmpty( upperStr ) && !string.IsNullOrEmpty( lowerStr ) ) {
+    //    allowedVersions = new Interval<PackageVersion>( lowerStr, PackageVersion.MaxValue );
+    //  }
+    //  else {
+    //    allowedVersions = new Interval<PackageVersion>( lowerStr, upperStr );
+    //  }
 
-      allowedVersions.LowerOpen = lowerOpen;
-      allowedVersions.UpperOpen = upperOpen;
-      return allowedVersions;
-    }
+    //  allowedVersions.LowerOpen = lowerOpen;
+    //  allowedVersions.UpperOpen = upperOpen;
+    //  return allowedVersions;
+    //}
 
-    public Interval<PackageVersion> AllowedVersions { get; set; } 
+    public string AllowedVersions { get; set; }
+
+    public PackageVersion Version { get; set; }
+
     public string Id { get; set; }
 
     public string TargetFramework { get; set; }
     public bool? UserInstalled { get; set; }
 
-    public override string ToString() {
-      return string.Format( "{0}/{1}/{2}", Id, SemVersionIntervalToString( AllowedVersions ), TargetFramework );
-    }
+    //public override string ToString() {
+    //  return string.Format( "{0}/{1}/{2}", Id, SemVersionIntervalToString( AllowedVersions ), TargetFramework );
+    //}
   }
 
 }

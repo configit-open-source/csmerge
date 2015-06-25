@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Configit.Base, Version=4.0.46.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Configit.Base.4.0.46\lib\net40-Client\Configit.Base.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="GitSharp, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GitSharp.0.3\lib\GitSharp.dll</HintPath>
       <Private>True</Private>
@@ -45,8 +49,24 @@
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Ionic.Zip.Reduced, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetZip.Reduced.1.9.1.8\lib\net20\Ionic.Zip.Reduced.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.0.1\lib\net45\NLog.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Security.Cryptography, Version=1.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Security.Cryptography.1.6.622.0\lib\Security.Cryptography.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SharpGit, Version=0.2202.1083.169, Culture=neutral, PublicKeyToken=bbd5cbe025856bdf, processorArchitecture=AMD64">
+      <HintPath>..\packages\SharpGit-x64.0.2202.1083.169\lib\net40\SharpGit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SharpGit.UI, Version=0.2202.1083.169, Culture=neutral, PublicKeyToken=19babbbd321e28c7, processorArchitecture=AMD64">
+      <HintPath>..\packages\SharpGit-x64.0.2202.1083.169\lib\net40\SharpGit.UI.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -66,7 +86,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GitHelper.cs" />
+    <Compile Include="PackagesInfo.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProjectMerger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

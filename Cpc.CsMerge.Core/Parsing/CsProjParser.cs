@@ -7,45 +7,55 @@ namespace Cpc.CsMerge.Core.Parsing {
   public class CsProjParser {
 
     public ProjectFile Parse( string name, Stream from ) {
-
       var doc = XDocument.Load( from );
+      return Parse( name, doc );
+    }
 
+    public ProjectFile Parse( string name, XDocument doc ) {
       if ( doc == null || doc.Root == null ) {
         throw new ArgumentException( "Stream did not contain a valid XML document", "from" );
       }
 
-      if ( doc.Root.Name != "Project" ) {
+      if ( doc.Root.Name.LocalName != "Project" ) {
         throw new ArgumentException( "Stream did not contain a project", "from" );
       }
 
       return new ProjectFile(
         name,
-        doc.Root.Elements( "ItemGroup" ).Select( ParseItemGroup ).ToList().AsReadOnly()
+        doc.Root.Elements( doc.Root.Name.Namespace.GetName( "ItemGroup" ) ).Select( ParseItemGroup ).ToList().AsReadOnly()
       );
     }
 
     private ItemGroup ParseItemGroup( XElement itemGroupElement ) {
-      return new ItemGroup( itemGroupElement.Elements().Select( ParseItem ).ToList().AsReadOnly() );
+      return new ItemGroup( itemGroupElement.Elements().Select( ParseItem ).Where( i => i != null ).ToList().AsReadOnly() );
     }
 
     private Item ParseItem( XElement itemElement ) {
-      var include = itemElement.Attribute( "Include" ).Value;
+      var xAttribute = itemElement.Attribute( "Include" );
+      if ( xAttribute == null ) {
+        return null;
+      }
+      var include = xAttribute.Value;
+
+      var xNamespace = itemElement.Name.Namespace;
 
       switch ( itemElement.Name.LocalName ) {
         case "Compile":
-          return new Compile( Path.GetDirectoryName( include ), Path.GetFileName( include ) );
+        case "None":
+          return new FileIncludeItem( itemElement.Name.LocalName, Path.GetDirectoryName( include ), Path.GetFileName( include ) );
         case "Reference":
-          var specificVersionAttribute = itemElement.Element( "SpecificVersion" );
-          var hintPathAttribute = itemElement.Element( "HintPath" );
+          var specificVersionAttribute = itemElement.Attribute( xNamespace.GetName( "SpecificVersion" ) );
+          var privateAttribute = itemElement.Attribute( xNamespace.GetName( "Private" ) );
+          var hintPathAttribute = itemElement.Element( xNamespace.GetName( "HintPath" ) );
           var specificVersion = specificVersionAttribute == null ? (bool?) null : bool.Parse( specificVersionAttribute.Value );
-
-          return new Reference( include, specificVersion, hintPathAttribute == null ? null : hintPathAttribute.Value );
-
+          var @private = privateAttribute == null ? (bool?) null : bool.Parse( privateAttribute.Value );
+          return new Reference( include, specificVersion, @private, hintPathAttribute == null ? null : hintPathAttribute.Value );
         case "ProjectReference":
-
-          return new ProjectReference( include, Guid.Parse( itemElement.Element( "Project" ).Value ), itemElement.Element( "Name" ).Value );
+          return new ProjectReference( include, 
+                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ), 
+                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value );
         default:
-          throw new InvalidDataException( "Unrecognised itemGroup member: " + itemElement.Name.LocalName );
+          return null;
       }
     }
   }

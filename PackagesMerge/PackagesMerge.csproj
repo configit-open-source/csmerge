@@ -62,10 +62,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Package.cs" />
     <Compile Include="PackagesConfigMerger.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="PackageVersion.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">
