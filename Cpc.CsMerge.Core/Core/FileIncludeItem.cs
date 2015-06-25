@@ -61,7 +61,7 @@ namespace Cpc.CsMerge.Core {
     }
 
     public override string ToString() {
-      return Action + " on " + Key;
+      return Key;
     }
   }
 }

@@ -114,18 +114,21 @@ namespace CsMerge {
       return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
     }
 
-    private static void AddItems( XDocument localDocument, Item[] items ) {
-      var itemGroupName = localDocument.Root.Name.Namespace.GetName( "ItemGroup" );
+    private static void AddItems( XDocument doc, Item[] items ) {
+      var root = doc.Root;
+      var itemGroupName = root.Name.Namespace.GetName( "ItemGroup" );
 
-      var emptyGroups = new Stack<XElement>( localDocument.Descendants( itemGroupName ).Where( ig => ig.IsEmpty ) );
+      var emptyGroups = new Stack<XElement>( doc.Descendants( itemGroupName ).Where( ig => ig.IsEmpty ) );
 
       foreach ( var itemGroup in items.GroupBy( r => r.Action ) ) {
         if ( emptyGroups.Count == 0 ) {
-          emptyGroups.Push( new XElement( itemGroupName ) );
+          var newGroup = new XElement( itemGroupName );
+          root.Add( newGroup );
+          emptyGroups.Push( newGroup );
         }
         var group = emptyGroups.Pop();
         foreach ( var item in itemGroup ) {
-          @group.Add( item.ToElement( localDocument.Root.Name.Namespace ) );
+          @group.Add( item.ToElement( root.Name.Namespace ) );
         }
       }
     }

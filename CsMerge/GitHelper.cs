@@ -1,19 +1,37 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 using NLog;
 
 namespace CsMerge {
   public class GitHelper {
-    private const string GitExePath =
-      "C:\\Users\\pt\\AppData\\Local\\GitHub\\PortableGit_c2ba306e536fdf878271f7fe636a147ff37326ad\\cmd\\git.exe";
 
-    public static string RunGitCmd( string cmd = "config", string gitCmdArgs = null, string workingDir = null ) {
+    private static string _gitExePath = null;
+
+    private static string GitExePath {
+      get {
+        if ( _gitExePath == null ) {
+          _gitExePath = Environment.GetEnvironmentVariable( "GIT_EXEC_PATH" );
+          if ( string.IsNullOrEmpty( _gitExePath ) ) {
+            // Try to find github installation
+            var gitFolder =
+              new DirectoryInfo( Path.Combine( Environment.GetEnvironmentVariable( "LOCALAPPDATA" ) ??
+                string.Empty, "GitHub" ) ).GetDirectories( "PortableGit_*" ).FirstOrDefault();
+            _gitExePath = gitFolder == null ?
+              "git.exe" : // Hoping that its on path
+              Path.Combine( gitFolder.FullName, "bin", "git.exe" );
+          }
+        }
+        return _gitExePath;
+      }
+    }
+    
+    public static string RunGitCmd( string cmd, string gitCmdArgs, string workingDir = null, bool singleLine = false ) {
       workingDir = workingDir ?? Directory.GetCurrentDirectory();
 
       var file = GitExePath;
-      Debug.Assert( File.Exists( file ) );
 
       var logger = LogManager.GetCurrentClassLogger();
 
@@ -32,19 +50,19 @@ namespace CsMerge {
         throw new Exception( "Could not execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
       }
 
-      string result = process.StandardOutput.ReadToEnd();
+      string result = singleLine ? process.StandardOutput.ReadLine() : process.StandardOutput.ReadToEnd();
       process.WaitForExit();
       return result;
     }
 
     public static string GetMergeCmdLine() {
-      string mergetool = RunGitCmd( gitCmdArgs : "merge.tool" );
-      return RunGitCmd( gitCmdArgs : "mergetool." + mergetool + ".cmd" );
+      string mergetool = RunGitCmd( cmd : "config", gitCmdArgs : "merge.tool", singleLine: true );
+      return RunGitCmd( cmd : "config", gitCmdArgs : "mergetool." + mergetool + ".cmd", singleLine : true );
     }
 
     public static int RunStandardMergetool( string @base, string local, string resolved, string theirs, Logger logger ) {
       string cmdLine =
-        GitHelper.GetMergeCmdLine()
+        GetMergeCmdLine()
           .Replace( "$BASE", @base )
           .Replace( "$LOCAL", local )
           .Replace( "$MERGED", resolved )
@@ -54,7 +72,7 @@ namespace CsMerge {
 
       var processStartInfo = new ProcessStartInfo( "cmd.exe", "/C \"" + cmdLine + "\"" ) {
         CreateNoWindow = true,
-        UseShellExecute = true,
+        UseShellExecute = false
       };
 
       var process = Process.Start( processStartInfo );
@@ -86,7 +104,7 @@ namespace CsMerge {
       string conflict ) {
       // Run the standard mergetool to deal with any remaining issues.
       var basePath = fullConflictPath + "_base";
-      var localPath = fullConflictPath + "_local";
+      var localPath = fullConflictPath;
       var theirsPath = fullConflictPath + "_theirs";
 
       File.WriteAllText( basePath, baseContent );
@@ -94,14 +112,18 @@ namespace CsMerge {
       File.WriteAllText( localPath, localContent );
 
       File.WriteAllText( theirsPath, theirContent );
-      if ( GitHelper.RunStandardMergetool( basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
+
+      if ( RunStandardMergetool( basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
         // The merge tool reports that the conflict was resolved
-        GitHelper.RunGitCmd( "add", workingDir : basePath, gitCmdArgs : conflict );
+        RunGitCmd( "add", workingDir : Path.GetDirectoryName( fullConflictPath ), gitCmdArgs : conflict );
         logger.Info( "Manually resolved " + fullConflictPath );
       }
       else {
         logger.Info( "Did not resolve " + fullConflictPath );
       }
+
+      File.Delete( basePath );
+      File.Delete( theirsPath );
     }
   }
 }

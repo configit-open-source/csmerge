@@ -42,6 +42,7 @@ namespace Cpc.CsMerge.Core.Parsing {
       switch ( itemElement.Name.LocalName ) {
         case "Compile":
         case "None":
+        //case "Content":
           return new FileIncludeItem( itemElement.Name.LocalName, Path.GetDirectoryName( include ), Path.GetFileName( include ) );
         case "Reference":
           var specificVersionAttribute = itemElement.Attribute( "SpecificVersion" );

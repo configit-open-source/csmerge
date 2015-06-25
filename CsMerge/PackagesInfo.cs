@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -29,14 +30,15 @@ namespace CsMerge {
         return false; // Correctly installed nuget package references have a hintpath
       }
 
-      string[] directories = reference.HintPath.Split( Path.DirectorySeparatorChar );
+      Debug.Assert( reference.HintPath.StartsWith( _packagesPrefix ) );
 
-      Debug.Assert( directories[0] == _packagesPrefix );
-      string packageFolderName = directories[1];
+      string[] directories = reference.HintPath.Substring( _packagesPrefix.Length ).Split( new[] { "" + Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries );
+
+      string packageFolderName = directories[0];
 
       int indexOfVersionStart = packageFolderName.ToList().FindIndex( c => { int val; return int.TryParse( c.ToString(), out val ); } );
 
-      string id = packageFolderName.Substring( 0, indexOfVersionStart );
+      string id = packageFolderName.Substring( 0, indexOfVersionStart - 1);
 
       if ( !_packages.ContainsKey( id ) ) {
         return false;

@@ -19,5 +19,9 @@ namespace Cpc.CsMerge.Core {
     }
 
     public abstract XElement ToElement( XNamespace ns );
+
+    public override string ToString() {
+      return Key;
+    }
   }
 }

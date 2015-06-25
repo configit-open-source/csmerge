@@ -229,9 +229,9 @@ namespace Cpc.CsMerge.Core {
     public string TargetFramework { get; set; }
     public bool? UserInstalled { get; set; }
 
-    //public override string ToString() {
-    //  return string.Format( "{0}/{1}/{2}", Id, SemVersionIntervalToString( AllowedVersions ), TargetFramework );
-    //}
+    public override string ToString() {
+      return string.Format( "Id: {0} Version: {1} TargetFramework: {2} AllowedVersions: {3}", Id, Version, TargetFramework, AllowedVersions );
+    }
   }
 
 }

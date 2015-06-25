@@ -60,5 +60,9 @@ namespace Cpc.CsMerge.Core {
       ProjectId = project;
       CsProjPath = csProjPath;
     }
+
+    public override string ToString() {
+      return Key;
+    }
   }
 }

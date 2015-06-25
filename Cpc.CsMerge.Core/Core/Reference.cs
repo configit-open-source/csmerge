@@ -29,7 +29,7 @@ namespace Cpc.CsMerge.Core {
       e.Add( new XAttribute( "Include", ReferenceName ) );
 
       if ( HintPath != null ) {
-        e.Add( new XElement( ns.GetName( "HintPath" ) ), HintPath );
+        e.Add( new XElement( ns.GetName( "HintPath" ), HintPath ) );
       }
       if ( SpecificVersion.HasValue ) {
         e.Add( new XElement( ns.GetName( "SpecificVersion" ), SpecificVersion.Value ) );

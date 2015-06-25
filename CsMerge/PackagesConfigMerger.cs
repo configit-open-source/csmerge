@@ -35,12 +35,12 @@ namespace PackagesMerge {
         }
 
         if ( m == t ) {
-          logger.Info( m + " matches between branches" );
+          logger.Debug( m + " matches between branches" );
           packages.Add( m ); // identical
           continue;
         }
 
-        if ( b != null && m == null && !t.AllowedVersions.Equals( b.AllowedVersions ) ) {
+        if ( b != null && m == null && !t.Equals( b ) ) {
           // Mine deleted something modified in theirs
           logger.Info( "Local deleted " + b + " while remote changed to " + t );
           var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
@@ -50,7 +50,7 @@ namespace PackagesMerge {
           continue;
         }
 
-        if ( b != null && t == null && !m.AllowedVersions.Equals( b.AllowedVersions ) ) {
+        if ( b != null && t == null && !m.Equals( b ) ) {
           // Theirs deleted something modified in mine
           logger.Info( "Patch deleted " + b + " while local changed to " + m );
           var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
