@@ -44,8 +44,8 @@ namespace Cpc.CsMerge.Core.Parsing {
         case "None":
           return new FileIncludeItem( itemElement.Name.LocalName, Path.GetDirectoryName( include ), Path.GetFileName( include ) );
         case "Reference":
-          var specificVersionAttribute = itemElement.Attribute( xNamespace.GetName( "SpecificVersion" ) );
-          var privateAttribute = itemElement.Attribute( xNamespace.GetName( "Private" ) );
+          var specificVersionAttribute = itemElement.Attribute( "SpecificVersion" );
+          var privateAttribute = itemElement.Attribute( "Private" );
           var hintPathAttribute = itemElement.Element( xNamespace.GetName( "HintPath" ) );
           var specificVersion = specificVersionAttribute == null ? (bool?) null : bool.Parse( specificVersionAttribute.Value );
           var @private = privateAttribute == null ? (bool?) null : bool.Parse( privateAttribute.Value );

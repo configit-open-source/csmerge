@@ -96,6 +96,15 @@ namespace Cpc.CsMerge.Core {
       }
     }
 
+    public static IEnumerable<Package> Parse( string content ) {
+      if ( string.IsNullOrEmpty( content ) ) {
+        return new Package[0];
+      }
+      using ( var stringReader = new StringReader( content ) ) {
+        return Read( stringReader );
+      }
+    }
+
     public static IEnumerable<Package> Read( TextReader reader ) {
       var xml = XElement.Load( reader );
 
@@ -150,10 +159,17 @@ namespace Cpc.CsMerge.Core {
                                 Encoding = Encoding.UTF8,
                                 CloseOutput = true,
                                 NewLineChars = "\n",
-                                Indent = true
+                                Indent = true,
+                                NamespaceHandling = NamespaceHandling.OmitDuplicates,
+                                ConformanceLevel = ConformanceLevel.Document,
                               };
 
-      using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
+      //using ( XmlTextWriter xmlWriter = new XmlTextWriter( writer ) ) {
+      //  xmlWriter.Formatting = Formatting.Indented;
+      //  xmlWriter.Namespaces = true;
+      //  xmlWriter.Settings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
+
+       using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
         element.WriteTo( xmlWriter );
       }
     }

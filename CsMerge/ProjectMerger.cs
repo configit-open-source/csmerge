@@ -66,6 +66,7 @@ namespace CsMerge {
         Reference t = theirByName.ContainsKey( name ) ? theirByName[name] : null;
 
         if ( b == t && b == m ) {
+          yield return m;
           continue;
         }
 

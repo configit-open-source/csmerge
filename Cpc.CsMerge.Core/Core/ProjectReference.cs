@@ -18,7 +18,7 @@ namespace Cpc.CsMerge.Core {
     public override XElement ToElement( XNamespace ns ) {
       var e = new XElement( ns.GetName( Action ) );
       e.Add( new XAttribute( "Include", CsProjPath ) );
-      e.Add( new XElement( ns.GetName( "Project" ) ), ProjectId );
+      e.Add( new XElement( ns.GetName( "Project" ), ProjectId ) );
       e.Add( new XElement( ns.GetName( "Name" ), Name ) );
       return e;
     }

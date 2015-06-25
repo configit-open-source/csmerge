@@ -1,5 +1,6 @@
 using System.IO;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 
 namespace Cpc.CsMerge.Core {
   public class FileIncludeItem: Item {
@@ -55,7 +56,7 @@ namespace Cpc.CsMerge.Core {
 
     public override XElement ToElement( XNamespace ns ) {
       var e = new XElement( ns.GetName( Action ) );
-      e.Add( new XAttribute( ns.GetName( "Include" ), Path.Combine( Folder, FileName ) ) );
+      e.Add( new XAttribute( "Include", Path.Combine( Folder, FileName ) ) );
       return e;
     }
 

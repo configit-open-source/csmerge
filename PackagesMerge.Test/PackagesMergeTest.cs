@@ -1,7 +1,4 @@
 ﻿using System.Linq;
-
-using Configit.Base.Intervals;
-
 using Cpc.CsMerge.Core;
 
 using NUnit.Framework;

@@ -26,16 +26,16 @@ namespace Cpc.CsMerge.Core {
     public override XElement ToElement( XNamespace ns ) {
       XElement e = new XElement( ns.GetName( Action ) );
 
-      e.Add( new XAttribute( ns.GetName( "Include" ), ReferenceName ) );
+      e.Add( new XAttribute( "Include", ReferenceName ) );
 
       if ( HintPath != null ) {
-        e.Add( new XElement( ns.GetName( "HintPath" ), HintPath ) ); ;
+        e.Add( new XElement( ns.GetName( "HintPath" ) ), HintPath );
       }
       if ( SpecificVersion.HasValue ) {
-        e.Add( new XElement( ns.GetName( "SpecificVersion" ), SpecificVersion.Value ) ); ;
+        e.Add( new XElement( ns.GetName( "SpecificVersion" ), SpecificVersion.Value ) );
       }
       if ( Private.HasValue ) {
-        e.Add( new XElement( ns.GetName( "Private" ), Private.Value ) ); ;
+        e.Add( new XElement( ns.GetName( "Private" ), Private.Value ) );
       }
       return e;
     }

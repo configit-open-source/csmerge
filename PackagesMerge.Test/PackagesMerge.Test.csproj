@@ -30,20 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Configit.Base, Version=4.0.46.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Configit.Base.4.0.46\lib\net40-Client\Configit.Base.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Ionic.Zip.Reduced, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
-      <HintPath>..\packages\DotNetZip.Reduced.1.9.1.8\lib\net20\Ionic.Zip.Reduced.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="nunit.framework, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Security.Cryptography, Version=1.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Security.Cryptography.1.6.622.0\lib\Security.Cryptography.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -64,9 +52,9 @@
       <Project>{BD6AF56E-5128-4E09-852D-159BB21972D3}</Project>
       <Name>Cpc.CsMerge.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\PackagesMerge\PackagesMerge.csproj">
-      <Project>{d8ca56ff-08e7-4edd-b4f6-a35d08cebe38}</Project>
-      <Name>PackagesMerge</Name>
+    <ProjectReference Include="..\CsMerge\CsMerge.csproj">
+      <Project>{4EBE13DA-83CD-4B07-99ED-098EDE83F5E5}</Project>
+      <Name>CsMerge</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
