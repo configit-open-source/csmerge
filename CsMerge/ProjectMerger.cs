@@ -166,7 +166,7 @@ namespace CsMerge {
         }
 
         Debug.Assert( m == t );
-        logger.Info( m + " matches between branches" );
+        logger.Debug( m + " matches between branches" );
         yield return m;
       }
     }

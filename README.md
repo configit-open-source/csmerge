@@ -32,7 +32,7 @@ You can also set it up system wide, see [http://git-scm.com/docs/gitattributes](
 ## Usage
 
 When packages.config files or csproj are modified in both branches, the configured failmerge merge driver
-will make sure they are not merged as text files.
+will make sure they are always considered conflicting, and not accidentally merged as text files.
 
 You can now execute `CsMerge.exe`. Either provide the path to the git folder as an argument, or run it from the
 folder you want to resolve conflicts for.

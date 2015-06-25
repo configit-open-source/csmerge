@@ -8,10 +8,14 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Cpc.CsMerge.Core;
-using GitSharp;
+
+using LibGit2Sharp;
+
 using NLog;
 
 using PackagesMerge;
+
+using Repository = GitSharp.Repository;
 
 namespace CsMerge {
   public class Program {
@@ -26,6 +30,15 @@ namespace CsMerge {
       logger.Debug( "Scanning " + folder );
 
       Repository gitRepo = new Repository( folder.FullName );
+
+      var rootFolder = FindRepoRoot( folder.FullName );
+
+      //using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
+      //  //var status = repository.RetrieveStatus( new StatusOptions { Show = StatusShowOption.IndexAndWorkDir } );
+      //  foreach(var conflict in repository.Index.Conflicts ) {
+      //    Console.WriteLine( conflict.Ours.Path );
+      //  }
+      //}
 
       foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
@@ -43,7 +56,9 @@ namespace CsMerge {
           UserResolvers.UserResolvePackage ).ToArray();
 
           Package.Write( result, fullConflictPath );
-          GitHelper.RunGitCmd( "add", workingDir : folder.FullName, gitCmdArgs : conflict );
+          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
+            repository.Stage( conflict );
+          }
         }
         catch ( OperationAbortedException ) {
           return;
@@ -90,10 +105,14 @@ namespace CsMerge {
           using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
             Package.WriteXml( textWriter, localDocument );
           }
-          GitHelper.RunGitCmd( "add", workingDir : folder.FullName, gitCmdArgs : conflict );
+          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
+            repository.Stage( conflict );
+          }
         }
         else {
-          GitHelper.ResolveWithStandardMergetool( fullConflictPath, baseContent, localContent, theirContent, logger, conflict );
+          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
+            GitHelper.ResolveWithStandardMergetool( repository, fullConflictPath, baseDocument, localDocument, theirDocument, logger, conflict );
+          }
         }
       }
     }
@@ -114,30 +133,48 @@ namespace CsMerge {
       return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
     }
 
+    private static string FindRepoRoot( string folder ) {
+      var current = new DirectoryInfo( folder ?? Directory.GetCurrentDirectory() );
+      while ( !new DirectoryInfo( Path.Combine( current.FullName, ".git" ) ).Exists ) {
+        current = current.Parent;
+        if ( current == null ) {
+          throw new Exception( "Could not locate \".git\" folder" );
+        }
+      }
+      return current.FullName;
+    }
+
     private static void AddItems( XDocument doc, Item[] items ) {
       var root = doc.Root;
       var itemGroupName = root.Name.Namespace.GetName( "ItemGroup" );
 
-      var emptyGroups = new Stack<XElement>( doc.Descendants( itemGroupName ).Where( ig => ig.IsEmpty ) );
+      foreach ( var itemGroup in items.GroupBy( r => r.Action ).OrderBy( g => g.Key ) ) {
 
-      foreach ( var itemGroup in items.GroupBy( r => r.Action ) ) {
-        if ( emptyGroups.Count == 0 ) {
-          var newGroup = new XElement( itemGroupName );
-          root.Add( newGroup );
-          emptyGroups.Push( newGroup );
-        }
-        var group = emptyGroups.Pop();
+        var newGroup = new XElement( itemGroupName );
+        
         foreach ( var item in itemGroup ) {
-          @group.Add( item.ToElement( root.Name.Namespace ) );
+          newGroup.Add( item.ToElement( root.Name.Namespace ) );
         }
+        root.Add( newGroup );
       }
     }
 
     private static void DeleteItemsWithAction( XDocument document, params string[] actions ) {
-      // TODO: If we completely parse the project file we dont need this
+      // TODO: If we completely parse and re-write the project file we dont need this
       var root = document.Root;
+      var xNamespace = root.Name.Namespace;
+
       Debug.Assert( root != null );
-      actions.Select( a => root.Descendants( root.Name.Namespace.GetName( a ) ) ).ToList().ForEach( e => e.Remove() );
+
+      var elementsToDelete = actions.SelectMany( a => root.Descendants( xNamespace.GetName( a ) ) ).ToArray();
+
+      foreach ( XElement e in elementsToDelete ) {
+        var parent = e.Parent;
+        e.Remove();
+        if ( parent != null && parent.IsEmpty ) {
+          parent.Remove();
+        }
+      }
     }
 
     //public static IEnumerable<XElement> CombineElementChanges(

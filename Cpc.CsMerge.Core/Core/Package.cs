@@ -153,6 +153,12 @@ namespace Cpc.CsMerge.Core {
       WriteXml( writer, element, settings );
     }
 
+    public static void WriteXml( string path, XNode root ) {
+      using ( var textWriter = new StreamWriter( path ) ) {
+        WriteXml( textWriter, root );
+      }
+    }
+
     public static void WriteXml( TextWriter writer, XNode element, XmlWriterSettings settings = null ) {
       var xmlWriterSettings = settings
                               ?? new XmlWriterSettings {

@@ -2,8 +2,17 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
+
+using Cpc.CsMerge.Core;
+
+using GitSharp.Core.DirectoryCache;
+
+using LibGit2Sharp;
 
 using NLog;
+
+using Repository = GitSharp.Repository;
 
 namespace CsMerge {
   public class GitHelper {
@@ -36,7 +45,7 @@ namespace CsMerge {
       var logger = LogManager.GetCurrentClassLogger();
 
       var arguments = cmd + " " + gitCmdArgs;
-      logger.Debug( "Executing " + file + " " + arguments );
+      logger.Info( "Executing " + file + " " + arguments );
       var processStartInfo = new ProcessStartInfo( file, arguments );
       processStartInfo.RedirectStandardOutput = true;
       processStartInfo.UseShellExecute = false;
@@ -92,34 +101,39 @@ namespace CsMerge {
       // A missing stage number (and the colon that follows it) names a stage 0 entry. 
       // During a merge, stage 1 is the common ancestor, stage 2 is the target branch’s version 
       // (typically the current branch), and stage 3 is the version from the branch which is being merged.
-      return GitHelper.RunGitCmd( cmd : "show", gitCmdArgs : ":" + stage + ":" + path, workingDir : folder );
+      return RunGitCmd( cmd : "show", gitCmdArgs : ":" + stage + ":" + path, workingDir : folder );
     }
 
     public static void ResolveWithStandardMergetool(
+      LibGit2Sharp.Repository repository,
       string fullConflictPath,
-      string baseContent,
-      string localContent,
-      string theirContent,
+      XDocument baseContent,
+      XDocument localContent,
+      XDocument theirContent,
       Logger logger,
       string conflict ) {
       // Run the standard mergetool to deal with any remaining issues.
       var basePath = fullConflictPath + "_base";
-      var localPath = fullConflictPath;
+      var localPath = fullConflictPath + "_local";
       var theirsPath = fullConflictPath + "_theirs";
 
-      File.WriteAllText( basePath, baseContent );
 
-      File.WriteAllText( localPath, localContent );
-
-      File.WriteAllText( theirsPath, theirContent );
+      Package.WriteXml( basePath, baseContent );
+      Package.WriteXml( localPath, localContent );
+      Package.WriteXml( theirsPath, theirContent );
 
       if ( RunStandardMergetool( basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
         // The merge tool reports that the conflict was resolved
-        RunGitCmd( "add", workingDir : Path.GetDirectoryName( fullConflictPath ), gitCmdArgs : conflict );
         logger.Info( "Manually resolved " + fullConflictPath );
+        File.Delete( fullConflictPath );
+        File.Move( localPath, fullConflictPath );
+
+        //RunGitCmd( "add", workingDir: Path.GetDirectoryName( fullConflictPath ), gitCmdArgs: conflict );
+        repository.Stage( conflict );
       }
       else {
         logger.Info( "Did not resolve " + fullConflictPath );
+        File.Delete( localPath );
       }
 
       File.Delete( basePath );
