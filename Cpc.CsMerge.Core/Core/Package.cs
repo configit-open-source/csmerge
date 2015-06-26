@@ -6,8 +6,8 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core {
-  public class Package: IEquatable<Package> {
+namespace CsMerge.Core {
+  public class Package: IEquatable<Package>, IKeyedEntry {
 
     public bool Equals( Package other ) {
       if ( ReferenceEquals( other, null ) ) {
@@ -198,6 +198,10 @@ namespace Cpc.CsMerge.Core {
         s.AppendLine( "UserInstalled: " + UserInstalled.Value + " " );
       }
       return s.ToString();
+    }
+
+    public string Key {
+      get { return Id; }
     }
   }
 }

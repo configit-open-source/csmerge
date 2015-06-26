@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   public class ItemGroup {
     public IReadOnlyCollection<Item> Items { get; private set; }
 

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cpc.CsMerge.Test", "Cpc.CsMerge.Test\Cpc.CsMerge.Test.csproj", "{CBB1F300-EDC2-486E-ADAB-70556A4D5500}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configit.CsMerge.Test", "Cpc.CsMerge.Test\Configit.CsMerge.Test.csproj", "{CBB1F300-EDC2-486E-ADAB-70556A4D5500}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cpc.CsMerge.Core", "Cpc.CsMerge.Core\Cpc.CsMerge.Core.csproj", "{BD6AF56E-5128-4E09-852D-159BB21972D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsMerge.Core", "Cpc.CsMerge.Core\CsMerge.Core.csproj", "{BD6AF56E-5128-4E09-852D-159BB21972D3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsMerge", "CsMerge\CsMerge.csproj", "{4EBE13DA-83CD-4B07-99ED-098EDE83F5E5}"
 EndProject

@@ -52,9 +52,9 @@
     <Compile Include="XmlTestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cpc.CsMerge.Core\Cpc.CsMerge.Core.csproj">
+    <ProjectReference Include="..\Cpc.CsMerge.Core\CsMerge.Core.csproj">
       <Project>{bd6af56e-5128-4e09-852d-159bb21972d3}</Project>
-      <Name>Cpc.CsMerge.Core</Name>
+      <Name>CsMerge.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

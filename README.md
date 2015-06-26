@@ -43,21 +43,24 @@ in the project files.
 
 If both branches modified the package entry, the highest version will be used. If only one branch has made changes to a package (including delete), then that change is simply applied. In case of conflicting changes (for example modify vs delete), the tool will ask the user to choose:
 
-    Patch deleted p1/10.0.0.0/net40-Client while local changed to add-p1/90.0.0.0/net45
+    Theirs deleted p1/10.0.0.0/net40-Client while Mine changed to add-p1/90.0.0.0/net45
     (b)ase: p1/10.0.0.0/net40-Client
-    (l)ocal: p1/90.0.0.0/net45
-    (p)atch: not installed
+    (m)ine: p1/90.0.0.0/net45
+    (t)heirs: not installed
     Choose resolution:
-    pAuto-merging packages.config
+    m
+	Auto-merging packages.config
 
-Local is used to refer to the current working copy state, being "mine" if merging, and "theirs" if rebasing, while "patch" refers to the changes being applied (which is a patch with your changes if rebasing).
+The merge tool uses Mine/Theirs correctly when rebasing and merging, so Mine is the changes in your branch, and not reversed as it is in non-rebase aware tools.
 
 ### Project files
-After handling the packages.config files, the tool looks for conflicting project files (at some point it might look at all project files, to ensure correct references in new projects, but that is not implemented yet). Pending completion of a full project file merger, it will attempt to auto-resolve ItemGroup entries with action `Reference`, `None`, `Compile` and `ProjectReference`. Only non-NuGet `Reference`s can result in a conflict requiring user interaction.
+After handling the packages.config files, the tool looks for conflicting project files (at some point it might look at all project files, to ensure correct references in new projects, but that is not implemented yet). Pending completion of a full project file merger, it will attempt to auto-resolve ItemGroup entries. 
 
 All references to the nuget packages folder will be updated to match those listed in packages.config, deleting
 references if the package has been removed from packages.config.
 
 A non-NuGet reference will conflict if the same assembly name (ie. Configit.Core.Compile ) is has conflicting changes, such as differing versions, or other properties on the reference. In this case the the user is queried for a resolution.
 
-In the current implementation the project files ItemGroups will be restructured.
+The remaining items are resolved using their Include value (if present) as key, and if no Include is specified, the entire content of the item element is used to compare.
+
+In the current implementation the project files ItemGroups are restructured to have one ItemGroup per item action (ie Compile, None etc.) and sorted on that action. The items are ordered according to their key (Package Id, Include path, Project Guid etc).

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core.Parsing {
+namespace CsMerge.Core.Parsing {
   public class CsProjParser {
 
     public ProjectFile Parse( string name, Stream from ) {

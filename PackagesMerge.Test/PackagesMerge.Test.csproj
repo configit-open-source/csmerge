@@ -54,9 +54,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cpc.CsMerge.Core\Cpc.CsMerge.Core.csproj">
+    <ProjectReference Include="..\Cpc.CsMerge.Core\CsMerge.Core.csproj">
       <Project>{BD6AF56E-5128-4E09-852D-159BB21972D3}</Project>
-      <Name>Cpc.CsMerge.Core</Name>
+      <Name>CsMerge.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\CsMerge\CsMerge.csproj">
       <Project>{4EBE13DA-83CD-4B07-99ED-098EDE83F5E5}</Project>

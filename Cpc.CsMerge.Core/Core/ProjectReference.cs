@@ -1,7 +1,7 @@
 using System;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   public class ProjectReference: Item {
     public string CsProjPath { get; private set; }
     public Guid ProjectId { get; private set; }

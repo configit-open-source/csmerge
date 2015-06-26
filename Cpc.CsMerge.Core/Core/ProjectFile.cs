@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 using NLog;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   public class ProjectFile {
     public string Name { get; private set; }
 

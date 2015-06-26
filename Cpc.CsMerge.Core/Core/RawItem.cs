@@ -1,8 +1,7 @@
 using System;
-using System.Security.Policy;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   /// <summary>
   /// Used for items that have no special semantics in the merge.
   /// </summary>

@@ -4,14 +4,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Xml.Linq;
 
-using Cpc.CsMerge.Core;
-using Cpc.CsMerge.Core.Parsing;
+using CsMerge.Core;
+using CsMerge.Core.Parsing;
 
 using LibGit2Sharp;
 
 using NLog;
 
-using Reference = Cpc.CsMerge.Core.Reference;
+using Reference = CsMerge.Core.Reference;
 
 namespace CsMerge {
 

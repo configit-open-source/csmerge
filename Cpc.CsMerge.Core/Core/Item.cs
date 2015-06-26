@@ -1,8 +1,8 @@
 using System;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core {
-  public abstract class Item : IEquatable<Item> {
+namespace CsMerge.Core {
+  public abstract class Item : IEquatable<Item>, IKeyedEntry {
     public virtual string Action { get { return GetType().Name; } }
     public abstract string Key { get; }
     public abstract bool Equals( Item other );

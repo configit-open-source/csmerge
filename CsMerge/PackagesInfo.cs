@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-using Cpc.CsMerge.Core;
+using CsMerge.Core;
 
 namespace CsMerge {
 

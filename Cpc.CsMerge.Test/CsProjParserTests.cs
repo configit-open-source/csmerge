@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Xml.Linq;
-using Cpc.CsMerge.Core;
-using Cpc.CsMerge.Core.Parsing;
+
+using CsMerge.Core;
+using CsMerge.Core.Parsing;
+
 using NUnit.Framework;
 
 namespace Cpc.CsMerge.Test {

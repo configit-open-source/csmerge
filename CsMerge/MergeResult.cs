@@ -1,6 +1,4 @@
-﻿using Cpc.CsMerge.Core;
-
-namespace CsMerge {
+﻿namespace CsMerge {
   public class MergeResult<T>
     where T: class {
     public MergeResult( T resolvedItem, MergeType mergeType, bool isResolved = true ) {

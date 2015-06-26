@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
-using Cpc.CsMerge.Core;
+using CsMerge.Core;
 
 using LibGit2Sharp;
+
 using NLog;
 
 namespace CsMerge {
-  public static class MergeHelper<T>
-    where T: class {
-    public static MergeResult<T> Merge(
+  public static class MergeHelper<T> where T: class, IKeyedEntry {
+
+    private static MergeResult<T> Merge(
       T b,
       T m,
       T t,
@@ -90,13 +90,14 @@ namespace CsMerge {
       IDictionary<string, T> theirObj,
       ConflictResolver<T> delModResolver,
       ConflictResolver<T> contentResolver = null ) {
-      return from id in baseObj.Keys.Union( localObj.Keys ).Union( theirObj.Keys ).OrderBy( i => i, StringComparer.OrdinalIgnoreCase )
-             let b = GetValue( baseObj, id )
-             let m = GetValue( localObj, id )
-             let t = GetValue( theirObj, id )
-             let mergeResult = Merge( b, m, t, delModResolver, contentResolver )
-             select HandleMergeResult( mergeResult, b, operation ) into mergedObj
-             where mergedObj != null select mergedObj;
+      return ( from id in baseObj.Keys.Union( localObj.Keys ).Union( theirObj.Keys ).OrderBy( i => i, StringComparer.OrdinalIgnoreCase )
+               let b = GetValue( baseObj, id )
+               let m = GetValue( localObj, id )
+               let t = GetValue( theirObj, id )
+               let mergeResult = Merge( b, m, t, delModResolver, contentResolver )
+               orderby mergeResult.ResolvedItem.Key
+               select HandleMergeResult( mergeResult, b, operation ) into mergedObj
+               where mergedObj != null select mergedObj ).OrderBy( o => o.Key );
     }
 
     private static T GetValue( IDictionary<string, T> baseObj, string id ) {

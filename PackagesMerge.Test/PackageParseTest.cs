@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-using Cpc.CsMerge.Core;
+using CsMerge.Core;
 
 using NUnit.Framework;
 

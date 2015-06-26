@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-using Cpc.CsMerge.Core;
+using CsMerge.Core;
 
 using LibGit2Sharp;
 

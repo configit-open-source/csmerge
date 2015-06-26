@@ -1,8 +1,7 @@
-using System;
 using System.Reflection;
 using System.Xml.Linq;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   public class Reference: Item {
     public string ReferenceName { get; private set; }
 

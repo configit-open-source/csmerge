@@ -1,4 +1,4 @@
-﻿namespace Cpc.CsMerge.Core {
+﻿namespace CsMerge.Core {
 
   public delegate T ConflictResolver<T>(Conflict<T> conflict);
 

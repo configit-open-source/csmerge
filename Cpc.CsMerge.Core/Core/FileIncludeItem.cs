@@ -1,8 +1,7 @@
 using System.IO;
 using System.Xml.Linq;
-using System.Xml.Serialization;
 
-namespace Cpc.CsMerge.Core {
+namespace CsMerge.Core {
   public class FileIncludeItem: Item {
     public string Folder { get; set; }
 

@@ -7,8 +7,8 @@
     <ProjectGuid>{BD6AF56E-5128-4E09-852D-159BB21972D3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cpc.CsMerge.Core</RootNamespace>
-    <AssemblyName>Cpc.CsMerge.Core</AssemblyName>
+    <RootNamespace>CsMerge.Core</RootNamespace>
+    <AssemblyName>CsMerge.Core</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Core\Conflict.cs" />
     <Compile Include="Core\FileIncludeItem.cs" />
+    <Compile Include="Core\IKeyedEntry.cs" />
     <Compile Include="Core\Item.cs" />
     <Compile Include="Core\ItemGroup.cs" />
     <Compile Include="Core\Package.cs" />

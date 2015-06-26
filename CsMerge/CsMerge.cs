@@ -5,9 +5,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Cpc.CsMerge.Core;
+
+using CsMerge.Core;
+
 using LibGit2Sharp;
 using NLog;
+
+using Reference = CsMerge.Core.Reference;
 
 namespace CsMerge {
 
@@ -111,7 +115,7 @@ namespace CsMerge {
             baseDocument,
             localDocument,
             theirDocument,
-            resolvers.UserResolveReference<Cpc.CsMerge.Core.Reference>,
+            resolvers.UserResolveReference<Reference>,
             resolvers.UserResolveReference<Item> ).ToArray();
 
         // Now remove everything we have handled, to check if we are done.

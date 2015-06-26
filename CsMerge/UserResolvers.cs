@@ -2,7 +2,7 @@
 using System.IO;
 using System.Xml.Linq;
 
-using Cpc.CsMerge.Core;
+using CsMerge.Core;
 
 using LibGit2Sharp;
 
@@ -65,18 +65,23 @@ namespace CsMerge {
 
     private T ChooseResolution<T>( IConflict<T> conflict ) {
       Console.WriteLine( "Choose resolution:" );
-      while ( true ) {
-        string key = Console.ReadKey().KeyChar.ToString().ToUpperInvariant();
+      try {
+        while ( true ) {
+          string key = Console.ReadKey().KeyChar.ToString().ToUpperInvariant();
 
-        if ( key == "b" ) {
-          return conflict.Base;
+          if ( key == "B" ) {
+            return conflict.Base;
+          }
+          if ( key == Local[0].ToString().ToUpperInvariant() ) {
+            return conflict.Local;
+          }
+          if ( key == Incoming[0].ToString().ToUpperInvariant() ) {
+            return conflict.Incoming;
+          }
         }
-        if ( key == Local[0].ToString().ToUpperInvariant() ) {
-          return conflict.Local;
-        }
-        if ( key == Incoming[0].ToString().ToUpperInvariant() ) {
-          return conflict.Incoming;
-        }
+      }
+      finally {
+        Console.WriteLine();
       }
     }
 
