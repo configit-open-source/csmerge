@@ -1,4 +1,4 @@
-# Slightly less painful way to handle conflicts on nuget packages
+# (Almost) painless way to handle conflicts on nuget packages
 
 ## Disclaimer
 Always backup your branch content before running this merge tool, its probably completely broken and will
@@ -59,8 +59,8 @@ After handling the packages.config files, the tool looks for conflicting project
 All references to the nuget packages folder will be updated to match those listed in packages.config, deleting
 references if the package has been removed from packages.config.
 
-A non-NuGet reference will conflict if the same assembly name (ie. Configit.Core.Compile ) is has conflicting changes, such as differing versions, or other properties on the reference. In this case the the user is queried for a resolution.
+A non-NuGet reference will conflict if the same assembly name (ie. Configit.Core.Compile ) has conflicting changes, such as differing versions, or other properties on the reference. In this case the the user is queried for a resolution.
 
 The remaining items are resolved using their Include value (if present) as key, and if no Include is specified, the entire content of the item element is used to compare.
 
-In the current implementation the project files ItemGroups are restructured to have one ItemGroup per item action (ie Compile, None etc.) and sorted on that action. The items are ordered according to their key (Package Id, Include path, Project Guid etc).
+In the current implementation the project files ItemGroups are restructured to have one ItemGroup per item action (ie Compile, None etc.) and sorted on that action. The items are ordered according to their key (Package Id, Include path, Project Guid etc). While this will initially cause a major restructuring, but otherwise keep a consistent ordering.
