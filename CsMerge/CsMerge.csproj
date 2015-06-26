@@ -56,6 +56,9 @@
   <ItemGroup>
     <Compile Include="CsMerge.cs" />
     <Compile Include="GitHelper.cs" />
+    <Compile Include="MergeType.cs" />
+    <Compile Include="MergeHelper.cs" />
+    <Compile Include="MergeResult.cs" />
     <Compile Include="PackagesConfigMerger.cs" />
     <Compile Include="PackagesInfo.cs" />
     <Compile Include="ProjectMerger.cs" />

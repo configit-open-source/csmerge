@@ -47,7 +47,7 @@ namespace CsMerge {
       File.Delete( basePath );
       File.Delete( theirsPath );
     }
-    public static Package UserResolvePackage( Conflict<Package> conflict ) {
+    public static Package UserResolvePackage( IConflict<Package> conflict ) {
       Console.WriteLine( "(b)ase: " + PackageToString( conflict.Base ) );
       Console.WriteLine( "(l)ocal: " + PackageToString( conflict.Local ) );
       Console.WriteLine( "(p)atch: " + PackageToString( conflict.Patch ) );
@@ -62,16 +62,16 @@ namespace CsMerge {
       }
     }
 
-    public static Reference UserResolveReference( Conflict<Reference> conflict ) {
+    public static T UserResolveReference<T>( IConflict<Item> conflict ) where T: Item {
       Console.WriteLine( "(b)ase: " + conflict.Base );
       Console.WriteLine( "(l)ocal: " + conflict.Local );
       Console.WriteLine( "(p)atch: " + conflict.Patch );
       while ( true ) {
         var key = Console.ReadKey();
         switch ( key.KeyChar ) {
-          case 'b': return conflict.Base;
-          case 'l': return conflict.Local;
-          case 'p': return conflict.Patch;
+          case 'b': return (T) conflict.Base;
+          case 'l': return (T) conflict.Local;
+          case 'p': return (T) conflict.Patch;
         }
       }
     }

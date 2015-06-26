@@ -59,39 +59,15 @@ namespace CsMerge {
         Reference m = localByName.ContainsKey( name ) ? localByName[name] : null;
         Reference t = theirByName.ContainsKey( name ) ? theirByName[name] : null;
 
-        if ( b == t && b == m ) {
-          yield return m;
-          continue;
-        }
+        var mergeResult = MergeHelper<Reference>.Merge( b, m, t, resolver );
 
-        if ( m == null && t == null ) {
-          logger.Info( "Both deleted " + name );
-          continue;
+        if ( mergeResult.ResolvedItem != null ) {
+          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
+          yield return mergeResult.ResolvedItem;
         }
-
-        if ( b == null && m == null ) {
-          logger.Info( "Patch added " + name + " as " + t );
-          yield return t;
-          continue;
+        else {
+          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
         }
-
-        if ( b == null && t == null ) {
-          logger.Info( "Local added " + name + " as " + m );
-          yield return m;
-          continue;
-        }
-
-        if( b == null && t == m ) {
-          logger.Info( "Both modified to " + m );
-          yield return m;
-          continue;
-        }
-
-        var resolved = resolver( new Conflict<Reference>( b, m, t ) );
-        if ( resolved == null ) {
-          continue;
-        }
-        yield return resolved;
       }
     }
 
@@ -109,15 +85,15 @@ namespace CsMerge {
       return baseRefs.Union( localRefs ).Union( theirRefs );
     }
 
-    public static IEnumerable<Item> Merge( string name, 
-      PackagesInfo info, 
-      XDocument baseDocument, 
-      XDocument localDocument, 
-      XDocument theirDocument, 
-      ConflictResolver<Reference> referenceResolver ) {
+    public static IEnumerable<Item> Merge( string name,
+      PackagesInfo info,
+      XDocument baseDocument,
+      XDocument localDocument,
+      XDocument theirDocument,
+      ConflictResolver<Reference> referenceResolver,
+      ConflictResolver<Item> itemResolver ) {
 
       CsProjParser parser = new CsProjParser();
-      var logger = LogManager.GetCurrentClassLogger();
       var localProj = parser.Parse( name, localDocument );
       var theirProj = parser.Parse( name, theirDocument );
       var baseProj = parser.Parse( name, baseDocument );
@@ -130,7 +106,7 @@ namespace CsMerge {
       var theirRefs = GetItems<Reference>( theirProj ).ToArray();
       var baseRefs = GetItems<Reference>( baseProj ).ToArray();
 
-      return MergeNonReference( localItems, theirItems, baseItems, logger ).Concat(
+      return MergeNonReference( localItems, theirItems, baseItems, itemResolver ).Concat(
         MergeReferences( info, baseRefs, localRefs, theirRefs, referenceResolver ) );
     }
 
@@ -138,7 +114,10 @@ namespace CsMerge {
       Dictionary<string, Item> localItems,
       Dictionary<string, Item> theirItems,
       Dictionary<string, Item> baseItems,
-      Logger logger ) {
+     ConflictResolver<Item> resolver ) {
+
+      var logger = LogManager.GetCurrentClassLogger();
+
       foreach (
         string key in
           localItems.Keys
@@ -148,20 +127,15 @@ namespace CsMerge {
         Item m = localItems.ContainsKey( key ) ? localItems[key] : null;
         Item t = theirItems.ContainsKey( key ) ? theirItems[key] : null;
 
-        if ( m == null && t == null ) {
-          logger.Info( b + " deleted in both branches" );
-          continue; // deleted in both 
-        }
+        var mergeResult = MergeHelper<Item>.Merge( b, m, t, resolver );
 
-        if ( b != null && m == null || t == null ) {
-          // Mine deleted something modified in theirs
-          logger.Info( ( m == null ? "local" : "patch" ) + " deleted " + b );
-          continue;
+        if ( mergeResult.ResolvedItem != null ) {
+          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
+          yield return mergeResult.ResolvedItem;
         }
-
-        Debug.Assert( m == t );
-        logger.Debug( m + " matches between branches" );
-        yield return m;
+        else {
+          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
+        }
       }
     }
   }

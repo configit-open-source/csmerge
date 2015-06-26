@@ -9,7 +9,6 @@ using Cpc.CsMerge.Core;
 using LibGit2Sharp;
 using NLog;
 
-using PackagesMerge;
 namespace CsMerge {
 
   /// <summary>
@@ -108,7 +107,8 @@ namespace CsMerge {
             baseDocument,
             localDocument,
             theirDocument,
-            UserResolvers.UserResolveReference ).ToArray();
+            UserResolvers.UserResolveReference<Cpc.CsMerge.Core.Reference>,
+            UserResolvers.UserResolveReference<Item> ).ToArray();
 
         // Now remove everything we have handled, to check if we are done.
         ProjectFile.DeleteItems( localDocument );

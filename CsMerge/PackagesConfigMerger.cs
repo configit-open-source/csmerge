@@ -4,23 +4,29 @@ using System.Linq;
 
 using Cpc.CsMerge.Core;
 
-namespace PackagesMerge {
+namespace CsMerge {
+
+  /// <summary>
+  /// Merges packages.config files.
+  /// </summary>
   public class PackagesConfigMerger {
+
     private static IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
       return pc.ToDictionary( p => p.Id, p => p );
     }
 
+    /// <summary>
+    /// Merge prefering newest packages.
+    /// </summary>
     public static IEnumerable<Package> Merge(
       IEnumerable<Package> @base,
       IEnumerable<Package> mine,
       IEnumerable<Package> theirs,
-      Func<Conflict<Package>, Package> conflictResolver ) {
+      ConflictResolver<Package> conflictResolver ) {
       var logger = NLog.LogManager.GetCurrentClassLogger();
       var baseIds = GetIndex( @base );
       var myIds = GetIndex( mine );
       var theirIds = GetIndex( theirs );
-
-      List<Package> packages = new List<Package>();
 
       foreach (
         string id in
@@ -29,63 +35,31 @@ namespace PackagesMerge {
         var m = myIds.ContainsKey( id ) ? myIds[id] : null;
         var t = theirIds.ContainsKey( id ) ? theirIds[id] : null;
 
-        if ( m == null && t == null ) {
-          logger.Info( b + " deleted in both branches" );
-          continue; // deleted in both 
-        }
+        var mergeResult = MergeHelper<Package>.Merge( b, m, t, conflictResolver, c => ResolveContent( c, conflictResolver ) );
 
-        if ( m == t ) {
-          logger.Debug( m + " matches between branches" );
-          packages.Add( m ); // identical
-          continue;
-        }
-
-        if ( b != null && m == null && !t.Equals( b ) ) {
-          // Mine deleted something modified in theirs
-          logger.Info( "Local deleted " + b + " while remote changed to " + t );
-          var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
-          if ( resolved != null ) {
-            packages.Add( resolved );
-          }
-          continue;
-        }
-
-        if ( b != null && t == null && !m.Equals( b ) ) {
-          // Theirs deleted something modified in mine
-          logger.Info( "Patch deleted " + b + " while local changed to " + m );
-          var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
-          if ( resolved != null ) {
-            packages.Add( resolved );
-          }
-          continue;
-        }
-
-        if ( t == null ) {
-          packages.Add( m );
-          logger.Info( "Local added " + m );
-        }
-        else if ( m == null ) {
-          logger.Info( "Local added " + t );
-          packages.Add( t );
+        if ( mergeResult.ResolvedItem != null ) {
+          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
+          yield return mergeResult.ResolvedItem;
         }
         else {
-          var mineNotComparingOnVersion = new Package( m.Id, t.Version, t.TargetFramework, t.AllowedVersions );
-
-          if ( mineNotComparingOnVersion == m ) {
-            var mineHigher = m.Version.CompareTo( t.Version ) >= 0;
-            logger.Info( "Both modified, picking " + ( mineHigher ? m : t ) + " over " + ( mineHigher ? t : m ) );
-            packages.Add( mineHigher ? m : t );
-          }
-          else {
-            var resolved = conflictResolver( new Conflict<Package>( b, m, t ) );
-            if ( resolved != null ) {
-              packages.Add( resolved );
-            }
-          }
+          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
         }
       }
+    }
 
-      return packages;
+    private static Package ResolveContent( Conflict<Package> conflict, ConflictResolver<Package> userResolution ) {
+      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Patch.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled: conflict.Local.UserInstalled );
+
+      var logger = NLog.LogManager.GetCurrentClassLogger();
+
+      if ( localNotComparingOnVersion == conflict.Patch ) {
+        var mineHigher = conflict.Local.Version.CompareTo( conflict.Patch.Version ) >= 0;
+        var package = ( mineHigher ? conflict.Local : conflict.Patch );
+        logger.Info( "Both modified, picking " + package + " over " + ( mineHigher ? conflict.Patch : conflict.Local ) );
+        return package;
+      }
+      var resolved = userResolution( conflict);
+      return resolved;
     }
   }
 }

@@ -66,16 +66,17 @@ namespace Cpc.CsMerge.Core {
       PackageVersion version,
       string targetFramework,
       string allowedVersions = null,
-      string userInstalled = null ) {
+      bool? userInstalled = null ) {
       Id = id;
       Version = version;
       AllowedVersions = allowedVersions;
       TargetFramework = targetFramework;
 
-      bool userInstalledParsed;
-      if ( !string.IsNullOrEmpty( userInstalled ) && bool.TryParse( userInstalled, out userInstalledParsed ) ) {
-        UserInstalled = userInstalledParsed;
-      }
+      //bool userInstalledParsed;
+      //if ( !string.IsNullOrEmpty( userInstalled ) && bool.TryParse( userInstalled, out userInstalledParsed ) ) {
+      //  UserInstalled = userInstalledParsed;
+      //}
+      UserInstalled = userInstalled;
     }
 
     public static IEnumerable<Package> Read( string path ) {
@@ -118,7 +119,15 @@ namespace Cpc.CsMerge.Core {
              let allowedVersions = allowedVersionAttribute != null ? allowedVersionAttribute.Value : null
              let targetFramework = targetFrameworkAttribute != null ? targetFrameworkAttribute.Value : null
              let userInstalled = userInstalledAttribute != null ? userInstalledAttribute.Value : null
-             select new Package( id, versions, targetFramework, allowedVersions, userInstalled );
+             select new Package( id, versions, targetFramework, allowedVersions, ParseNullableBool( userInstalled ) );
+    }
+
+    private static bool? ParseNullableBool( string s ) {
+      bool parsed;
+      if ( !string.IsNullOrEmpty( s ) && bool.TryParse( s, out parsed ) ) {
+        return parsed;
+      }
+      return null;
     }
 
     public static void Write( IEnumerable<Package> packages, TextWriter writer, XmlWriterSettings settings = null ) {
