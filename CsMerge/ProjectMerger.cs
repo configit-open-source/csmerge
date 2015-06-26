@@ -16,7 +16,7 @@ namespace CsMerge {
   /// </summary>
   public class ProjectMerger {
 
-    public static string[] HandledItems = { /*"Content",*/ "Compile", "None", "ProjectReference", "Reference" };
+    public static string[] HandledItems = { "Content", "Service", "Compile", "None", "ProjectReference", "Reference" };
 
     private static Dictionary<string, TItem> GetItemIndex<TItem>( ProjectFile localProj, Predicate<Item> include ) where TItem: Item {
       return GetItems<TItem>( localProj, include ).ToDictionary( r => r.Key );
@@ -26,10 +26,6 @@ namespace CsMerge {
       include = include ?? ( p => true );
 
       return localProj.ItemGroups.SelectMany( ig => ig.Items.Where( i => i is TItem && include( i ) ).Cast<TItem>() );
-    }
-
-    private static IEnumerable<Reference> GetPackageReferences( string packagePrefix, IEnumerable<Reference> references ) {
-      return references.Where( r => r.HintPath != null && r.HintPath.StartsWith( packagePrefix ) );
     }
 
     private static IEnumerable<Reference> MergeReferences(

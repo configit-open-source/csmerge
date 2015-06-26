@@ -50,6 +50,7 @@
     <Compile Include="Core\Package.cs" />
     <Compile Include="Core\PackageVersion.cs" />
     <Compile Include="Core\ProjectReference.cs" />
+    <Compile Include="Core\RawItem.cs" />
     <Compile Include="Core\Reference.cs" />
     <Compile Include="Parsing\CsProjParser.cs" />
     <Compile Include="Core\ProjectFile.cs" />

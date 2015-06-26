@@ -32,6 +32,16 @@ namespace CsMerge {
         conflictPaths = repository.Index.Conflicts.Select( c => c.Ours.Path ).ToArray();
       }
 
+      ProcessPackagesConfig( conflictPaths, folder, logger, rootFolder );
+
+      ProcessProjectFiles( conflictPaths, folder, logger, rootFolder );
+    }
+
+    private static void ProcessPackagesConfig(
+      string[] conflictPaths,
+      DirectoryInfo folder,
+      Logger logger,
+      string rootFolder ) {
       foreach ( var conflict in conflictPaths.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( "Examining conflict for " + fullConflictPath );
@@ -40,23 +50,25 @@ namespace CsMerge {
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
         var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
-        try {
-          var result = PackagesConfigMerger.Merge(
-          Package.Parse( baseContent ),
-          Package.Parse( localContent ),
-          Package.Parse( theirContent ),
-          UserResolvers.UserResolvePackage ).ToArray();
+        var result =
+          PackagesConfigMerger.Merge(
+            Package.Parse( baseContent ),
+            Package.Parse( localContent ),
+            Package.Parse( theirContent ),
+            UserResolvers.UserResolvePackage ).ToArray();
 
-          Package.Write( result, fullConflictPath );
-          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
-            repository.Stage( conflict );
-          }
-        }
-        catch ( OperationAbortedException ) {
-          return;
+        Package.Write( result, fullConflictPath );
+        using ( var repository = new Repository( rootFolder ) ) {
+          repository.Stage( conflict );
         }
       }
+    }
 
+    private static void ProcessProjectFiles(
+      string[] conflictPaths,
+      DirectoryInfo folder,
+      Logger logger,
+      string rootFolder ) {
       foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( "Examining conflict for " + fullConflictPath );
@@ -77,16 +89,19 @@ namespace CsMerge {
 
         var packageIndex = new PackagesInfo( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
 
-        Item[] items = ProjectMerger.Merge( projFileName,
-          packageIndex,
-          baseDocument,
-          localDocument,
-          theirDocument,
-          UserResolvers.UserResolveReference ).ToArray();
+        Item[] items =
+          ProjectMerger.Merge(
+            projFileName,
+            packageIndex,
+            baseDocument,
+            localDocument,
+            theirDocument,
+            UserResolvers.UserResolveReference ).ToArray();
 
-        DeleteItemsWithAction( localDocument, ProjectMerger.HandledItems );
-        DeleteItemsWithAction( theirDocument, ProjectMerger.HandledItems );
-        DeleteItemsWithAction( baseDocument, ProjectMerger.HandledItems );
+        // Now remove everything we have handled, to check if we are done.
+        DeleteItems( localDocument );
+        DeleteItems( theirDocument );
+        DeleteItems( baseDocument );
 
         AddItems( baseDocument, items );
         AddItems( localDocument, items );
@@ -104,7 +119,13 @@ namespace CsMerge {
         else {
           using ( var repository = new Repository( rootFolder ) ) {
             UserResolvers.ResolveWithStandardMergetool(
-              repository, fullConflictPath, baseDocument, localDocument, theirDocument, logger, conflict );
+              repository,
+              fullConflictPath,
+              baseDocument,
+              localDocument,
+              theirDocument,
+              logger,
+              conflict );
           }
         }
       }
@@ -149,6 +170,24 @@ namespace CsMerge {
           newGroup.Add( item.ToElement( root.Name.Namespace ) );
         }
         root.Add( newGroup );
+      }
+    }
+
+    private static void DeleteItems( XDocument document ) {
+      var root = document.Root;
+
+      Debug.Assert( root != null );
+
+      var elementsToDelete = root.Descendants()
+                                 .Where( n => n.Parent.Name.LocalName == "ItemGroup" )
+                                 .ToArray();
+
+      foreach ( XElement e in elementsToDelete ) {
+        var parent = e.Parent;
+        e.Remove();
+        if ( parent != null && parent.IsEmpty ) {
+          parent.Remove();
+        }
       }
     }
 

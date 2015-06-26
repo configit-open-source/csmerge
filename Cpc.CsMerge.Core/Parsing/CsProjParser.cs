@@ -31,19 +31,15 @@ namespace Cpc.CsMerge.Core.Parsing {
     }
 
     private Item ParseItem( XElement itemElement ) {
-      var xAttribute = itemElement.Attribute( "Include" );
-      if ( xAttribute == null ) {
+      var includeAttribute = itemElement.Attribute( "Include" );
+      if ( includeAttribute == null ) {
         return null;
       }
-      var include = xAttribute.Value;
+      var include = includeAttribute.Value;
 
       var xNamespace = itemElement.Name.Namespace;
 
       switch ( itemElement.Name.LocalName ) {
-        case "Compile":
-        case "None":
-        //case "Content":
-          return new FileIncludeItem( itemElement.Name.LocalName, Path.GetDirectoryName( include ), Path.GetFileName( include ) );
         case "Reference":
           var specificVersionAttribute = itemElement.Attribute( "SpecificVersion" );
           var privateAttribute = itemElement.Attribute( "Private" );
@@ -52,11 +48,11 @@ namespace Cpc.CsMerge.Core.Parsing {
           var @private = privateAttribute == null ? (bool?) null : bool.Parse( privateAttribute.Value );
           return new Reference( include, specificVersion, @private, hintPathAttribute == null ? null : hintPathAttribute.Value );
         case "ProjectReference":
-          return new ProjectReference( include, 
-                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ), 
+          return new ProjectReference( include,
+                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
                                        itemElement.Element( xNamespace.GetName( "Name" ) ).Value );
         default:
-          return null;
+          return new RawItem( itemElement, include );
       }
     }
   }
