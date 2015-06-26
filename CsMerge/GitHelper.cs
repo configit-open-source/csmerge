@@ -63,6 +63,15 @@ namespace CsMerge {
       }
     }
 
-   
+    public static string FindRepoRoot( string folder ) {
+      var current = new DirectoryInfo( folder ?? Directory.GetCurrentDirectory() );
+      while ( !new DirectoryInfo( Path.Combine( current.FullName, ".git" ) ).Exists ) {
+        current = current.Parent;
+        if ( current == null ) {
+          throw new Exception( "Could not locate \".git\" folder" );
+        }
+      }
+      return current.FullName;
+    }
   }
 }

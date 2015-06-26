@@ -16,8 +16,6 @@ namespace CsMerge {
   /// </summary>
   public class ProjectMerger {
 
-    public static string[] HandledItems = { "Content", "Service", "Compile", "None", "ProjectReference", "Reference" };
-
     private static Dictionary<string, TItem> GetItemIndex<TItem>( ProjectFile localProj, Predicate<Item> include ) where TItem: Item {
       return GetItems<TItem>( localProj, include ).ToDictionary( r => r.Key );
     }

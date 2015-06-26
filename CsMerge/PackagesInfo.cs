@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 
 using Cpc.CsMerge.Core;
 
 namespace CsMerge {
 
+  /// <summary>
+  /// Information about what packages are installed, and the location of the package folder.
+  /// </summary>
   public class PackagesInfo {
     private readonly string _packagesPrefix;
 

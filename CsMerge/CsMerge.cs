@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -10,9 +11,16 @@ using NLog;
 
 using PackagesMerge;
 namespace CsMerge {
-  public class Program {
 
-    static void Main( string[] args ) {
+  /// <summary>
+  /// See README.md
+  /// </summary>
+  public class CsMerge {
+
+    /// <summary>
+    /// See README.md
+    /// </summary>
+    public static void Main( string[] args ) {
       if ( args.Length != 1 ) {
         args = new[] { Directory.GetCurrentDirectory() };
       }
@@ -21,7 +29,7 @@ namespace CsMerge {
       var logger = LogManager.GetCurrentClassLogger();
       logger.Debug( "Scanning " + folder );
 
-      var rootFolder = FindRepoRoot( folder.FullName );
+      var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
 
       string[] conflictPaths;
 
@@ -77,7 +85,11 @@ namespace CsMerge {
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
         var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
-        var conflictFolder = Path.GetDirectoryName( conflict );
+        var conflictFolder = Path.GetDirectoryName( Path.Combine( rootFolder, conflict ) );
+
+        if ( conflictFolder == null ) {
+          throw new Exception( "No conflict folder" );
+        }
 
         XDocument localDocument = XDocument.Parse( localContent );
         XDocument theirDocument = XDocument.Parse( theirContent );
@@ -99,13 +111,13 @@ namespace CsMerge {
             UserResolvers.UserResolveReference ).ToArray();
 
         // Now remove everything we have handled, to check if we are done.
-        DeleteItems( localDocument );
-        DeleteItems( theirDocument );
-        DeleteItems( baseDocument );
+        ProjectFile.DeleteItems( localDocument );
+        ProjectFile.DeleteItems( theirDocument );
+        ProjectFile.DeleteItems( baseDocument );
 
-        AddItems( baseDocument, items );
-        AddItems( localDocument, items );
-        AddItems( theirDocument, items );
+        ProjectFile.AddItems( baseDocument, items );
+        ProjectFile.AddItems( localDocument, items );
+        ProjectFile.AddItems( theirDocument, items );
 
         if ( localDocument.ToString() == theirDocument.ToString() ) {
           // We handled all the differences
@@ -146,107 +158,5 @@ namespace CsMerge {
 
       return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
     }
-
-    private static string FindRepoRoot( string folder ) {
-      var current = new DirectoryInfo( folder ?? Directory.GetCurrentDirectory() );
-      while ( !new DirectoryInfo( Path.Combine( current.FullName, ".git" ) ).Exists ) {
-        current = current.Parent;
-        if ( current == null ) {
-          throw new Exception( "Could not locate \".git\" folder" );
-        }
-      }
-      return current.FullName;
-    }
-
-    private static void AddItems( XDocument doc, Item[] items ) {
-      var root = doc.Root;
-      var itemGroupName = root.Name.Namespace.GetName( "ItemGroup" );
-
-      foreach ( var itemGroup in items.GroupBy( r => r.Action ).OrderBy( g => g.Key ) ) {
-
-        var newGroup = new XElement( itemGroupName );
-        
-        foreach ( var item in itemGroup ) {
-          newGroup.Add( item.ToElement( root.Name.Namespace ) );
-        }
-        root.Add( newGroup );
-      }
-    }
-
-    private static void DeleteItems( XDocument document ) {
-      var root = document.Root;
-
-      Debug.Assert( root != null );
-
-      var elementsToDelete = root.Descendants()
-                                 .Where( n => n.Parent.Name.LocalName == "ItemGroup" )
-                                 .ToArray();
-
-      foreach ( XElement e in elementsToDelete ) {
-        var parent = e.Parent;
-        e.Remove();
-        if ( parent != null && parent.IsEmpty ) {
-          parent.Remove();
-        }
-      }
-    }
-
-    private static void DeleteItemsWithAction( XDocument document, params string[] actions ) {
-      // TODO: If we completely parse and re-write the project file we dont need this
-      var root = document.Root;
-      var xNamespace = root.Name.Namespace;
-
-      Debug.Assert( root != null );
-
-      var elementsToDelete = actions.SelectMany( a => root.Descendants( xNamespace.GetName( a ) ) ).ToArray();
-
-      foreach ( XElement e in elementsToDelete ) {
-        var parent = e.Parent;
-        e.Remove();
-        if ( parent != null && parent.IsEmpty ) {
-          parent.Remove();
-        }
-      }
-    }
-
-    //public static IEnumerable<XElement> CombineElementChanges(
-    //  IEnumerable<XElement> baseElements,
-    //  IEnumerable<XElement> localElements,
-    //  IEnumerable<XElement> theirElements ) {
-
-    //  var logger = LogManager.GetCurrentClassLogger();
-
-    //  var baseIndex = baseElements.ToDictionary( e => e.ToString(), e => e );
-
-    //  var localIndex = localElements.ToDictionary( e => e.ToString(), e => e );
-
-    //  var theirIndex = theirElements.ToDictionary( e => e.ToString(), e => e );
-
-    //  foreach ( var elementKey in baseIndex.Keys.Union( localIndex.Keys ).Union( theirIndex.Keys ) ) {
-    //    bool inBase = baseIndex.ContainsKey( elementKey );
-    //    bool inLocal = localIndex.ContainsKey( elementKey );
-    //    bool inTheirs = theirIndex.ContainsKey( elementKey );
-
-    //    if ( !inLocal && !inTheirs ) {
-    //      logger.Info( "Discarding " + baseIndex[elementKey] );
-    //      continue; // agree on deleted
-    //    }
-
-    //    if ( inBase && !inTheirs ) {
-    //      logger.Info( "Discarding " + baseIndex[elementKey] );
-    //      continue; // was in base and theirs deleted
-    //    }
-    //    if ( inBase && !inLocal ) {
-    //      logger.Info( "Discarding " + baseIndex[elementKey] );
-    //      continue; // was in base and local deleted
-    //    } 
-    //    if ( inTheirs ) {
-    //      yield return theirIndex[elementKey];
-    //    }
-    //    else {
-    //      yield return localIndex[elementKey];
-    //    }
-    //  }
-    //}
   }
 }
