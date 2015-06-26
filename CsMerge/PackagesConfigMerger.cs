@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using Cpc.CsMerge.Core;
+
+using LibGit2Sharp;
 
 using NLog;
 
@@ -13,14 +14,20 @@ namespace CsMerge {
   /// </summary>
   public class PackagesConfigMerger {
 
-    private static IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
+    public CurrentOperation Operation { get; set; }
+
+    private IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
       return pc.ToDictionary( p => p.Id, p => p );
+    }
+
+    public PackagesConfigMerger( CurrentOperation operation ) {
+      Operation = operation;
     }
 
     /// <summary>
     /// Merge prefering newest packages.
     /// </summary>
-    public static IEnumerable<Package> Merge(
+    public IEnumerable<Package> Merge(
       IEnumerable<Package> @base,
       IEnumerable<Package> mine,
       IEnumerable<Package> theirs,
@@ -31,18 +38,18 @@ namespace CsMerge {
 
       ConflictResolver<Package> contentResolver = c => ResolveContent( c, conflictResolver );
 
-      return MergeHelper<Package>.MergeAll( baseIds, myIds, theirIds, conflictResolver, contentResolver );
+      return MergeHelper<Package>.MergeAll( Operation, baseIds, myIds, theirIds, conflictResolver, contentResolver );
     }
 
-    private static Package ResolveContent( Conflict<Package> conflict, ConflictResolver<Package> userResolution ) {
-      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Patch.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled : conflict.Local.UserInstalled );
+    private Package ResolveContent( Conflict<Package> conflict, ConflictResolver<Package> userResolution ) {
+      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Incoming.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled : conflict.Local.UserInstalled );
 
       var logger = LogManager.GetCurrentClassLogger();
 
-      if ( localNotComparingOnVersion == conflict.Patch ) {
-        var mineHigher = conflict.Local.Version.CompareTo( conflict.Patch.Version ) >= 0;
-        var package = ( mineHigher ? conflict.Local : conflict.Patch );
-        logger.Info( "Both modified\n" + conflict.Base + "picking\n" + package + " over\n" + ( mineHigher ? conflict.Patch : conflict.Local ) );
+      if ( localNotComparingOnVersion == conflict.Incoming ) {
+        var mineHigher = conflict.Local.Version.CompareTo( conflict.Incoming.Version ) >= 0;
+        var package = ( mineHigher ? conflict.Local : conflict.Incoming );
+        logger.Info( "Both modified\n" + conflict.Base + "picking\n" + package + " over\n" + ( mineHigher ? conflict.Incoming : conflict.Local ) );
         return package;
       }
       var resolved = userResolution( conflict );

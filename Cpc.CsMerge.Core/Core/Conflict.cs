@@ -7,14 +7,14 @@
 
     T Local { get; }
 
-    T Patch { get; }
+    T Incoming { get; }
   }
 
   public class Conflict<T> : IConflict<T> {
-    public Conflict( T @base, T local, T patch ) {
+    public Conflict( T @base, T local, T incoming ) {
       Base = @base;
       Local = local;
-      Patch = patch;
+      Incoming = incoming;
     }
 
     public T Base {
@@ -27,7 +27,7 @@
       private set;
     }
 
-    public T Patch {
+    public T Incoming {
       get;
       private set;
     }

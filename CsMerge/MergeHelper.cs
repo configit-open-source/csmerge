@@ -5,11 +5,11 @@ using System.Linq;
 
 using Cpc.CsMerge.Core;
 
+using LibGit2Sharp;
 using NLog;
-using NLog.LayoutRenderers.Wrappers;
 
 namespace CsMerge {
-  public class MergeHelper<T>
+  public static class MergeHelper<T>
     where T: class {
     public static MergeResult<T> Merge(
       T b,
@@ -25,55 +25,49 @@ namespace CsMerge {
 
       if ( b == null ) {
         if ( Equals( m, t ) ) {
-          return new MergeResult<T>( m, MergeType.LocalAdded | MergeType.TheirsAdded );
+          return new MergeResult<T>( m, MergeType.LocalAdded | MergeType.IncomingAdded );
         }
         if ( t != null && m != null ) {
           return new MergeResult<T>( contentResolver( new Conflict<T>( b, m, t ) ),
-            MergeType.LocalAdded | MergeType.TheirsAdded );
+            MergeType.LocalAdded | MergeType.IncomingAdded );
         }
-        return new MergeResult<T>( t ?? m, t == null ? MergeType.LocalAdded : MergeType.TheirsAdded );
+        return new MergeResult<T>( t ?? m, t == null ? MergeType.LocalAdded : MergeType.IncomingAdded );
       }
 
       if ( m == null && t == null ) {
-        return new MergeResult<T>( MergeType.LocalDeleted | MergeType.TheirsDeleted );
+        return new MergeResult<T>( MergeType.LocalDeleted | MergeType.IncomingDeleted );
       }
 
       if ( m == null ) {
-        if ( !t.Equals( b ) ) {
-          // Mine deleted something modified in theirs
-          var resolved = modDeleteResolver( new Conflict<T>( b, m, t ) );
-          if ( resolved != null ) {
-            return new MergeResult<T>( resolved, MergeType.LocalDeleted | MergeType.TheirsModified );
-          }
+        if ( t.Equals( b ) ) {
+          return new MergeResult<T>( MergeType.LocalDeleted );
         }
 
-        Debug.Assert( t.Equals( b ) );
-        return new MergeResult<T>( MergeType.LocalDeleted );
+        // Local deleted something modified in incoming
+        var resolved = modDeleteResolver( new Conflict<T>( b, m, t ) );
+        return new MergeResult<T>( resolved, MergeType.LocalDeleted | MergeType.IncomingModified );
       }
 
       if ( t == null ) {
-        if ( !Equals( m, b ) ) {
-          // Theirs deleted something modified in mine
-          var resolved = modDeleteResolver( new Conflict<T>( b, m, t ) );
-          if ( resolved != null ) {
-            return new MergeResult<T>( resolved, MergeType.LocalModified | MergeType.TheirsDeleted );
-          }
+        if ( Equals( m, b ) ) {
+          return new MergeResult<T>( MergeType.IncomingDeleted );
         }
 
-        Debug.Assert( m.Equals( b ) );
-        return new MergeResult<T>( MergeType.TheirsDeleted );
+        // Incoming deleted something modified in local
+        var resolved = modDeleteResolver( new Conflict<T>( b, m, t ) );
+        return new MergeResult<T>( resolved, MergeType.LocalModified | MergeType.IncomingDeleted );
       }
 
       if ( Equals( m, t ) ) {
-        return new MergeResult<T>( m, MergeType.LocalModified | MergeType.TheirsModified );
+        return new MergeResult<T>( m, MergeType.LocalModified | MergeType.IncomingModified );
       }
 
       return new MergeResult<T>(
         contentResolver( new Conflict<T>( b, m, t ) ),
-        MergeType.LocalModified | MergeType.TheirsModified );
+        MergeType.LocalModified | MergeType.IncomingModified );
     }
 
-    private static T HandleMergeResult( MergeResult<T> mergeResult, T @base ) {
+    private static T HandleMergeResult( MergeResult<T> mergeResult, T @base, CurrentOperation operation ) {
       var logger = LogManager.GetCurrentClassLogger();
 
       if ( mergeResult.MergeType == MergeType.NoChanges ) {
@@ -81,15 +75,16 @@ namespace CsMerge {
       }
 
       if ( mergeResult.ResolvedItem != null ) {
-        logger.Info( mergeResult.MergeType + " resolved to\n" + mergeResult.ResolvedItem );
+        logger.Info( mergeResult.MergeType.ToString( operation ) + " resolved to\n" + mergeResult.ResolvedItem );
       }
       else {
-        logger.Info( mergeResult.MergeType + " resolved to delete of\n" + @base );
+        logger.Info( mergeResult.MergeType.ToString( operation ) + " resolved to delete of\n" + @base );
       }
       return mergeResult.ResolvedItem;
     }
 
     public static IEnumerable<T> MergeAll(
+      CurrentOperation operation,
       IDictionary<string, T> baseObj,
       IDictionary<string, T> localObj,
       IDictionary<string, T> theirObj,
@@ -100,7 +95,7 @@ namespace CsMerge {
              let m = GetValue( localObj, id )
              let t = GetValue( theirObj, id )
              let mergeResult = Merge( b, m, t, delModResolver, contentResolver )
-             select HandleMergeResult( mergeResult, b ) into mergedObj
+             select HandleMergeResult( mergeResult, b, operation ) into mergedObj
              where mergedObj != null select mergedObj;
     }
 

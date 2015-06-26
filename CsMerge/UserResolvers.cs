@@ -8,12 +8,21 @@ using LibGit2Sharp;
 
 using NLog;
 
-using Reference = Cpc.CsMerge.Core.Reference;
-
 namespace CsMerge {
   public class UserResolvers {
+    public CurrentOperation Operation { get; set; }
 
-    public static void ResolveWithStandardMergetool(
+    public UserResolvers( CurrentOperation operation ) {
+      Operation = operation;
+      Local = MergeTypeExtensions.Local( Operation );
+      Incoming = MergeTypeExtensions.Incoming( Operation );
+    }
+
+    public string Local { get; private set; }
+
+    public string Incoming { get; private set; }
+
+    public void ResolveWithStandardMergetool(
      Repository repository,
      string fullConflictPath,
      XDocument baseContent,
@@ -24,13 +33,13 @@ namespace CsMerge {
       // Run the standard mergetool to deal with any remaining issues.
       var basePath = fullConflictPath + "_base";
       var localPath = fullConflictPath + "_local";
-      var theirsPath = fullConflictPath + "_theirs";
+      var incomingPath = fullConflictPath + "_theirs";
 
       Package.WriteXml( basePath, baseContent );
       Package.WriteXml( localPath, localContent );
-      Package.WriteXml( theirsPath, theirContent );
+      Package.WriteXml( incomingPath, theirContent );
 
-      if ( GitHelper.RunStandardMergetool( repository, basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
+      if ( GitHelper.RunStandardMergetool( repository, basePath, localPath, incomingPath, fullConflictPath ) == 0 ) {
         // The merge tool reports that the conflict was resolved
         logger.Info( "Resolved " + fullConflictPath + " using standad merge tool" );
         File.Delete( fullConflictPath );
@@ -44,36 +53,38 @@ namespace CsMerge {
       }
 
       File.Delete( basePath );
-      File.Delete( theirsPath );
+      File.Delete( incomingPath );
     }
 
-    public static Package UserResolvePackage( IConflict<Package> conflict ) {
-      Console.WriteLine( "(b)ase:\n" + PackageToString( conflict.Base ) );
-      Console.WriteLine( "(l)ocal:\n" + PackageToString( conflict.Local ) );
-      Console.WriteLine( "(p)atch:\n" + PackageToString( conflict.Patch ) );
+    public Package UserResolvePackage( IConflict<Package> conflict ) {
+      Console.WriteLine( "(b)ase :\n" + PackageToString( conflict.Base ) );
+      Console.WriteLine( "(" + Local[0] + ")" + Local.Substring( 1 ) + ":\n" + PackageToString( conflict.Local ) );
+      Console.WriteLine( "(" + Incoming[0] + ")" + Incoming.Substring( 1 ) + ":\n" + PackageToString( conflict.Incoming ) );
+      return ChooseResolution( conflict );
+    }
+
+    private T ChooseResolution<T>( IConflict<T> conflict ) {
       Console.WriteLine( "Choose resolution:" );
       while ( true ) {
-        var key = Console.ReadKey();
-        switch ( key.KeyChar ) {
-          case 'b': return conflict.Base;
-          case 'l': return conflict.Local;
-          case 'p': return conflict.Patch;
+        string key = Console.ReadKey().KeyChar.ToString().ToUpperInvariant();
+
+        if ( key == "b" ) {
+          return conflict.Base;
+        }
+        if ( key == Local[0].ToString().ToUpperInvariant() ) {
+          return conflict.Local;
+        }
+        if ( key == Incoming[0].ToString().ToUpperInvariant() ) {
+          return conflict.Incoming;
         }
       }
     }
 
-    public static T UserResolveReference<T>( IConflict<Item> conflict ) where T: Item {
-      Console.WriteLine( "(b)ase:\n" + conflict.Base );
-      Console.WriteLine( "(l)ocal:\n" + conflict.Local );
-      Console.WriteLine( "(p)atch:\n" + conflict.Patch );
-      while ( true ) {
-        var key = Console.ReadKey();
-        switch ( key.KeyChar ) {
-          case 'b': return (T) conflict.Base;
-          case 'l': return (T) conflict.Local;
-          case 'p': return (T) conflict.Patch;
-        }
-      }
+    public T UserResolveReference<T>( IConflict<Item> conflict ) where T: Item {
+      Console.WriteLine( "(b)ase :\n" + conflict.Base );
+      Console.WriteLine( "(" + Local[0] + ")" + Local.Substring( 1 ) + ":\n" + conflict.Local );
+      Console.WriteLine( "(" + Incoming[0] + ")" + Incoming.Substring( 1 ) + ":\n" + conflict.Incoming );
+      return (T) ChooseResolution( conflict );
     }
 
     private static string PackageToString( Package p ) {

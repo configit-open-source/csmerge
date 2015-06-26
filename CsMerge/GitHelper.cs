@@ -19,13 +19,17 @@ namespace CsMerge {
       return cmd.Value;
     }
 
-    public static int RunStandardMergetool( Repository repository, string @base, string local, string resolved, string theirs, Logger logger ) {
+    public static int RunStandardMergetool( Repository repository, string @base, string local, string incoming, string resolved ) {
+      var logger = LogManager.GetCurrentClassLogger();
+
+      var currentOperation = repository.Info.CurrentOperation;
+
       string cmdLine =
         GetMergeCmdLine( repository )
           .Replace( "$BASE", @base )
-          .Replace( "$LOCAL", local )
+          .Replace( "$LOCAL", MergeTypeExtensions.Local( currentOperation ) == MergeTypeExtensions.Mine ? local : incoming )
           .Replace( "$MERGED", resolved )
-          .Replace( "$REMOTE", theirs );
+          .Replace( "$REMOTE", MergeTypeExtensions.Local( currentOperation ) == MergeTypeExtensions.Mine ? incoming : local );
 
       logger.Debug( "Invoking:\n" + cmdLine );
 

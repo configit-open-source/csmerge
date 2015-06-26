@@ -31,20 +31,25 @@ namespace CsMerge {
       var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
 
       string[] conflictPaths;
+      CurrentOperation operation;
 
       using ( var repository = new Repository( rootFolder ) ) {
         if ( repository.Index.IsFullyMerged ) {
           return;
         }
         conflictPaths = repository.Index.Conflicts.Select( c => c.Ours.Path ).ToArray();
+        operation = repository.Info.CurrentOperation;
       }
 
-      ProcessPackagesConfig( conflictPaths, folder, logger, rootFolder );
+      UserResolvers resolvers = new UserResolvers( operation );
 
-      ProcessProjectFiles( conflictPaths, folder, logger, rootFolder );
+      ProcessPackagesConfig( resolvers, conflictPaths, folder, logger, rootFolder );
+
+      ProcessProjectFiles( resolvers, conflictPaths, folder, logger, rootFolder );
     }
 
     private static void ProcessPackagesConfig(
+      UserResolvers resolvers,
       string[] conflictPaths,
       DirectoryInfo folder,
       Logger logger,
@@ -57,12 +62,11 @@ namespace CsMerge {
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
         var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
-        var result =
-          PackagesConfigMerger.Merge(
+        var result = new PackagesConfigMerger( resolvers.Operation ).Merge(
             Package.Parse( baseContent ),
             Package.Parse( localContent ),
             Package.Parse( theirContent ),
-            UserResolvers.UserResolvePackage ).ToArray();
+            resolvers.UserResolvePackage ).ToArray();
 
         Package.Write( result, fullConflictPath );
         using ( var repository = new Repository( rootFolder ) ) {
@@ -72,6 +76,7 @@ namespace CsMerge {
     }
 
     private static void ProcessProjectFiles(
+      UserResolvers resolvers,
       string[] conflictPaths,
       DirectoryInfo folder,
       Logger logger,
@@ -100,15 +105,14 @@ namespace CsMerge {
 
         var packageIndex = new PackagesInfo( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
 
-        Item[] items =
-          ProjectMerger.Merge(
+        Item[] items = new ProjectMerger( resolvers.Operation ).Merge(
             projFileName,
             packageIndex,
             baseDocument,
             localDocument,
             theirDocument,
-            UserResolvers.UserResolveReference<Cpc.CsMerge.Core.Reference>,
-            UserResolvers.UserResolveReference<Item> ).ToArray();
+            resolvers.UserResolveReference<Cpc.CsMerge.Core.Reference>,
+            resolvers.UserResolveReference<Item> ).ToArray();
 
         // Now remove everything we have handled, to check if we are done.
         ProjectFile.DeleteItems( localDocument );
@@ -130,7 +134,7 @@ namespace CsMerge {
         }
         else {
           using ( var repository = new Repository( rootFolder ) ) {
-            UserResolvers.ResolveWithStandardMergetool(
+            resolvers.ResolveWithStandardMergetool(
               repository,
               fullConflictPath,
               baseDocument,

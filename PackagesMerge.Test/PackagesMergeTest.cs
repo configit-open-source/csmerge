@@ -3,6 +3,8 @@ using Cpc.CsMerge.Core;
 
 using CsMerge;
 
+using LibGit2Sharp;
+
 using NUnit.Framework;
 
 namespace PackagesMerge.Test {
@@ -13,7 +15,7 @@ namespace PackagesMerge.Test {
     public void NoChanges() {
       var allowedVersions = new PackageVersion( 1, 0, 0 );
 
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP", allowedVersions, ".net45" ) },
         new[] { new Package( "MP", allowedVersions, ".net45" ) },
         new[] { new Package( "MP", allowedVersions, ".net45" ) }, pc => pc.Local
@@ -26,7 +28,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void TheirsUpdated() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) }, pc => pc.Local
@@ -39,7 +41,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void MineUpdated() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) }, pc => pc.Local
@@ -53,7 +55,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void TheirsAndMineUpdated() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 2 ), ".net45" ) }, pc => pc.Local
@@ -66,7 +68,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void TheirsDeletedMineUpdated_ResolveMine() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new Package[0],
@@ -80,11 +82,11 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void TheirsDeletedMineUpdated_ResolveTheirs() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new Package[0],
-        pc => pc.Patch
+        pc => pc.Incoming
       ).ToList();
 
       Assert.That( result, Is.Empty );
@@ -92,11 +94,11 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void MineDeletedTheirsUpdated_ResolveTheirs() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new Package[0],
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        pc => pc.Patch
+        pc => pc.Incoming
       ).ToList();
 
       Assert.That( result, Is.EquivalentTo( new[] {
@@ -106,7 +108,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void MineDeletedTheirsUpdated_ResolveMine() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new Package[0],
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
@@ -118,7 +120,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void BothAdded() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new Package[0],
         new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 2 ), ".net45" ) },
@@ -131,7 +133,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void BothDeleted() {
-      var result = PackagesConfigMerger.Merge(
+      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
         new Package[0],
         new Package[0],
