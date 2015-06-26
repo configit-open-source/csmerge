@@ -48,27 +48,11 @@ namespace CsMerge {
       IEnumerable<Reference> theirRefs,
       ConflictResolver<Reference> resolver ) {
 
-      var logger = LogManager.GetCurrentClassLogger();
-
       var baseByName = baseRefs.ToDictionary( r => r.ReferenceAssemblyName.Name, r => r );
       var localByName = localRefs.ToDictionary( r => r.ReferenceAssemblyName.Name, r => r );
       var theirByName = theirRefs.ToDictionary( r => r.ReferenceAssemblyName.Name, r => r );
 
-      foreach ( var name in baseByName.Keys.Concat( localByName.Keys ).Concat( theirByName.Keys ).Distinct() ) {
-        Reference b = baseByName.ContainsKey( name ) ? baseByName[name] : null;
-        Reference m = localByName.ContainsKey( name ) ? localByName[name] : null;
-        Reference t = theirByName.ContainsKey( name ) ? theirByName[name] : null;
-
-        var mergeResult = MergeHelper<Reference>.Merge( b, m, t, resolver );
-
-        if ( mergeResult.ResolvedItem != null ) {
-          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
-          yield return mergeResult.ResolvedItem;
-        }
-        else {
-          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
-        }
-      }
+      return MergeHelper<Reference>.MergeAll( baseByName, localByName, theirByName, resolver );
     }
 
     private static IEnumerable<Reference> MergePackageReferences(
@@ -106,37 +90,8 @@ namespace CsMerge {
       var theirRefs = GetItems<Reference>( theirProj ).ToArray();
       var baseRefs = GetItems<Reference>( baseProj ).ToArray();
 
-      return MergeNonReference( localItems, theirItems, baseItems, itemResolver ).Concat(
+      return MergeHelper<Item>.MergeAll( baseItems, localItems, theirItems, itemResolver ).Concat(
         MergeReferences( info, baseRefs, localRefs, theirRefs, referenceResolver ) );
-    }
-
-    private static IEnumerable<Item> MergeNonReference(
-      Dictionary<string, Item> localItems,
-      Dictionary<string, Item> theirItems,
-      Dictionary<string, Item> baseItems,
-     ConflictResolver<Item> resolver ) {
-
-      var logger = LogManager.GetCurrentClassLogger();
-
-      foreach (
-        string key in
-          localItems.Keys
-            .Union( theirItems.Keys )
-            .Union( baseItems.Keys ) ) {
-        Item b = baseItems.ContainsKey( key ) ? baseItems[key] : null;
-        Item m = localItems.ContainsKey( key ) ? localItems[key] : null;
-        Item t = theirItems.ContainsKey( key ) ? theirItems[key] : null;
-
-        var mergeResult = MergeHelper<Item>.Merge( b, m, t, resolver );
-
-        if ( mergeResult.ResolvedItem != null ) {
-          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
-          yield return mergeResult.ResolvedItem;
-        }
-        else {
-          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
-        }
-      }
     }
   }
 }

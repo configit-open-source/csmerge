@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace Cpc.CsMerge.Core {
-  public class Package {
-    protected bool Equals( Package other ) {
+  public class Package: IEquatable<Package> {
+
+    public bool Equals( Package other ) {
+      if ( ReferenceEquals( other, null ) ) {
+        return false;
+      }
       return string.Equals( TargetFramework, other.TargetFramework ) &&
         string.Equals( Id, other.Id ) &&
+        string.Equals( Version, other.Version ) &&
         Equals( AllowedVersions, other.AllowedVersions ) &&
         Equals( UserInstalled, other.UserInstalled );
     }
@@ -40,7 +44,7 @@ namespace Cpc.CsMerge.Core {
       if ( obj.GetType() != GetType() ) {
         return false;
       }
-      return Equals( (Package)obj );
+      return Equals( (Package) obj );
     }
 
     public override int GetHashCode() {
@@ -54,14 +58,6 @@ namespace Cpc.CsMerge.Core {
       }
     }
 
-    private static readonly Regex AllowedVersionRegex = new Regex(
-      @"(?<l>\[|\()?(?<lower>(\d|\.)*)?(,(?<upper>(\d|\.)*))?(?<u>\]|\))?",
-      RegexOptions.Compiled |
-      RegexOptions.CultureInvariant |
-      RegexOptions.ExplicitCapture |
-      RegexOptions.IgnorePatternWhitespace | 
-      RegexOptions.Singleline );
-
     public Package( string id,
       PackageVersion version,
       string targetFramework,
@@ -72,10 +68,6 @@ namespace Cpc.CsMerge.Core {
       AllowedVersions = allowedVersions;
       TargetFramework = targetFramework;
 
-      //bool userInstalledParsed;
-      //if ( !string.IsNullOrEmpty( userInstalled ) && bool.TryParse( userInstalled, out userInstalledParsed ) ) {
-      //  UserInstalled = userInstalledParsed;
-      //}
       UserInstalled = userInstalled;
     }
 
@@ -132,12 +124,7 @@ namespace Cpc.CsMerge.Core {
 
     public static void Write( IEnumerable<Package> packages, TextWriter writer, XmlWriterSettings settings = null ) {
       XElement element = new XElement( "packages" );
-      foreach ( var packageGroup in packages.GroupBy( p => p.Id ) ) {
-        if ( packageGroup.Count() > 1 ) {
-          throw new NotImplementedException();
-        }
-        var package = packageGroup.First();
-
+      foreach ( var package in packages ) {
         var packagesElement = new XElement( "package", new XAttribute( "id", package.Id ) );
 
         if ( package.Version != null ) {
@@ -178,62 +165,10 @@ namespace Cpc.CsMerge.Core {
                                 NamespaceHandling = NamespaceHandling.OmitDuplicates,
                                 ConformanceLevel = ConformanceLevel.Document,
                               };
-
-      //using ( XmlTextWriter xmlWriter = new XmlTextWriter( writer ) ) {
-      //  xmlWriter.Formatting = Formatting.Indented;
-      //  xmlWriter.Namespaces = true;
-      //  xmlWriter.Settings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
-
-       using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
+      using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
         element.WriteTo( xmlWriter );
       }
     }
-
-    //private static string SemVersionIntervalToString( Interval<PackageVersion> interval ) {
-    //  if ( interval.Lower == interval.Upper ) {
-    //    return string.Format( "[{0}]", interval.Lower );
-    //  }
-
-    //  if ( interval.Upper == PackageVersion.MaxValue ) {
-    //    // x.y notation shortcut
-    //    return interval.Lower.ToString();
-    //  }
-
-    //  string lower = interval.Lower == PackageVersion.MinValue ? string.Empty : interval.Lower.ToString();
-    //  string upper = interval.Upper == PackageVersion.MaxValue ? string.Empty : interval.Upper.ToString();
-
-    //  return string.Format( "{0}{1},{2}{3}", interval.LowerOpen ? "(" : "[", lower, upper, interval.LowerOpen ? ")" : "]" );
-    //}
-
-    //private static Interval<PackageVersion> GetAllowedVersion( string versionString ) {
-    //  if ( string.IsNullOrEmpty( versionString ) ) {
-    //    return null;
-    //  }
-
-    //  Match matches = AllowedVersionRegex.Match( versionString );
-
-    //  string lowerStr = matches.Groups["lower"].Value;
-    //  string upperStr = matches.Groups["upper"].Value;
-
-    //  bool lowerOpen = matches.Groups["l"].Value == "(";
-    //  bool upperOpen = matches.Groups["u"].Value != "]";
-
-    //  Interval<PackageVersion> allowedVersions;
-
-    //  if ( string.IsNullOrEmpty( lowerStr ) && !string.IsNullOrEmpty( upperStr ) ) {
-    //    allowedVersions = new Interval<PackageVersion>( PackageVersion.MinValue, upperStr );
-    //  }
-    //  else if ( string.IsNullOrEmpty( upperStr ) && !string.IsNullOrEmpty( lowerStr ) ) {
-    //    allowedVersions = new Interval<PackageVersion>( lowerStr, PackageVersion.MaxValue );
-    //  }
-    //  else {
-    //    allowedVersions = new Interval<PackageVersion>( lowerStr, upperStr );
-    //  }
-
-    //  allowedVersions.LowerOpen = lowerOpen;
-    //  allowedVersions.UpperOpen = upperOpen;
-    //  return allowedVersions;
-    //}
 
     public string AllowedVersions { get; set; }
 
@@ -245,8 +180,24 @@ namespace Cpc.CsMerge.Core {
     public bool? UserInstalled { get; set; }
 
     public override string ToString() {
-      return string.Format( "Id: {0} Version: {1} TargetFramework: {2} AllowedVersions: {3}", Id, Version, TargetFramework, AllowedVersions );
+      StringBuilder s = new StringBuilder();
+      if ( !string.IsNullOrEmpty( Id ) ) {
+        s.AppendLine( "Id: " + Id  );
+      }
+      if ( Version != null ) {
+        s.AppendLine( "Version:" + Version + " " );
+      }
+      if ( !string.IsNullOrEmpty( TargetFramework ) ) {
+        s.AppendLine( "TargetFramework: " + TargetFramework );
+      }
+      if ( !string.IsNullOrEmpty( AllowedVersions ) ) {
+        s.AppendLine( "AllowedVersions: " + AllowedVersions + " " );
+      }
+
+      if ( UserInstalled.HasValue ) {
+        s.AppendLine( "UserInstalled: " + UserInstalled.Value + " " );
+      }
+      return s.ToString();
     }
   }
-
 }

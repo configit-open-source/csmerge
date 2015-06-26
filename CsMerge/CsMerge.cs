@@ -51,7 +51,7 @@ namespace CsMerge {
       string rootFolder ) {
       foreach ( var conflict in conflictPaths.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
-        logger.Info( "Examining conflict for " + fullConflictPath );
+        logger.Info( "Examining concurrent modification for " + fullConflictPath );
 
         var baseContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ancestor, conflict );
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
@@ -78,7 +78,7 @@ namespace CsMerge {
       string rootFolder ) {
       foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
-        logger.Info( "Examining conflict for " + fullConflictPath );
+        logger.Info( "Examining concurrent modification for " + fullConflictPath );
 
         var baseContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ancestor, conflict );
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );

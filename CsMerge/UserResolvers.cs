@@ -32,25 +32,25 @@ namespace CsMerge {
 
       if ( GitHelper.RunStandardMergetool( repository, basePath, localPath, fullConflictPath, theirsPath, logger ) == 0 ) {
         // The merge tool reports that the conflict was resolved
-        logger.Info( "Manually resolved " + fullConflictPath );
+        logger.Info( "Resolved " + fullConflictPath + " using standad merge tool" );
         File.Delete( fullConflictPath );
         File.Move( localPath, fullConflictPath );
 
-        //RunGitCmd( "add", workingDir: Path.GetDirectoryName( fullConflictPath ), gitCmdArgs: conflict );
         repository.Stage( conflict );
       }
       else {
         logger.Info( "Did not resolve " + fullConflictPath );
-        File.Delete( localPath );
+        throw new OperationCanceledException();
       }
 
       File.Delete( basePath );
       File.Delete( theirsPath );
     }
+
     public static Package UserResolvePackage( IConflict<Package> conflict ) {
-      Console.WriteLine( "(b)ase: " + PackageToString( conflict.Base ) );
-      Console.WriteLine( "(l)ocal: " + PackageToString( conflict.Local ) );
-      Console.WriteLine( "(p)atch: " + PackageToString( conflict.Patch ) );
+      Console.WriteLine( "(b)ase:\n" + PackageToString( conflict.Base ) );
+      Console.WriteLine( "(l)ocal:\n" + PackageToString( conflict.Local ) );
+      Console.WriteLine( "(p)atch:\n" + PackageToString( conflict.Patch ) );
       Console.WriteLine( "Choose resolution:" );
       while ( true ) {
         var key = Console.ReadKey();
@@ -63,9 +63,9 @@ namespace CsMerge {
     }
 
     public static T UserResolveReference<T>( IConflict<Item> conflict ) where T: Item {
-      Console.WriteLine( "(b)ase: " + conflict.Base );
-      Console.WriteLine( "(l)ocal: " + conflict.Local );
-      Console.WriteLine( "(p)atch: " + conflict.Patch );
+      Console.WriteLine( "(b)ase:\n" + conflict.Base );
+      Console.WriteLine( "(l)ocal:\n" + conflict.Local );
+      Console.WriteLine( "(p)atch:\n" + conflict.Patch );
       while ( true ) {
         var key = Console.ReadKey();
         switch ( key.KeyChar ) {

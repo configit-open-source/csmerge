@@ -4,6 +4,8 @@ using System.Linq;
 
 using Cpc.CsMerge.Core;
 
+using NLog;
+
 namespace CsMerge {
 
   /// <summary>
@@ -23,42 +25,27 @@ namespace CsMerge {
       IEnumerable<Package> mine,
       IEnumerable<Package> theirs,
       ConflictResolver<Package> conflictResolver ) {
-      var logger = NLog.LogManager.GetCurrentClassLogger();
       var baseIds = GetIndex( @base );
       var myIds = GetIndex( mine );
       var theirIds = GetIndex( theirs );
 
-      foreach (
-        string id in
-          baseIds.Keys.Union( myIds.Keys ).Union( theirIds.Keys ).OrderBy( i => i, StringComparer.OrdinalIgnoreCase ) ) {
-        var b = baseIds.ContainsKey( id ) ? baseIds[id] : null;
-        var m = myIds.ContainsKey( id ) ? myIds[id] : null;
-        var t = theirIds.ContainsKey( id ) ? theirIds[id] : null;
+      ConflictResolver<Package> contentResolver = c => ResolveContent( c, conflictResolver );
 
-        var mergeResult = MergeHelper<Package>.Merge( b, m, t, conflictResolver, c => ResolveContent( c, conflictResolver ) );
-
-        if ( mergeResult.ResolvedItem != null ) {
-          logger.Info( "Resolved " + mergeResult.ResolvedItem + " after " + mergeResult.MergeType );
-          yield return mergeResult.ResolvedItem;
-        }
-        else {
-          logger.Info( "Removed " + b + " because of " + mergeResult.MergeType );
-        }
-      }
+      return MergeHelper<Package>.MergeAll( baseIds, myIds, theirIds, conflictResolver, contentResolver );
     }
 
     private static Package ResolveContent( Conflict<Package> conflict, ConflictResolver<Package> userResolution ) {
-      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Patch.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled: conflict.Local.UserInstalled );
+      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Patch.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled : conflict.Local.UserInstalled );
 
-      var logger = NLog.LogManager.GetCurrentClassLogger();
+      var logger = LogManager.GetCurrentClassLogger();
 
       if ( localNotComparingOnVersion == conflict.Patch ) {
         var mineHigher = conflict.Local.Version.CompareTo( conflict.Patch.Version ) >= 0;
         var package = ( mineHigher ? conflict.Local : conflict.Patch );
-        logger.Info( "Both modified, picking " + package + " over " + ( mineHigher ? conflict.Patch : conflict.Local ) );
+        logger.Info( "Both modified\n" + conflict.Base + "picking\n" + package + " over\n" + ( mineHigher ? conflict.Patch : conflict.Local ) );
         return package;
       }
-      var resolved = userResolution( conflict);
+      var resolved = userResolution( conflict );
       return resolved;
     }
   }
