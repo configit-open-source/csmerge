@@ -1,22 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Xml;
 using System.Xml.Linq;
 using Cpc.CsMerge.Core;
-
 using LibGit2Sharp;
-
 using NLog;
 
 using PackagesMerge;
-
-using Repository = GitSharp.Repository;
-
 namespace CsMerge {
   public class Program {
 
@@ -29,24 +21,24 @@ namespace CsMerge {
       var logger = LogManager.GetCurrentClassLogger();
       logger.Debug( "Scanning " + folder );
 
-      Repository gitRepo = new Repository( folder.FullName );
-
       var rootFolder = FindRepoRoot( folder.FullName );
 
-      //using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
-      //  //var status = repository.RetrieveStatus( new StatusOptions { Show = StatusShowOption.IndexAndWorkDir } );
-      //  foreach(var conflict in repository.Index.Conflicts ) {
-      //    Console.WriteLine( conflict.Ours.Path );
-      //  }
-      //}
+      string[] conflictPaths;
 
-      foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
+      using ( var repository = new Repository( rootFolder ) ) {
+        if ( repository.Index.IsFullyMerged ) {
+          return;
+        }
+        conflictPaths = repository.Index.Conflicts.Select( c => c.Ours.Path ).ToArray();
+      }
+
+      foreach ( var conflict in conflictPaths.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( "Examining conflict for " + fullConflictPath );
 
-        var baseContent = GitHelper.GetContent( 1, conflict, folder.FullName );
-        var localContent = GitHelper.GetContent( 2, conflict, folder.FullName );
-        var theirContent = GitHelper.GetContent( 3, conflict, folder.FullName );
+        var baseContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ancestor, conflict );
+        var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
+        var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
         try {
           var result = PackagesConfigMerger.Merge(
@@ -65,13 +57,13 @@ namespace CsMerge {
         }
       }
 
-      foreach ( var conflict in gitRepo.Status.MergeConflict.Where( p => p.EndsWith( ".csproj" ) ) ) {
+      foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( "Examining conflict for " + fullConflictPath );
 
-        var baseContent = GitHelper.GetContent( 1, conflict, folder.FullName );
-        var localContent = GitHelper.GetContent( 2, conflict, folder.FullName );
-        var theirContent = GitHelper.GetContent( 3, conflict, folder.FullName );
+        var baseContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ancestor, conflict );
+        var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
+        var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
         var conflictFolder = Path.GetDirectoryName( conflict );
 
@@ -105,13 +97,14 @@ namespace CsMerge {
           using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
             Package.WriteXml( textWriter, localDocument );
           }
-          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
+          using ( var repository = new Repository( rootFolder ) ) {
             repository.Stage( conflict );
           }
         }
         else {
-          using ( var repository = new LibGit2Sharp.Repository( rootFolder ) ) {
-            GitHelper.ResolveWithStandardMergetool( repository, fullConflictPath, baseDocument, localDocument, theirDocument, logger, conflict );
+          using ( var repository = new Repository( rootFolder ) ) {
+            UserResolvers.ResolveWithStandardMergetool(
+              repository, fullConflictPath, baseDocument, localDocument, theirDocument, logger, conflict );
           }
         }
       }
