@@ -29,6 +29,9 @@ By placing it under `.git\info` it will not be versioned and so will not affect 
 
 You can also set it up system wide, see [http://git-scm.com/docs/gitattributes](http://git-scm.com/docs/gitattributes "Git Attributes") for details.
 
+### Step 3 : Install binaries
+Copy the content of the `binaries` folder to a location that is included in the value of the PATH environment variable.
+
 ## Usage
 
 When packages.config files or csproj are modified in both branches, the configured failmerge merge driver

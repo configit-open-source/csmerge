@@ -30,7 +30,7 @@ namespace CsMerge {
 
       DirectoryInfo folder = new DirectoryInfo( args[0] );
       var logger = LogManager.GetCurrentClassLogger();
-      logger.Debug( "Scanning " + folder );
+      logger.Info( "Looking for things to merge in " + folder );
 
       var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
 
@@ -39,6 +39,7 @@ namespace CsMerge {
 
       using ( var repository = new Repository( rootFolder ) ) {
         if ( repository.Index.IsFullyMerged ) {
+          logger.Info( "Nothing to do, already fully merged" );
           return;
         }
         conflictPaths = repository.Index.Conflicts.Select( c => c.Ours.Path ).ToArray();

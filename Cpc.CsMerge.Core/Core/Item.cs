@@ -3,6 +3,9 @@ using System.Xml.Linq;
 
 namespace CsMerge.Core {
   public abstract class Item : IEquatable<Item>, IKeyedEntry {
+
+    public abstract override int GetHashCode();
+
     public virtual string Action { get { return GetType().Name; } }
     public abstract string Key { get; }
     public abstract bool Equals( Item other );
@@ -13,6 +16,8 @@ namespace CsMerge.Core {
       }
       return ReferenceEquals( null, i1 ) || i1.Equals( i2 );
     }
+
+    public abstract override bool Equals( object obj );
 
     public static bool operator !=( Item i1, Item i2 ) {
       return !( i1 == i2 );
