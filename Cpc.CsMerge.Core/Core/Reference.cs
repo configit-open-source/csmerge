@@ -3,19 +3,20 @@ using System.Xml.Linq;
 
 namespace CsMerge.Core {
   public class Reference: Item {
-    public string ReferenceName { get; private set; }
+    public string Include { get; private set; }
 
-    public AssemblyName ReferenceAssemblyName { get { return new AssemblyName( ReferenceName ); } }
+    public AssemblyName ReferenceAssemblyName { get { return new AssemblyName( Include ); } }
     public bool? SpecificVersion { get; private set; }
     public string HintPath { get; private set; }
     public bool? Private { get; private set; }
+    public string RequiredTargetFramework { get; private set; }
 
     public override string Key {
-      get { return ReferenceName; }
+      get { return Include; }
     }
 
     public override string ToString() {
-      return "Reference to " + ReferenceName;
+      return "Reference to " + Include;
     }
 
     public override bool Equals( Item other ) {
@@ -25,18 +26,22 @@ namespace CsMerge.Core {
     public override XElement ToElement( XNamespace ns ) {
       XElement e = new XElement( ns.GetName( Action ) );
 
-      e.Add( new XAttribute( "Include", ReferenceName ) );
-
-      if ( HintPath != null ) {
-        e.Add( new XElement( ns.GetName( "HintPath" ), HintPath ) );
-      }
-      if ( SpecificVersion.HasValue ) {
-        e.Add( new XElement( ns.GetName( "SpecificVersion" ), SpecificVersion.Value ) );
-      }
-      if ( Private.HasValue ) {
-        e.Add( new XElement( ns.GetName( "Private" ), Private.Value ) );
-      }
+      e.Add( new XAttribute( "Include", Include ) );
+      AddElement( e, "Name", Name );
+      AddElement( e, "FusionName", FusionName );
+      AddElement( e, "HintPath", HintPath );
+      AddElement( e, "Private", Private );
+      AddElement( e, "EmbedInteropTypes", EmbedInteropTypes );
+      AddElement( e, "Aliases", Aliases );
+      AddElement( e, "SpecificVersion", SpecificVersion );
+      AddElement( e, "RequiredTargetFramework", RequiredTargetFramework );
       return e;
+    }
+
+    private static void AddElement( XElement parent, string elementName, object value ) {
+      if ( value != null ) {
+        parent.Add( new XElement( parent.Name.Namespace.GetName( elementName ), value ) );
+      }
     }
 
     public bool Equals( Reference other ) {
@@ -48,7 +53,7 @@ namespace CsMerge.Core {
       }
       return string.Equals( HintPath, other.HintPath ) &&
         SpecificVersion == other.SpecificVersion &&
-        string.Equals( ReferenceName, other.ReferenceName );
+        string.Equals( Include, other.Include );
     }
 
     public override bool Equals( object obj ) {
@@ -65,13 +70,33 @@ namespace CsMerge.Core {
       unchecked {
         var hashCode = ( HintPath != null ? HintPath.GetHashCode() : 0 );
         hashCode = ( hashCode * 397 ) ^ SpecificVersion.GetHashCode();
-        hashCode = ( hashCode * 397 ) ^ ( ReferenceName != null ? ReferenceName.GetHashCode() : 0 );
+        hashCode = ( hashCode * 397 ) ^ ( Include != null ? Include.GetHashCode() : 0 );
         return hashCode;
       }
     }
 
-    public Reference( string referenceName, bool? specificVersion, bool? @private, string hintPath ) {
-      ReferenceName = referenceName;
+    public Reference( XElement itemElement ) {
+      Include = itemElement.Attribute( "Include" ).Value;
+      Name = itemElement.SameNsElement( "Name" ).GetValueOrNull();
+      EmbedInteropTypes = itemElement.SameNsElement( "EmbedInteropTypes" ).GetBoolOrNull();
+      Aliases = itemElement.SameNsElement( "Aliases" ).GetValueOrNull();
+      FusionName = itemElement.SameNsElement( "FusionName" ).GetValueOrNull();
+      RequiredTargetFramework = itemElement.SameNsElement( "RequiredTargetFramework" ).GetValueOrNull();
+      Private = itemElement.SameNsElement( "Private" ).GetBoolOrNull();
+      SpecificVersion = itemElement.SameNsElement( "SpecificVersion" ).GetBoolOrNull();
+      HintPath = itemElement.SameNsElement( "HintPath" ).GetValueOrNull();
+    }
+
+    public string Name { get; private set; }
+
+    public bool? EmbedInteropTypes { get; private set; }
+
+    public string Aliases { get; private set; }
+
+    public string FusionName { get; private set; }
+
+    public Reference( string include, bool? specificVersion, bool? @private, string hintPath ) {
+      Include = include;
       SpecificVersion = specificVersion;
       Private = @private;
       HintPath = hintPath;

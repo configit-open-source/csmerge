@@ -53,6 +53,7 @@
     <Compile Include="Core\ProjectReference.cs" />
     <Compile Include="Core\RawItem.cs" />
     <Compile Include="Core\Reference.cs" />
+    <Compile Include="Core\XExtensions.cs" />
     <Compile Include="Parsing\CsProjParser.cs" />
     <Compile Include="Core\ProjectFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

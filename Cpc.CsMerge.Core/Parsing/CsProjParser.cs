@@ -41,12 +41,7 @@ namespace CsMerge.Core.Parsing {
 
       switch ( itemElement.Name.LocalName ) {
         case "Reference":
-          var specificVersionAttribute = itemElement.Attribute( "SpecificVersion" );
-          var privateAttribute = itemElement.Attribute( "Private" );
-          var hintPathAttribute = itemElement.Element( xNamespace.GetName( "HintPath" ) );
-          var specificVersion = specificVersionAttribute == null ? (bool?) null : bool.Parse( specificVersionAttribute.Value );
-          var @private = privateAttribute == null ? (bool?) null : bool.Parse( privateAttribute.Value );
-          return new Reference( include, specificVersion, @private, hintPathAttribute == null ? null : hintPathAttribute.Value );
+          return new Reference( itemElement );
         case "ProjectReference":
           return new ProjectReference( include,
                                        Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
