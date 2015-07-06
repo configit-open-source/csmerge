@@ -66,22 +66,21 @@ namespace CsMerge {
       RegexOptions.CultureInvariant );
 
     public static Package PackageFromFolderName( string packageFolderName ) {
-      int indexOfVersionStart = packageFolderName.ToList().FindIndex(
-        c => {
-          int val;
-          return int.TryParse( c.ToString(), out val );
-        } );
 
-      while ( packageFolderName[indexOfVersionStart - 1] != '.' ) {
-        indexOfVersionStart++;
-      }
 
-      string id = packageFolderName.Substring( 0, indexOfVersionStart - 1 );
+      var parts = packageFolderName.Split( '.' ).ToList();
 
-      string versionString = packageFolderName.Substring( indexOfVersionStart );
+      var versionStartIndex = parts.FindIndex( c => { int val; return int.TryParse( c.ToString(), out val ); } );
 
-      var referencedPackage = new Package( id, PackageVersion.Parse( versionString ), String.Empty );
-      return referencedPackage;
+      if ( versionStartIndex < 0 ) {
+        throw new ArgumentException( "Unknown package folder name format.", packageFolderName );
+      } 
+        
+      var id = string.Join( ".", parts.Take( versionStartIndex ) );
+      var versionString = string.Join( ".", parts.Skip( versionStartIndex ) );
+      var packageVersion = PackageVersion.Parse( versionString );
+
+      return new Package( id, packageVersion, String.Empty );
     }
 
     public Package this[string id] {
