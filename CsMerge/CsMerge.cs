@@ -87,12 +87,12 @@ namespace CsMerge {
         var theirContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
         var result = new PackagesConfigMerger( resolvers.Operation ).Merge(
-            Package.Parse( baseContent ),
-            Package.Parse( localContent ),
-            Package.Parse( theirContent ),
+            PackageReference.Parse( baseContent ),
+            PackageReference.Parse( localContent ),
+            PackageReference.Parse( theirContent ),
             resolvers.UserResolvePackage ).ToArray();
 
-        Package.Write( result, fullConflictPath );
+        PackageReference.Write( result, fullConflictPath );
         using ( var repository = new Repository( rootFolder ) ) {
           repository.Stage( conflict );
         }
@@ -150,7 +150,7 @@ namespace CsMerge {
         if ( localDocument.ToString() == theirDocument.ToString() ) {
           // We handled all the differences
           using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
-            Package.WriteXml( textWriter, localDocument );
+            PackageReference.WriteXml( textWriter, localDocument );
           }
           using ( var repository = new Repository( rootFolder ) ) {
             repository.Stage( conflict );

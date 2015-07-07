@@ -35,9 +35,9 @@ namespace CsMerge {
       var localPath = fullConflictPath + "_local";
       var incomingPath = fullConflictPath + "_theirs";
 
-      Package.WriteXml( basePath, baseContent );
-      Package.WriteXml( localPath, localContent );
-      Package.WriteXml( incomingPath, theirContent );
+      PackageReference.WriteXml( basePath, baseContent );
+      PackageReference.WriteXml( localPath, localContent );
+      PackageReference.WriteXml( incomingPath, theirContent );
 
       if ( GitHelper.RunStandardMergetool( repository, basePath, localPath, incomingPath, fullConflictPath ) == 0 ) {
         // The merge tool reports that the conflict was resolved
@@ -56,7 +56,7 @@ namespace CsMerge {
       File.Delete( incomingPath );
     }
 
-    public Package UserResolvePackage( IConflict<Package> conflict ) {
+    public PackageReference UserResolvePackage( IConflict<PackageReference> conflict ) {
       Console.WriteLine( "(b)ase :\n" + PackageToString( conflict.Base ) );
       Console.WriteLine( "(" + Local[0] + ")" + Local.Substring( 1 ) + ":\n" + PackageToString( conflict.Local ) );
       Console.WriteLine( "(" + Incoming[0] + ")" + Incoming.Substring( 1 ) + ":\n" + PackageToString( conflict.Incoming ) );
@@ -92,7 +92,7 @@ namespace CsMerge {
       return (T) ChooseResolution( conflict );
     }
 
-    private static string PackageToString( Package p ) {
+    private static string PackageToString( PackageReference p ) {
       return p == null ? "not installed" : p.ToString();
     }
   }

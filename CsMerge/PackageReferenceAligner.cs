@@ -14,6 +14,8 @@ using NLog;
 
 using NuGet;
 
+using PackageReference = CsMerge.Core.PackageReference;
+
 namespace CsMerge {
   public class PackageReferenceAligner {
     public string UpgradePrefix { get; set; }
@@ -26,7 +28,8 @@ namespace CsMerge {
 
     private readonly string _packagesPrefix;
 
-    private IDictionary<string, Package> _idToNewest;
+    private IDictionary<string, PackageVersion> _idToNewestVersion;
+    private IDictionary<string, string> _idToTargetFramework;
 
     private readonly HashSet<string> _nonInstalledPackages = new HashSet<string>();
 
@@ -40,25 +43,25 @@ namespace CsMerge {
     }
 
     public void IndexNewestPackages() {
-      _idToNewest = new Dictionary<string, Package>();
+      _idToNewestVersion = new Dictionary<string, PackageVersion>();
+      _idToTargetFramework = new Dictionary<string, string>();
+
       var path = new DirectoryInfo( Path.Combine( _baseFolder, _packagesPrefix ) );
 
-      var groupedPackages = (
-        from packageFolder in path.GetDirectories()
-        where packageFolder.GetFiles( "*.nupkg" ).Any()
-        select ProjectPackages.PackageFromFolderName( packageFolder.Name ) ).GroupBy( p => p.Id );
-
+      var groupedPackages = 
+        path.GetFiles( "*.nupkg" ).Select( fi => ProjectPackages.PackageFromNuPkg( fi.DirectoryName ) ).GroupBy( p => p.Id );
+      
       foreach ( var group in groupedPackages ) {
         var v = group.Max( g => g.Version );
 
         var newest = group.First( g => g.Version == v );
-        _idToNewest[group.Key] = newest;
+        _idToNewestVersion[group.Key] = newest.Version;
 
         if ( !string.IsNullOrEmpty( UpgradeVersion ) ) {
           var explicitVersion = PackageVersion.Parse( UpgradeVersion );
           if ( group.Key.StartsWith( UpgradePrefix ) && explicitVersion > newest.Version ) {
-            _idToNewest[group.Key] = new Package(
-              newest.Id, explicitVersion, UpgradeFramework ?? newest.TargetFramework, newest.AllowedVersions, newest.UserInstalled );
+            _idToNewestVersion[group.Key] = explicitVersion;
+            _idToTargetFramework[group.Key] = UpgradeFramework;
             _nonInstalledPackages.Add( group.Key );
           }
         }
@@ -84,64 +87,9 @@ namespace CsMerge {
 
       var packagesFolder = Path.GetFullPath( Path.Combine( projectFolder, packagesRelativePath ) );
 
-      List<Package> updatedPackages = new List<Package>();
-
-      bool changed = false;
-
-      foreach ( var package in oldPackagesConfig ) {
-        if ( !_idToNewest.ContainsKey( package.Id ) ) {
-          logger.Error( "Packages must be restored to align references: No package is installed in "
-            + packagesRelativePath + " matching " + package.Id + " as found in " + projectFile +
-            ". Perhaps this project is not part of a solution?" );
-          return;
-        }
-        var newestPackage = _idToNewest[package.Id];
-        Package newPackage = new Package( package.Id,
-  newestPackage.Version,
-  package.TargetFramework,
-  package.AllowedVersions,
-  package.UserInstalled );
-        updatedPackages.Add( newPackage );
-
-        if ( newestPackage.Version != package.Version ) {
-          changed = true;
-          logger.Info( project.Name + ": Upgrading " + package + " to " + newestPackage.Version );
-
-          if ( !_nonInstalledPackages.Contains( newestPackage.Id ) ) {
-            continue;
-          }
-
-          logger.Info( "Install nuget package " + package.Id + " to " + packagesRelativePath );
-          var nugetExe = Path.Combine( _baseFolder, @".nuget\nuget.exe" );
-          if ( !File.Exists( nugetExe ) ) {
-            throw new Exception( "cannot find " + nugetExe );
-          }
-
-          var processStartInfo = new ProcessStartInfo( nugetExe,
-            "install " + package.Id + " -Version " + newestPackage.Version );
-          processStartInfo.RedirectStandardOutput = true;
-
-          processStartInfo.WorkingDirectory = packagesFolder;
-          processStartInfo.UseShellExecute = false;
-          processStartInfo.CreateNoWindow = true;
-
-          var process = Process.Start( processStartInfo );
-          logger.Info( process.StandardOutput.ReadToEnd() );
-
-          if ( process.ExitCode != 0 ) {
-            throw new Exception( "Failed to execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
-          }
-          _nonInstalledPackages.Remove( newestPackage.Id );
-        }
-      }
-
-      if ( !changed ) {
+      if ( !UpgradePackagesConfig( projectFile, oldPackagesConfig, packagesRelativePath, project, packagesFolder, projectFolder ) ) {
         return;
       }
-
-      var config = Path.Combine( projectFolder, "packages.config" );
-      logger.Info( "Writing changes to " + config );
-      Package.Write( updatedPackages, config );
 
       // reparse packages
       ProjectPackages updatedPackagesConfig = new ProjectPackages( projectFolder, packagesRelativePath );
@@ -162,73 +110,175 @@ namespace CsMerge {
                 continue; // remove reference
               }
 
-              var refPackage = oldPackagesConfig.PackageFromHintPath( reference );
-              var newestPackage = updatedPackagesConfig[refPackage.Id];
-              var oldPackage = oldPackagesConfig[refPackage.Id];
+              Package refPackage = oldPackagesConfig.PackageFromHintPath( reference );
+              PackageReference newestPackage = updatedPackagesConfig[refPackage.Id];
 
-              if ( oldPackage.Version != newestPackage.Version ) {
-                var packageFolderName = refPackage.ToPackageFolderName();
+              if ( refPackage.Version != newestPackage.Version ) {
                 var newPackageFolderName = newestPackage.ToPackageFolderName();
 
-                var newHintPath = reference.HintPath
-                  .Replace( packageFolderName, newPackageFolderName )
-                  .Replace( oldPackage.TargetFramework, newestPackage.TargetFramework );
+                var relativePackageFolder = Path.Combine( projectFolder, _packagesPrefix, newPackageFolderName );
+                var packageFolder = new DirectoryInfo( Path.GetFullPath( relativePackageFolder ) );
 
-                var referencePath = Path.GetFullPath( Path.Combine( projectFolder, newHintPath ) );
+                var assemblyName = Path.GetFileName( reference.HintPath );
 
-                if ( !File.Exists( referencePath ) ) {
-                  logger.Warn( "The target framework seems to be incorrect in the old HintPath:" + reference.HintPath );
-                  // messed up reference, look in lib folder
-                  var libFolder = Path.GetDirectoryName( Path.GetDirectoryName( newHintPath ) );
-                  var assemblyFileName = Path.GetFileName( newHintPath );
+                bool located = false;
 
-                  var relativeCandidate = Path.Combine( libFolder, newestPackage.TargetFramework, assemblyFileName );
+                foreach ( var file in packageFolder.GetFiles( assemblyName ) ) {
+                  var newHintPath = ReconstructHintPath( file, newestPackage, reference );
 
-                  var candidate = Path.GetFullPath( Path.Combine( projectFolder, relativeCandidate ) );
-
-                  if ( File.Exists( candidate ) ) {
-                    newHintPath = candidate;
-                    referencePath = candidate;
-                    logger.Warn( "Found new location: " + reference.HintPath + " -> " + newHintPath );
+                  if ( newHintPath == null ) {
+                    continue;
                   }
-                  else {
-                    throw new FileLoadException( "Could not find " + assemblyFileName );
-                  }
+
+                  AssemblyName updatedName = AssemblyName.GetAssemblyName( file.FullName );
+
+                  string updatedInclude = IncludeFromAssemblyName( updatedName );
+
+                  items.Add( new Reference( updatedInclude, reference.SpecificVersion, reference.Private, newHintPath ) );
+                  logger.Info( "Updated: " + reference + " to: " + items.Last() );
+                  located = true;
+                  break;
+                }
+                if ( located ) {
+                  continue;
                 }
 
-                var updatedName = AssemblyName.GetAssemblyName( referencePath );
-
-                var token = BitConverter.ToString( updatedName.GetPublicKeyToken() ).Replace( "-", "" );
-
-                var includeTokens = new[] {
-                  updatedName.Name,
-                  "Version=" + updatedName.Version,
-                  string.IsNullOrEmpty( updatedName.CultureName ) ?  "Culture=neutral" : "Culture=" + updatedName.CultureName,
-                  string.IsNullOrEmpty( token ) ? string.Empty : "PublicKeyToken="+token,
-                  "processorArchitecture=" + updatedName.ProcessorArchitecture}.Where( s => !string.IsNullOrEmpty( s ) ).ToArray();
-
-                var updatedInclude = string.Join( ", ", includeTokens );
-
-                items.Add( new Reference( updatedInclude, reference.SpecificVersion, reference.Private, newHintPath ) );
-                logger.Info( "Updated: " + reference + " to: " + items.Last() );
-                continue;
+                logger.Error( "Could not reconstruct hintpath " + reference.HintPath + " original reference will not be changed" );
               }
             }
+            items.Add( item );
           }
-          items.Add( item );
+          output.Add( new ItemGroup( items ) );
         }
-        output.Add( new ItemGroup( items ) );
+
+        XDocument projectXml = XDocument.Load( projectFile );
+
+        ProjectFile.DeleteItems( projectXml );
+        ProjectFile.AddItems( projectXml, output.SelectMany( ig => ig.Items ).ToArray() );
+
+        using ( var textWriter = new StreamWriter( projectFile ) ) {
+          logger.Info( "Writing " + projectFile );
+          PackageReference.WriteXml( textWriter, projectXml );
+        }
+      }
+    }
+
+    private static string IncludeFromAssemblyName( AssemblyName updatedName ) {
+      var token = BitConverter.ToString( updatedName.GetPublicKeyToken() ).Replace( "-", "" );
+
+      var includeTokens =
+        new[] {
+          updatedName.Name, "Version=" + updatedName.Version,
+          string.IsNullOrEmpty( updatedName.CultureName ) ? "Culture=neutral" : "Culture=" + updatedName.CultureName,
+          string.IsNullOrEmpty( token ) ? string.Empty : "PublicKeyToken=" + token,
+          "processorArchitecture=" + updatedName.ProcessorArchitecture
+        }.Where( s => !string.IsNullOrEmpty( s ) ).ToArray();
+
+      var updatedInclude = string.Join( ", ", includeTokens );
+      return updatedInclude;
+    }
+
+    private static string ReconstructHintPath(
+      FileInfo file,
+      PackageReference newestPackage,
+      Reference reference ) {
+
+      var parts = file.FullName.Split( Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar ).ToList();
+      int tfIndex = parts.FindIndex( p => p.Equals( newestPackage.TargetFramework, StringComparison.OrdinalIgnoreCase ) );
+      if ( tfIndex < 0 ) {
+        return null;
       }
 
-      XDocument projectXml = XDocument.Load( projectFile );
+      var hintParts = reference.HintPath.Split( Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar ).ToList();
 
-      ProjectFile.DeleteItems( projectXml );
-      ProjectFile.AddItems( projectXml, output.SelectMany( ig => ig.Items ).ToArray() );
+      List<string> resultPath = new List<string>();
 
-      using ( var textWriter = new StreamWriter( projectFile ) ) {
-        logger.Info( "Writing " + projectFile );
-        Package.WriteXml( textWriter, projectXml );
+      for ( int i = hintParts.Count - 1; i >= 0; i-- ) {
+        if ( hintParts[i].StartsWith( "$" ) ) {
+          resultPath.Add( hintParts[i] );
+        }
+        else if ( parts[i].Equals( newestPackage.TargetFramework ) ) {
+          resultPath.Add( parts[i] );
+        }
+        else {
+          resultPath.Add( hintParts[i] );
+        }
       }
+
+      resultPath.Reverse();
+
+      return Path.Combine( resultPath.ToArray() );
+    }
+
+    private bool UpgradePackagesConfig(
+      string projectFile,
+      ProjectPackages oldPackagesConfig,
+      string packagesRelativePath,
+      ProjectFile project,
+      string packagesFolder,
+      string projectFolder ) {
+      List<PackageReference> updatedPackages = new List<PackageReference>();
+
+      bool changed = false;
+      var logger = NLog.LogManager.GetCurrentClassLogger();
+
+      foreach ( var package in oldPackagesConfig ) {
+        if ( !_idToNewestVersion.ContainsKey( package.Id ) ) {
+          logger.Error(
+            "Packages must be restored to align references: No package is installed in " + packagesRelativePath
+            + " matching " + package.Id + " as found in " + projectFile
+            + ". Perhaps this project is not part of a solution?" );
+          return true;
+        }
+        var targetVersion = _idToNewestVersion[package.Id];
+
+        PackageReference newPackage = new PackageReference(
+          package.Id,
+          targetVersion,
+          package.TargetFramework,
+          package.AllowedVersions,
+          package.UserInstalled );
+        updatedPackages.Add( newPackage );
+
+        if ( targetVersion != package.Version ) {
+          changed = true;
+          logger.Info( project.Name + ": Upgrading " + package + " to " + targetVersion );
+
+          if ( !_nonInstalledPackages.Contains( package.Id ) ) {
+            continue;
+          }
+
+          logger.Info( "Install nuget package " + package.Id + " to " + packagesRelativePath );
+          var nugetExe = Path.Combine( _baseFolder, @".nuget\nuget.exe" );
+          if ( !File.Exists( nugetExe ) ) {
+            throw new Exception( "cannot find " + nugetExe );
+          }
+
+          var processStartInfo = new ProcessStartInfo( nugetExe, "install " + package.Id + " -Version " + targetVersion );
+          processStartInfo.RedirectStandardOutput = true;
+
+          processStartInfo.WorkingDirectory = packagesFolder;
+          processStartInfo.UseShellExecute = false;
+          processStartInfo.CreateNoWindow = true;
+
+          var process = Process.Start( processStartInfo );
+          logger.Info( process.StandardOutput.ReadToEnd() );
+
+          if ( process.ExitCode != 0 ) {
+            throw new Exception( "Failed to execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
+          }
+          _nonInstalledPackages.Remove( package.Id );
+        }
+      }
+
+      if ( !changed ) {
+        return false;
+      }
+
+      var config = Path.Combine( projectFolder, "packages.config" );
+      logger.Info( "Writing changes to " + config );
+      PackageReference.Write( updatedPackages, config );
+      return true;
     }
   }
 }

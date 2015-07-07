@@ -16,7 +16,7 @@ namespace CsMerge {
 
     public CurrentOperation Operation { get; set; }
 
-    private IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
+    private IDictionary<string, PackageReference> GetIndex( IEnumerable<PackageReference> pc ) {
       return pc.ToDictionary( p => p.Id, p => p );
     }
 
@@ -27,22 +27,22 @@ namespace CsMerge {
     /// <summary>
     /// Merge prefering newest packages.
     /// </summary>
-    public IEnumerable<Package> Merge(
-      IEnumerable<Package> @base,
-      IEnumerable<Package> mine,
-      IEnumerable<Package> theirs,
-      ConflictResolver<Package> conflictResolver ) {
+    public IEnumerable<PackageReference> Merge(
+      IEnumerable<PackageReference> @base,
+      IEnumerable<PackageReference> mine,
+      IEnumerable<PackageReference> theirs,
+      ConflictResolver<PackageReference> conflictResolver ) {
       var baseIds = GetIndex( @base );
       var myIds = GetIndex( mine );
       var theirIds = GetIndex( theirs );
 
-      ConflictResolver<Package> contentResolver = c => ResolveContent( c, conflictResolver );
+      ConflictResolver<PackageReference> contentResolver = c => ResolveContent( c, conflictResolver );
 
-      return MergeHelper<Package>.MergeAll( Operation, baseIds, myIds, theirIds, conflictResolver, contentResolver );
+      return MergeHelper<PackageReference>.MergeAll( Operation, baseIds, myIds, theirIds, conflictResolver, contentResolver );
     }
 
-    private Package ResolveContent( Conflict<Package> conflict, ConflictResolver<Package> userResolution ) {
-      var localNotComparingOnVersion = new Package( conflict.Local.Id, conflict.Incoming.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled : conflict.Local.UserInstalled );
+    private PackageReference ResolveContent( Conflict<PackageReference> conflict, ConflictResolver<PackageReference> userResolution ) {
+      var localNotComparingOnVersion = new PackageReference( conflict.Local.Id, conflict.Incoming.Version, conflict.Local.TargetFramework, conflict.Local.AllowedVersions, userInstalled : conflict.Local.UserInstalled );
 
       var logger = LogManager.GetCurrentClassLogger();
 

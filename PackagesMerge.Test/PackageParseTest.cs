@@ -21,11 +21,11 @@ namespace PackagesMerge.Test {
 
       StringReader reader = new StringReader( original );
 
-      var packages = Package.Read( reader );
+      var packages = PackageReference.Read( reader );
 
       StringWriter writer = new Utf8StringWriter();
 
-      Package.Write( packages, writer );
+      PackageReference.Write( packages, writer );
 
       var written = writer.ToString().Replace( "\r", "" );
 

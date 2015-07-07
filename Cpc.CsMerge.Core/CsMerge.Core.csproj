@@ -49,6 +49,7 @@
     <Compile Include="Core\Item.cs" />
     <Compile Include="Core\ItemGroup.cs" />
     <Compile Include="Core\Package.cs" />
+    <Compile Include="Core\PackageReference.cs" />
     <Compile Include="Core\PackageVersion.cs" />
     <Compile Include="Core\ProjectReference.cs" />
     <Compile Include="Core\RawItem.cs" />
