@@ -14,9 +14,8 @@ namespace Cpc.CsMerge.Test {
 
     private static ProjectFile Project( params object[] children ) {
       var root = new XElement( "Project", children );
-      var parser = new CsProjParser();
       using ( var ms = root.ToStream() ) {
-        return parser.Parse( TestProjectName, ms );
+        return CsProjParser.Parse( TestProjectName, ms );
       }
     }
 

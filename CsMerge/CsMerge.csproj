@@ -41,8 +41,16 @@
       <HintPath>..\packages\LibGit2Sharp.0.21.0.176\lib\net40\LibGit2Sharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.Web.XmlTransform, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.0.1\lib\net45\NLog.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NuGet.Core, Version=2.8.60318.667, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\NuGet.Core.2.8.5\lib\net40-Client\NuGet.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -59,8 +67,9 @@
     <Compile Include="MergeType.cs" />
     <Compile Include="MergeHelper.cs" />
     <Compile Include="MergeResult.cs" />
+    <Compile Include="PackageReferenceAligner.cs" />
     <Compile Include="PackagesConfigMerger.cs" />
-    <Compile Include="PackagesInfo.cs" />
+    <Compile Include="ProjectPackages.cs" />
     <Compile Include="ProjectMerger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserResolvers.cs" />

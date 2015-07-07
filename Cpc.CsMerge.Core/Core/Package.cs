@@ -200,6 +200,10 @@ namespace CsMerge.Core {
       return s.ToString();
     }
 
+    public string ToPackageFolderName() {
+      return Id + "." + Version;
+    }
+
     public string Key {
       get { return Id; }
     }
