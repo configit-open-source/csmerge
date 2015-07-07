@@ -24,15 +24,34 @@ namespace CsMerge {
     /// See README.md
     /// </summary>
     public static void Main( string[] args ) {
-      if ( args.Length != 1 ) {
+      if ( args.Length == 0 ) {
         args = new[] { Directory.GetCurrentDirectory() };
       }
 
+
       DirectoryInfo folder = new DirectoryInfo( args[0] );
       var logger = LogManager.GetCurrentClassLogger();
-      logger.Info( "Looking for things to merge in " + folder );
 
       var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
+
+      if ( args.Length >= 2 && args[1] == "--align" ) {
+        logger.Info( "Aligning references in " + rootFolder );
+
+        string pattern = args.Length == 4 ? args[2] : null;
+        string patternVersion = args.Length == 4 ? args[3] : null;
+
+        var aligner =
+          new PackageReferenceAligner( rootFolder, FindRelativePathOfPackagesFolder( rootFolder ), pattern, patternVersion );
+        
+        foreach ( var projectFile in folder.GetFiles( "*.csproj", SearchOption.AllDirectories ) ) {
+          aligner.AlignReferences( projectFile.FullName );
+        }
+        return;
+      }
+
+      logger.Info( "Looking for things to merge in " + folder );
+
+      
 
       string[] conflictPaths;
       CurrentOperation operation;
@@ -108,7 +127,7 @@ namespace CsMerge {
 
         var projectFolder = Path.Combine( folder.FullName, conflictFolder );
 
-        var packageIndex = new PackagesInfo( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
+        var packageIndex = new ProjectPackages( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
 
         Item[] items = new ProjectMerger( resolvers.Operation ).Merge(
             projFileName,
@@ -152,7 +171,7 @@ namespace CsMerge {
       }
     }
 
-    private static string FindRelativePathOfPackagesFolder( string folder = null ) {
+    public static string FindRelativePathOfPackagesFolder( string folder = null ) {
       var current = new DirectoryInfo( folder ?? Directory.GetCurrentDirectory() );
 
       int depth = 0;

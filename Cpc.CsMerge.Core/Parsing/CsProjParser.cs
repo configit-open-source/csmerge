@@ -6,12 +6,12 @@ using System.Xml.Linq;
 namespace CsMerge.Core.Parsing {
   public class CsProjParser {
 
-    public ProjectFile Parse( string name, Stream from ) {
+    public static ProjectFile Parse( string name, Stream from ) {
       var doc = XDocument.Load( from );
       return Parse( name, doc );
     }
 
-    public ProjectFile Parse( string name, XDocument doc ) {
+    public static ProjectFile Parse( string name, XDocument doc ) {
       if ( doc == null || doc.Root == null ) {
         throw new ArgumentException( "Stream did not contain a valid XML document", "from" );
       }
@@ -26,11 +26,11 @@ namespace CsMerge.Core.Parsing {
       );
     }
 
-    private ItemGroup ParseItemGroup( XElement itemGroupElement ) {
+    private static ItemGroup ParseItemGroup( XElement itemGroupElement ) {
       return new ItemGroup( itemGroupElement.Elements().Select( ParseItem ).Where( i => i != null ).ToList().AsReadOnly() );
     }
 
-    private Item ParseItem( XElement itemElement ) {
+    private static Item ParseItem( XElement itemElement ) {
       var includeAttribute = itemElement.Attribute( "Include" );
       if ( includeAttribute == null ) {
         return null;
