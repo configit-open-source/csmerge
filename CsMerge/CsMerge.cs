@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-
 using CsMerge.Core;
-
+using CsMerge.Properties;
 using LibGit2Sharp;
 using NLog;
-
+using LogLevel = NLog.LogLevel;
 using Reference = CsMerge.Core.Reference;
 
 namespace CsMerge {
@@ -24,6 +22,11 @@ namespace CsMerge {
     /// See README.md
     /// </summary>
     public static void Main( string[] args ) {
+
+      if ( Settings.Default.Debug ) {
+        Debugger.Launch();
+      }
+
       if ( args.Length == 0 ) {
         args = new[] { Directory.GetCurrentDirectory() };
       }
@@ -105,7 +108,9 @@ namespace CsMerge {
       DirectoryInfo folder,
       Logger logger,
       string rootFolder ) {
+
       foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
+
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( "Examining concurrent modification for " + fullConflictPath );
 
@@ -123,49 +128,65 @@ namespace CsMerge {
         XDocument theirDocument = XDocument.Parse( theirContent );
         XDocument baseDocument = XDocument.Parse( baseContent );
 
-        var projFileName = Path.GetFileName( conflict );
+        var resolved = false;
 
-        var projectFolder = Path.Combine( folder.FullName, conflictFolder );
+        try {
+          var projFileName = Path.GetFileName( conflict );
+
+          var projectFolder = Path.Combine( folder.FullName, conflictFolder );
 
         var packageIndex = new ProjectPackages( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
 
-        Item[] items = new ProjectMerger( resolvers.Operation ).Merge(
-            projFileName,
-            packageIndex,
-            baseDocument,
-            localDocument,
-            theirDocument,
-            resolvers.UserResolveReference<Reference>,
-            resolvers.UserResolveReference<Item> ).ToArray();
-
-        // Now remove everything we have handled, to check if we are done.
-        ProjectFile.DeleteItems( localDocument );
-        ProjectFile.DeleteItems( theirDocument );
-        ProjectFile.DeleteItems( baseDocument );
-
-        ProjectFile.AddItems( baseDocument, items );
-        ProjectFile.AddItems( localDocument, items );
-        ProjectFile.AddItems( theirDocument, items );
-
-        if ( localDocument.ToString() == theirDocument.ToString() ) {
-          // We handled all the differences
-          using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
-            Package.WriteXml( textWriter, localDocument );
-          }
-          using ( var repository = new Repository( rootFolder ) ) {
-            repository.Stage( conflict );
-          }
-        }
-        else {
-          using ( var repository = new Repository( rootFolder ) ) {
-            resolvers.ResolveWithStandardMergetool(
-              repository,
-              fullConflictPath,
+          Item[] items = new ProjectMerger( resolvers.Operation ).Merge(
+              projFileName,
+              packageIndex,
               baseDocument,
               localDocument,
               theirDocument,
-              logger,
-              conflict );
+              resolvers.UserResolveReference<Reference>,
+              resolvers.UserResolveReference<Item> ).ToArray();
+
+          // Now remove everything we have handled, to check if we are done.
+          ProjectFile.DeleteItems( localDocument );
+          ProjectFile.DeleteItems( theirDocument );
+          ProjectFile.DeleteItems( baseDocument );
+
+          ProjectFile.AddItems( baseDocument, items );
+          ProjectFile.AddItems( localDocument, items );
+          ProjectFile.AddItems( theirDocument, items );
+
+          if ( localDocument.ToString() == theirDocument.ToString() ) {
+            // We handled all the differences
+            using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
+              Package.WriteXml( textWriter, localDocument );
+            }
+            using ( var repository = new Repository( rootFolder ) ) {
+              repository.Stage( conflict );
+            }
+
+            resolved = true;
+          }
+        } catch ( Exception exception ) {
+          logger.Log( LogLevel.Error, exception, "Project merge failed for {0}", conflict );
+        }
+
+        if ( !resolved ) {
+
+          string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
+          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+
+          if ( userQuestion.Resolve() ) {
+
+            using ( var repository = new Repository( rootFolder ) ) {
+              resolvers.ResolveWithStandardMergetool(
+                repository,
+                fullConflictPath,
+                baseDocument,
+                localDocument,
+                theirDocument,
+                logger,
+                conflict );
+            }
           }
         }
       }

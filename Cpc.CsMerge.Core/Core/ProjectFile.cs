@@ -48,9 +48,10 @@ namespace CsMerge.Core {
 
         var newGroup = new XElement( itemGroupName );
 
-        foreach ( var item in itemGroup ) {
+        foreach ( var item in itemGroup.OrderBy( i => i.Key ) ) {
           newGroup.Add( item.ToElement( root.Name.Namespace ) );
         }
+
         root.Add( newGroup );
       }
     }

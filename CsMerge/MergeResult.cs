@@ -1,15 +1,22 @@
-﻿namespace CsMerge {
+﻿using CsMerge.Core;
+
+namespace CsMerge {
   public class MergeResult<T>
-    where T: class {
-    public MergeResult( T resolvedItem, MergeType mergeType, bool isResolved = true ) {
+    where T: class, IKeyedEntry {
+
+    public string Key { get; private set; }
+
+    public MergeResult( string key, T resolvedItem, MergeType mergeType, bool isResolved = true ) {
       MergeType = mergeType;
       IsResolved = isResolved;
       ResolvedItem = resolvedItem;
+      Key = key;
     }
 
-    public MergeResult( MergeType mergeType, bool isResolved = true ) {
+    public MergeResult( string key, MergeType mergeType, bool isResolved = true ) {
       MergeType = mergeType;
       IsResolved = isResolved;
+      Key = key;
     }
 
     public T ResolvedItem { get; private set; }

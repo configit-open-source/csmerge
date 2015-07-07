@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Linq.Expressions;
 
 using CsMerge;
 using CsMerge.Core;
@@ -31,7 +33,8 @@ namespace PackagesMerge.Test {
       var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) }, pc => pc.Local
+        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
+        pc => { throw new Exception( "Resolver was called but shouldn't have been." ); } // This should be auto resolved without calling the resolver.
       ).ToList();
 
       Assert.That( result, Is.EquivalentTo( new[] {
@@ -44,15 +47,15 @@ namespace PackagesMerge.Test {
       var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
         new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
         new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) }, pc => pc.Local
+        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) }, 
+        pc => { throw new Exception( "Resolver was called but shouldn't have been." ); } // This should be auto resolved without calling the resolver.
       ).ToList();
 
       Assert.That( result, Is.EquivalentTo( new[] {
         new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" )
       } ) );
     }
-
-
+    
     [Test]
     public void TheirsAndMineUpdated() {
       var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
@@ -142,5 +145,6 @@ namespace PackagesMerge.Test {
 
       Assert.That( result, Is.Empty );
     }
+
   }
 }
