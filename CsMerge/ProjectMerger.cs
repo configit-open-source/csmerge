@@ -36,19 +36,19 @@ namespace CsMerge {
     }
 
     private IEnumerable<Reference> MergeReferences(
-      PackagesInfo packageInfo,
+      ProjectPackages projectPackage,
       IReadOnlyCollection<Reference> baseRefs,
       IReadOnlyCollection<Reference> localRefs,
       IReadOnlyCollection<Reference> theirRefs, ConflictResolver<Reference> resolver ) {
 
-      return MergePackageReferences( packageInfo,
-        baseRefs.Where( packageInfo.IsPackageReference ),
-        localRefs.Where( packageInfo.IsPackageReference ),
-        theirRefs.Where( packageInfo.IsPackageReference ) )
+      return MergePackageReferences( projectPackage,
+        baseRefs.Where( projectPackage.IsPackageReference ),
+        localRefs.Where( projectPackage.IsPackageReference ),
+        theirRefs.Where( projectPackage.IsPackageReference ) )
           .Concat( MergeNonPackageReferencesbaseRefs(
-          baseRefs.Where( r => !packageInfo.IsPackageReference( r ) ),
-          localRefs.Where( r => !packageInfo.IsPackageReference( r ) ),
-          theirRefs.Where( r => !packageInfo.IsPackageReference( r ) ), resolver ) );
+          baseRefs.Where( r => !projectPackage.IsPackageReference( r ) ),
+          localRefs.Where( r => !projectPackage.IsPackageReference( r ) ),
+          theirRefs.Where( r => !projectPackage.IsPackageReference( r ) ), resolver ) );
     }
 
     private IEnumerable<Reference> MergeNonPackageReferencesbaseRefs(
@@ -65,31 +65,30 @@ namespace CsMerge {
     }
 
     private IEnumerable<Reference> MergePackageReferences(
-      PackagesInfo packageInfo,
+      ProjectPackages projectPackage,
       IEnumerable<Reference> baseRefs,
       IEnumerable<Reference> localRefs,
       IEnumerable<Reference> theirRefs ) {
 
       // Discard packages that are no longer installed 
-      baseRefs = baseRefs.Where( packageInfo.IsPackageInstalled );
-      localRefs = localRefs.Where( packageInfo.IsPackageInstalled );
-      theirRefs = theirRefs.Where( packageInfo.IsPackageInstalled );
+      baseRefs = baseRefs.Where( projectPackage.IsPackageInstalled );
+      localRefs = localRefs.Where( projectPackage.IsPackageInstalled );
+      theirRefs = theirRefs.Where( projectPackage.IsPackageInstalled );
 
       return baseRefs.Union( localRefs ).Union( theirRefs );
     }
 
     public IEnumerable<Item> Merge( string name,
-      PackagesInfo info,
+      ProjectPackages info,
       XDocument baseDocument,
       XDocument localDocument,
       XDocument theirDocument,
       ConflictResolver<Reference> referenceResolver,
       ConflictResolver<Item> itemResolver ) {
 
-      CsProjParser parser = new CsProjParser();
-      var localProj = parser.Parse( name, localDocument );
-      var theirProj = parser.Parse( name, theirDocument );
-      var baseProj = parser.Parse( name, baseDocument );
+      var localProj = CsProjParser.Parse( name, localDocument );
+      var theirProj = CsProjParser.Parse( name, theirDocument );
+      var baseProj = CsProjParser.Parse( name, baseDocument );
 
       var localItems = GetItemIndex<Item>( localProj, i => !( i is Reference ) );
       var theirItems = GetItemIndex<Item>( theirProj, i => !( i is Reference ) );
