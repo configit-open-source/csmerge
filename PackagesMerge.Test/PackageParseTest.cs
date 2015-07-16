@@ -1,12 +1,10 @@
 ﻿using System.IO;
 using System.Text;
-
-using CsMerge;
 using CsMerge.Core;
-
 using NUnit.Framework;
 
 namespace PackagesMerge.Test {
+
   [TestFixture]
   public class PackageParseTest {
 
@@ -38,7 +36,7 @@ namespace PackagesMerge.Test {
       var package = ProjectPackages.PackageFromFolderName( "C.1V1.1.2.3" );
 
       Assert.That( package.Key, Is.EqualTo( "C.1V1" ) );
-      Assert.That( package.Version.ToString(), Is.EqualTo( "1.2.3" ));
+      Assert.That( package.Version.ToString(), Is.EqualTo( "1.2.3" ) );
     }
   }
 }

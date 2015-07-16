@@ -30,7 +30,7 @@ namespace CsMerge {
 
     private readonly HashSet<string> _nonInstalledPackages = new HashSet<string>();
 
-    public PackageReferenceAligner( string baseFolder, string packagesPrefix, string upgradePrefix = null , string upgradeVersion = null, string upgradeFramework = null ) {
+    public PackageReferenceAligner( string baseFolder, string packagesPrefix, string upgradePrefix = null, string upgradeVersion = null, string upgradeFramework = null ) {
       UpgradePrefix = upgradePrefix;
       UpgradeVersion = upgradeVersion;
       UpgradeFramework = upgradeFramework;
@@ -190,8 +190,7 @@ namespace CsMerge {
                     newHintPath = candidate;
                     referencePath = candidate;
                     logger.Warn( "Found new location: " + reference.HintPath + " -> " + newHintPath );
-                  }
-                  else {
+                  } else {
                     throw new FileLoadException( "Could not find " + assemblyFileName );
                   }
                 }
@@ -203,7 +202,7 @@ namespace CsMerge {
                 var includeTokens = new[] {
                   updatedName.Name,
                   "Version=" + updatedName.Version,
-                  string.IsNullOrEmpty( updatedName.CultureName ) ?  "Culture=neutral" : "Culture=" + updatedName.CultureName,
+                  string.IsNullOrEmpty( updatedName.CultureName ) ? "Culture=neutral" : "Culture=" + updatedName.CultureName,
                   string.IsNullOrEmpty( token ) ? string.Empty : "PublicKeyToken="+token,
                   "processorArchitecture=" + updatedName.ProcessorArchitecture}.Where( s => !string.IsNullOrEmpty( s ) ).ToArray();
 

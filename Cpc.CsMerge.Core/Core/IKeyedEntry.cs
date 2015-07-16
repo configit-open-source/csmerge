@@ -1,5 +1,6 @@
 namespace CsMerge.Core {
-  public interface IKeyedEntry {
+  public interface IConflictableItem {
     string Key { get; }
+    bool IsResolveOption { get; }
   }
 }

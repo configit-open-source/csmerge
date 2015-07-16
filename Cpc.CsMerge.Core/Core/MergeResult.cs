@@ -1,8 +1,6 @@
-﻿using CsMerge.Core;
+﻿namespace CsMerge.Core {
 
-namespace CsMerge {
-  public class MergeResult<T>
-    where T: class, IKeyedEntry {
+  public class MergeResult<T> {
 
     public string Key { get; private set; }
 

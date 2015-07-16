@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+		<ProjectGuid>{4A2Y00D4-E8EF-46D7-B078-AF79DD62647A}</ProjectGuid>
+		<OutputType>Library</OutputType>
+		<AppDesignerFolder>Properties</AppDesignerFolder>
+		<RootNamespace>CsMerge.Test</RootNamespace>
+		<AssemblyName>CsMerge.Test</AssemblyName>
+		<TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+		<FileAlignment>512</FileAlignment>
+		<SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<OutputPath>bin\Debug\</OutputPath>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<OutputPath>bin\Release\</OutputPath>
+		<DefineConstants>TRACE</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+	</PropertyGroup>
+	<ItemGroup>
+    
+		<Reference Include="CsMerge.Packages.NoChanges, Version=1.0.0.0, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\NoChanges.1.0.0.0\CsMerge.Packages.NoChanges.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.DeletedInLocal, Version=1.0.0.0, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\DeletedInLocal.1.0.0.0\CsMerge.Packages.DeletedInLocal.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.DeletedInLocalUpdatedInIncoming, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\DeletedInLocalUpdatedInIncoming.1.0.0.2\CsMerge.Packages.DeletedInLocalUpdatedInIncoming.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+
+		<Reference Include="CsMerge.Packages.UpdatedInLocal, Version=1.0.0.0, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\UpdatedInLocal.1.0.0.0\CsMerge.Packages.UpdatedInLocal.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.UpdatedInIncoming, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\UpdatedInIncoming.1.0.0.2\CsMerge.Packages.UpdatedInIncoming.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.UpdatedInBoth.Identical, Version=1.0.0.1, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\UpdatedInBoth.Identical.1.0.0.1\CsMerge.Packages.UpdatedInBoth.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.UpdatedInBoth.Different.VersionChangeOnly, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\UpdatedInBoth.Different.VersionChangeOnly.1.0.0.2\CsMerge.NugetPackage.1.0.0.0\CsMerge.Packages.UpdatedInBoth.Different.VersionChangeOnly.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.UpdatedInBoth.Different.OtherChanges, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\UpdatedInBoth.Different.OtherChanges.1.0.0.2\CsMerge.Packages.UpdatedInBoth.Different.OtherChanges.dll</HintPath>
+			<SpecificVersion>true</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Identical, Version=1.0.0.0, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Identical.1.0.0.0\CsMerge.Packages.Duplicate.Identical.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Identical, Version=1.0.0.0, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Identical.1.0.0.0\CsMerge.Packages.Duplicate.Identical.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Different.VersionChangeOnly, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Different.VersionChangeOnly.1.0.0.2\CsMerge.Packages.Duplicate.Different.VersionChangeOnly.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Different.VersionChangeOnly, Version=1.0.0.1, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Different.VersionChangeOnly.1.0.0.1\CsMerge.Packages.Duplicate.Different.VersionChangeOnly.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Different.OtherChanges, Version=1.0.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Different.OtherChanges.1.0.0.2\CsMerge.Packages.Duplicate.Different.OtherChanges.dll</HintPath>
+			<SpecificVersion>false</SpecificVersion>
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="CsMerge.Packages.Duplicate.Different.OtherChanges, Version=1.0.0.3, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL" >
+			<HintPath>..\..\packages\Duplicate.Different.OtherChanges.1.0.0.2\CsMerge.Packages.Duplicate.Different.OtherChanges.dll</HintPath>
+			<SpecificVersion>true</SpecificVersion>
+		</Reference>
+
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Include="NoChange.cs" />
+	  <Compile Include="DeleteInLocal.cs" />
+
+	  <!--Updates aren't possible when there is only a key as changes will mean they are not matched -->
+	  <Compile Include="Duplicate.Identical.cs" />
+	  <Compile Include="Duplicate.Identical.cs" />
+	  <!--currently not supported
+	  <Compile Include="Duplicate.Different.cs" />
+	  -->
+	  <Compile Include="AddedInIncoming.cs" />
+	  <Compile Include="AddedInBoth\Identical.cs" />
+	  
+	  <Compile Include="Properties\AssemblyInfo.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="app.config" />
+		<None Include="packages.config" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.UnChanged.csproj">
+			<Project>{00000000-0000-0000-0000-000000000001}</Project>
+			<Name>CsMerge.OtherProject.UnChanged</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.DeleteInLocal.csproj">
+			<Project>{00000000-0000-0000-0000-000000000003}</Project>
+			<Name>CsMerge.OtherProject.DeleteInLocal</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.DeleteLocalUpdateIncoming.csproj">
+			<Project>{00000000-0000-0000-0000-000000000006}</Project>
+			<Name>CsMerge.OtherProject.DeleteLocalUpdateIncoming.Incoming</Name>
+		</ProjectReference>		
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.UpdateLocal.csproj">
+			<Project>{00000000-0000-0000-0000-000000000007}</Project>
+			<Name>CsMerge.OtherProject.UpdateLocal</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.UpdateIncoming.csproj">
+			<Project>{00000000-0000-0000-0000-000000000008}</Project>
+			<Name>CsMerge.OtherProject.UpdateIncoming.Incoming</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.UpdateIncomingAndLocal.Identical.csproj">
+			<Project>{00000000-0000-0000-0000-000000000009}</Project>
+			<Name>CsMerge.OtherProject.UpdateIncomingAndLocal.Identical.Updated</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.UpdateIncomingAndLocal.Different.csproj">
+			<Project>{00000000-0000-0000-0000-000000000010}</Project>
+			<Name>CsMerge.OtherProject.UpdateIncomingAndLocal.Different.Incoming</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.Duplicate.Identical.csproj">
+			<Project>{00000000-0000-0000-0000-000000000011}</Project>
+			<Name>CsMerge.OtherProject.Duplicate.Identical</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.Duplicate.Identical.csproj">
+			<Project>{00000000-0000-0000-0000-000000000011}</Project>
+			<Name>CsMerge.OtherProject.Duplicate.Identical</Name>
+		</ProjectReference>
+    <!--Currently not supported
+    <ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.Duplicate.Different.csproj">
+			<Project>{00000000-0000-0000-0000-000000000012}</Project>
+			<Name>CsMerge.OtherProject.Duplicate.Different.Incoming1</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.Duplicate.Different.csproj">
+			<Project>{00000000-0000-0000-0000-000000000012}</Project>
+			<Name>CsMerge.OtherProject.Duplicate.Different.Incoming2</Name>
+		</ProjectReference>	
+    -->
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.AddedInIncoming.csproj">
+			<Project>{00000000-0000-0000-0000-000000000021}</Project>
+			<Name>CsMerge.OtherProject.AddedInIncoming</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.AddedInBoth.Identical.csproj">
+			<Project>{00000000-0000-0000-0000-000000000022}</Project>
+			<Name>CsMerge.OtherProject.AddedInLocal.Identical</Name>
+		</ProjectReference>
+		<ProjectReference Include="..\..\OtherProjects\CsMerge.OtherProject.AddedInBoth.Different.csproj">
+			<Project>{00000000-0000-0000-0000-000000000023}</Project>
+			<Name>CsMerge.OtherProject.AddedInLocal.Identical.Incoming</Name>
+		</ProjectReference>
+	</ItemGroup>
+	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+	<!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
+
+

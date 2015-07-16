@@ -1,147 +1,173 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-
+﻿using System.Linq;
 using CsMerge;
 using CsMerge.Core;
-
 using LibGit2Sharp;
-
 using NUnit.Framework;
+using PackagesMerge.Test.Resolvers;
 
 namespace PackagesMerge.Test {
   [TestFixture]
   public class PackagesMergeTest {
 
+    private Package[] _packageV0;
+    private Package[] _packageV1;
+    private Package[] _packageV2;
+    private Package[] _packageV2Net46;
+    private Package[] _packageEmpty;
+
+    private static Package[] CreatePackage( string id, string targetFramework, string allowedVersions, params int[] versionComponents ) {
+      return new[] {
+        new Package( id, new PackageVersion( versionComponents ), targetFramework, allowedVersions ), 
+      };
+    }
+
+    [TestFixtureSetUp]
+    public void TestFixtureSetUp() {
+      _packageV0 = CreatePackage( "MP", ".net45", null, 1, 0, 0 );
+      _packageV1 = CreatePackage( "MP", ".net45", null, 1, 0, 1 );
+      _packageV2 = CreatePackage( "MP", ".net45", null, 1, 0, 2 );
+      _packageV2Net46 = CreatePackage( "MP", ".net46", null, 1, 0, 2 );
+      _packageEmpty = new Package[0];
+    }
+
     [Test]
     public void NoChanges() {
-      var allowedVersions = new PackageVersion( 1, 0, 0 );
 
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP", allowedVersions, ".net45" ) },
-        new[] { new Package( "MP", allowedVersions, ".net45" ) },
-        new[] { new Package( "MP", allowedVersions, ".net45" ) }, pc => pc.Local
-      ).ToList();
+      var resolver = new ExceptionResolver<Package>();
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP", allowedVersions, ".net45" )
-      } ) );
+      var result = merger.Merge( _packageV0, _packageV0, _packageV0 ).ToList();
+
+      Assert.That( result, Is.EquivalentTo( _packageV0 ) );
     }
 
     [Test]
     public void TheirsUpdated() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        pc => { throw new Exception( "Resolver was called but shouldn't have been." ); } // This should be auto resolved without calling the resolver.
-      ).ToList();
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" )
-      } ));
+      var resolver = new ExceptionResolver<Package>();
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageV0, _packageV1 ).ToList();
+
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
 
     [Test]
     public void MineUpdated() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) }, 
-        pc => { throw new Exception( "Resolver was called but shouldn't have been." ); } // This should be auto resolved without calling the resolver.
-      ).ToList();
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" )
-      } ) );
+      var resolver = new ExceptionResolver<Package>();
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageV1, _packageV0 ).ToList();
+
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
-    
-    [Test]
-    public void TheirsAndMineUpdated() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 2 ), ".net45" ) }, pc => pc.Local
-      ).ToList();
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP",  new PackageVersion( 1, 0, 2 ), ".net45" )
-      } ) );
+    [Test]
+    public void BothUpdatedAutoResolved() {
+
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      // CurrentOperation.Merge causes local to be set to mine
+      var result = merger.Merge( _packageV0, _packageV1, _packageV2 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( false ) );
+      Assert.That( result, Is.EquivalentTo( _packageV2 ) );
+    }
+
+    [Test]
+    public void BothUpdated() {
+
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      // CurrentOperation.Merge causes local to be set to mine
+      var result = merger.Merge( _packageV0, _packageV1, _packageV2Net46 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
 
     [Test]
     public void TheirsDeletedMineUpdated_ResolveMine() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new Package[0],
-        pc => pc.Local
-      ).ToList();
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" )
-      } ) );
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageV1, _packageEmpty ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
 
     [Test]
     public void TheirsDeletedMineUpdated_ResolveTheirs() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new Package[0],
-        pc => pc.Incoming
-      ).ToList();
 
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageV1, _packageEmpty ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.Empty );
     }
 
     [Test]
     public void MineDeletedTheirsUpdated_ResolveTheirs() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new Package[0],
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        pc => pc.Incoming
-      ).ToList();
 
-      Assert.That( result, Is.EquivalentTo( new[] {
-        new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" )
-      } ));
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageEmpty, _packageV1 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
 
     [Test]
     public void MineDeletedTheirsUpdated_ResolveMine() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 0 ), ".net45" ) },
-        new Package[0],
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        pc => pc.Local
-      ).ToList();
 
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV0, _packageEmpty, _packageV1 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.Empty );
     }
 
     [Test]
-    public void BothAdded() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new Package[0],
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 2 ), ".net45" ) },
-        pc => pc.Local
-      ).ToList();
+    public void BothAddedAutoResolved() {
 
-      Assert.That( result, Is.EquivalentTo(
-        new[] { new Package( "MP", new PackageVersion( 1, 0, 2 ), ".net45" ) } ) );
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageEmpty, _packageV1, _packageV2 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( false ) );
+      Assert.That( result, Is.EquivalentTo( _packageV2 ) ); // Auto resolved to highest version
+    }
+
+    [Test]
+    public void BothAddedUserResolved() {
+
+      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageEmpty, _packageV1, _packageV2Net46 ).ToList();
+
+      Assert.That( resolver.Called, Is.EqualTo( true ) );
+      Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
 
     [Test]
     public void BothDeleted() {
-      var result = new PackagesConfigMerger( CurrentOperation.Merge ).Merge(
-        new[] { new Package( "MP",  new PackageVersion( 1, 0, 1 ), ".net45" ) },
-        new Package[0],
-        new Package[0],
-        pc => pc.Local
-      ).ToList();
+
+      var resolver = new ExceptionResolver<Package>();
+      var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
+
+      var result = merger.Merge( _packageV1, _packageEmpty, _packageEmpty ).ToList();
 
       Assert.That( result, Is.Empty );
     }

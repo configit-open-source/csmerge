@@ -43,7 +43,9 @@ namespace CsMerge.Core {
 
     public override int GetHashCode() {
       unchecked {
-        return ( ( Element != null ? Element.GetHashCode() : 0 ) * 397 ) ^ ( _key != null ? _key.GetHashCode() : 0 );
+        var hashCode = string.IsNullOrEmpty( Action ) ? 0 : Action.GetHashCode();
+        hashCode = ( hashCode * 397 ) ^ ( string.IsNullOrEmpty( Key ) ? 0 : Key.GetHashCode() );
+        return hashCode;
       }
     }
 
