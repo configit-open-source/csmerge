@@ -13,11 +13,11 @@ namespace CsMerge.Core.Parsing {
 
     public static ProjectFile Parse( string name, XDocument doc ) {
       if ( doc == null || doc.Root == null ) {
-        throw new ArgumentException( "Stream did not contain a valid XML document", "from" );
+        throw new ArgumentException( "Stream did not contain a valid XML document", "doc" );
       }
 
       if ( doc.Root.Name.LocalName != "Project" ) {
-        throw new ArgumentException( "Stream did not contain a project", "from" );
+        throw new ArgumentException( "Stream did not contain a project", "doc" );
       }
 
       return new ProjectFile(
@@ -27,14 +27,23 @@ namespace CsMerge.Core.Parsing {
     }
 
     private static ItemGroup ParseItemGroup( XElement itemGroupElement ) {
-      return new ItemGroup( itemGroupElement.Elements().Select( ParseItem ).Where( i => i != null ).ToList().AsReadOnly() );
+      return new ItemGroup(
+        itemGroupElement
+          .Elements()
+          .Select( ParseItem )
+          .Where( i => i != null )
+          .ToList()
+          .AsReadOnly() );
     }
 
     private static Item ParseItem( XElement itemElement ) {
+
       var includeAttribute = itemElement.Attribute( "Include" );
+
       if ( includeAttribute == null ) {
         return null;
       }
+
       var include = includeAttribute.Value;
 
       var xNamespace = itemElement.Name.Namespace;
@@ -42,10 +51,13 @@ namespace CsMerge.Core.Parsing {
       switch ( itemElement.Name.LocalName ) {
         case "Reference":
           return new Reference( itemElement );
+
         case "ProjectReference":
           return new ProjectReference( include,
                                        Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
                                        itemElement.Element( xNamespace.GetName( "Name" ) ).Value );
+        //case "Compile":
+        //  return new FileIncludeItem( itemElement, include );
         default:
           return new RawItem( itemElement, include );
       }

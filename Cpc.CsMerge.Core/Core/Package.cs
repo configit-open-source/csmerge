@@ -7,7 +7,11 @@ using System.Xml;
 using System.Xml.Linq;
 
 namespace CsMerge.Core {
-  public class Package: IEquatable<Package>, IKeyedEntry {
+  public class Package: IEquatable<Package>, IConflictableItem {
+
+    public bool IsResolveOption {
+      get { return true; }
+    }
 
     public bool Equals( Package other ) {
       if ( ReferenceEquals( other, null ) ) {
@@ -49,7 +53,7 @@ namespace CsMerge.Core {
 
     public override int GetHashCode() {
       unchecked {
-        var hashCode = ( TargetFramework != null ? TargetFramework.GetHashCode() : 0 );
+        var hashCode = TargetFramework != null ? TargetFramework.GetHashCode() : 0;
         hashCode = ( hashCode * 397 ) ^ ( Id != null ? Id.GetHashCode() : 0 );
         hashCode = ( hashCode * 397 ) ^ ( AllowedVersions != null ? AllowedVersions.GetHashCode() : 0 );
         hashCode = ( hashCode * 397 ) ^ ( UserInstalled != null ? UserInstalled.GetHashCode() : 0 );
@@ -69,6 +73,15 @@ namespace CsMerge.Core {
       TargetFramework = targetFramework;
 
       UserInstalled = userInstalled;
+    }
+
+    public Package Clone() {
+      return new Package(
+        Id,
+        Version,
+        TargetFramework,
+        AllowedVersions,
+        UserInstalled );
     }
 
     public static IEnumerable<Package> Read( string path ) {
@@ -182,7 +195,7 @@ namespace CsMerge.Core {
     public override string ToString() {
       StringBuilder s = new StringBuilder();
       if ( !string.IsNullOrEmpty( Id ) ) {
-        s.AppendLine( "Id: " + Id  );
+        s.AppendLine( "Id: " + Id );
       }
       if ( Version != null ) {
         s.AppendLine( "Version:" + Version + " " );

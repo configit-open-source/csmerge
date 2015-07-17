@@ -1,19 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 
-using CsMerge.Core;
-
-namespace CsMerge {
+namespace CsMerge.Core {
 
   /// <summary>
   /// Information about what packages are installed, and the location of the package folder.
   /// </summary>
-  public class ProjectPackages : IEnumerable<Package> {
+  public class ProjectPackages: IEnumerable<Package> {
     private readonly string _packagesPrefix;
 
     private readonly IDictionary<string, Package> _packages;
@@ -26,15 +22,14 @@ namespace CsMerge {
     }
 
     public bool IsPackageReference( Reference reference ) {
-      return reference.HintPath != null && reference.HintPath.StartsWith( _packagesPrefix );
+      // Correctly installed nuget package references have a hintpath
+      return reference.HintPath != null && reference.HintPath.StartsWith( _packagesPrefix, StringComparison.InvariantCultureIgnoreCase );
     }
 
     public bool IsPackageInstalled( Reference reference ) {
-      if ( reference.HintPath == null ) {
-        return false; // Correctly installed nuget package references have a hintpath
+      if ( !IsPackageReference( reference ) ) {
+        return false;
       }
-
-      Debug.Assert( reference.HintPath.StartsWith( _packagesPrefix ) );
 
       var referencedPackage = PackageFromHintPath( reference );
 
@@ -58,15 +53,7 @@ namespace CsMerge {
       return referencedPackage;
     }
 
-    private static readonly Regex PackageNameParser = new Regex(
-      @"(^(?<id>\w*)\.(?<version>((\d)\.*)+)$)",
-
-      RegexOptions.ExplicitCapture |
-      RegexOptions.Compiled |
-      RegexOptions.CultureInvariant );
-
     public static Package PackageFromFolderName( string packageFolderName ) {
-
 
       var parts = packageFolderName.Split( '.' ).ToList();
 
@@ -74,8 +61,8 @@ namespace CsMerge {
 
       if ( versionStartIndex < 0 ) {
         throw new ArgumentException( "Unknown package folder name format.", packageFolderName );
-      } 
-        
+      }
+
       var id = string.Join( ".", parts.Take( versionStartIndex ) );
       var versionString = string.Join( ".", parts.Skip( versionStartIndex ) );
       var packageVersion = PackageVersion.Parse( versionString );

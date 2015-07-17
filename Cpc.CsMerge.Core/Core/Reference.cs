@@ -1,22 +1,49 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Linq;
 
 namespace CsMerge.Core {
   public class Reference: Item {
-    public string Include { get; private set; }
 
+    public string Include { get; set; }
     public AssemblyName ReferenceAssemblyName { get { return new AssemblyName( Include ); } }
     public bool? SpecificVersion { get; private set; }
     public string HintPath { get; private set; }
     public bool? Private { get; private set; }
     public string RequiredTargetFramework { get; private set; }
+    public string Name { get; private set; }
+    public bool? EmbedInteropTypes { get; private set; }
+    public string Aliases { get; private set; }
+    public string FusionName { get; private set; }
 
     public override string Key {
-      get { return Include; }
+      get { return ReferenceAssemblyName.Name; }
     }
 
     public override string ToString() {
-      return "Reference to " + Include;
+
+      var propertyNames = new List<string>();
+
+      propertyNames.Add( Include );
+      AddIfNotNull( propertyNames, HintPath, "HintPath" );
+      AddIfNotNull( propertyNames, Private, "Private" );
+      AddIfNotNull( propertyNames, SpecificVersion, "SpecificVersion" );
+      AddIfNotNull( propertyNames, RequiredTargetFramework, "RequiredTargetFramework" );
+
+      return string.Join( Environment.NewLine, propertyNames );
+    }
+
+    private static void AddIfNotNull( List<string> propertyNames, object propertyValue, string propertyName = null ) {
+      if ( propertyValue == null ) {
+        return;
+      }
+
+      var text = string.IsNullOrEmpty( propertyName ) ?
+        propertyValue.ToString() :
+        string.Format( "{0}: {1}", propertyName, propertyValue );
+
+      propertyNames.Add( text );
     }
 
     public override bool Equals( Item other ) {
@@ -68,7 +95,7 @@ namespace CsMerge.Core {
 
     public override int GetHashCode() {
       unchecked {
-        var hashCode = ( HintPath != null ? HintPath.GetHashCode() : 0 );
+        var hashCode = HintPath != null ? HintPath.GetHashCode() : 0;
         hashCode = ( hashCode * 397 ) ^ SpecificVersion.GetHashCode();
         hashCode = ( hashCode * 397 ) ^ ( Include != null ? Include.GetHashCode() : 0 );
         return hashCode;
@@ -87,19 +114,32 @@ namespace CsMerge.Core {
       HintPath = itemElement.SameNsElement( "HintPath" ).GetValueOrNull();
     }
 
-    public string Name { get; private set; }
-
-    public bool? EmbedInteropTypes { get; private set; }
-
-    public string Aliases { get; private set; }
-
-    public string FusionName { get; private set; }
-
     public Reference( string include, bool? specificVersion, bool? @private, string hintPath ) {
       Include = include;
       SpecificVersion = specificVersion;
       Private = @private;
       HintPath = hintPath;
     }
+
+    private Reference() { }
+
+    public Reference Clone() {
+      return new Reference {
+        Include = Include,
+        SpecificVersion = SpecificVersion,
+        Private = Private,
+        HintPath = HintPath,
+        Aliases = Aliases,
+        EmbedInteropTypes = EmbedInteropTypes,
+        FusionName = FusionName,
+        Name = Name,
+        RequiredTargetFramework = RequiredTargetFramework,
+      };
+    }
+
+    public void ApplyIsResolveOption( ProjectPackages projectPackages ) {
+      IsResolveOption = !projectPackages.IsPackageReference( this ) || projectPackages.IsPackageInstalled( this );
+    }
+
   }
 }

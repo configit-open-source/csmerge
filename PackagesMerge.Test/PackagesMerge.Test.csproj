@@ -50,9 +50,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ProjectMergerTest.cs" />
+    <Compile Include="PackageConflictResolverTest.cs" />
+    <Compile Include="Resolvers\TestConflictResolver.cs" />
     <Compile Include="PackageParseTest.cs" />
     <Compile Include="PackagesMergeTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resolvers\ExceptionResolver.cs" />
+    <Compile Include="Resolvers\TestDuplicateResolver.cs" />
+    <Compile Include="ResourceHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cpc.CsMerge.Core\CsMerge.Core.csproj">
@@ -68,10 +74,15 @@
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="TestFiles\Incoming.csproj" />
+    <EmbeddedResource Include="TestFiles\Local.csproj" />
+    <EmbeddedResource Include="TestFiles\Base.csproj" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="TestFiles\packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

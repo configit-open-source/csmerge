@@ -4,13 +4,11 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace CsMerge.Core {
-  /// <summary>
-  /// 
-  /// </summary>
-  public sealed class PackageVersion : IComparable<PackageVersion>, IComparable {
+  
+  public sealed class PackageVersion: IComparable<PackageVersion>, IComparable {
     public List<uint> VersionComponents { get; set; }
 
-    private static readonly Regex parseEx =
+    private static readonly Regex ParseEx =
       new Regex(
         @"^(?<major>\d+)(\.(?<component>\d+))*"
         + @"(\-(?<pre>[0-9A-Za-z\-\.]+))?"
@@ -44,7 +42,7 @@ namespace CsMerge.Core {
     /// <returns>The SemVersion object.</returns>
     /// <exception cref="System.InvalidOperationException">When a invalid version string is passed.</exception>
     public static PackageVersion Parse( string version ) {
-      var match = parseEx.Match( version );
+      var match = ParseEx.Match( version );
       if ( !match.Success ) {
         throw new ArgumentException( "Invalid version.", "version" );
       }
@@ -82,8 +80,7 @@ namespace CsMerge.Core {
       try {
         semver = Parse( version );
         return true;
-      }
-      catch ( Exception ) {
+      } catch ( Exception ) {
         semver = null;
         return false;
       }
@@ -117,8 +114,7 @@ namespace CsMerge.Core {
       }
       return versionA.CompareTo( versionB );
     }
-
-
+    
     /// <summary>
     ///   Gets the pre-release version.
     /// </summary>
@@ -145,7 +141,7 @@ namespace CsMerge.Core {
       var version = "";
 
       version = string.Join( ".", VersionComponents );
-      
+
       if ( !string.IsNullOrEmpty( Prerelease ) ) {
         version += "-" + Prerelease;
       }
@@ -169,7 +165,7 @@ namespace CsMerge.Core {
     ///   Greater than zero This instance follows <paramref name="obj" /> in the sort order.
     /// </returns>
     public int CompareTo( object obj ) {
-      return CompareTo( (PackageVersion)obj );
+      return CompareTo( (PackageVersion) obj );
     }
 
     /// <summary>
@@ -322,10 +318,10 @@ namespace CsMerge.Core {
       unchecked {
         var result = 1;
         for ( int i = 0; i < VersionComponents.Count; i++ ) {
-          result *= result * 31 + i;
+          result *= ( result * 31 ) + i;
         }
-        result = result * 31 + Prerelease.GetHashCode();
-        result = result * 31 + Build.GetHashCode();
+        result = ( result * 31 ) + Prerelease.GetHashCode();
+        result = ( result * 31 ) + Build.GetHashCode();
         return result;
       }
     }
