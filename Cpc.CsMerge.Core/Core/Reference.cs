@@ -26,24 +26,12 @@ namespace CsMerge.Core {
       var propertyNames = new List<string>();
 
       propertyNames.Add( Include );
-      AddIfNotNull( propertyNames, HintPath, "HintPath" );
-      AddIfNotNull( propertyNames, Private, "Private" );
-      AddIfNotNull( propertyNames, SpecificVersion, "SpecificVersion" );
-      AddIfNotNull( propertyNames, RequiredTargetFramework, "RequiredTargetFramework" );
+      propertyNames.AddPropertyIfNotNull( HintPath, "HintPath" );
+      propertyNames.AddPropertyIfNotNull( Private, "Private" );
+      propertyNames.AddPropertyIfNotNull( SpecificVersion, "SpecificVersion" );
+      propertyNames.AddPropertyIfNotNull( RequiredTargetFramework, "RequiredTargetFramework" );
 
       return string.Join( Environment.NewLine, propertyNames );
-    }
-
-    private static void AddIfNotNull( List<string> propertyNames, object propertyValue, string propertyName = null ) {
-      if ( propertyValue == null ) {
-        return;
-      }
-
-      var text = string.IsNullOrEmpty( propertyName ) ?
-        propertyValue.ToString() :
-        string.Format( "{0}: {1}", propertyName, propertyValue );
-
-      propertyNames.Add( text );
     }
 
     public override bool Equals( Item other ) {

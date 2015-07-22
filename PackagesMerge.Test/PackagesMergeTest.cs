@@ -36,7 +36,7 @@ namespace PackagesMerge.Test {
       var resolver = new ExceptionResolver<Package>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageV0, _packageV0 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV0, _packageV0 ).ToList();
 
       Assert.That( result, Is.EquivalentTo( _packageV0 ) );
     }
@@ -47,7 +47,7 @@ namespace PackagesMerge.Test {
       var resolver = new ExceptionResolver<Package>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageV0, _packageV1 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV0, _packageV1 ).ToList();
 
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
@@ -58,7 +58,7 @@ namespace PackagesMerge.Test {
       var resolver = new ExceptionResolver<Package>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageV1, _packageV0 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageV0 ).ToList();
 
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
@@ -70,7 +70,7 @@ namespace PackagesMerge.Test {
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       // CurrentOperation.Merge causes local to be set to mine
-      var result = merger.Merge( _packageV0, _packageV1, _packageV2 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageV2 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( false ) );
       Assert.That( result, Is.EquivalentTo( _packageV2 ) );
@@ -83,7 +83,7 @@ namespace PackagesMerge.Test {
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       // CurrentOperation.Merge causes local to be set to mine
-      var result = merger.Merge( _packageV0, _packageV1, _packageV2Net46 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageV2Net46 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
@@ -95,7 +95,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageV1, _packageEmpty ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageEmpty ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
@@ -107,7 +107,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageV1, _packageEmpty ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageEmpty ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.Empty );
@@ -119,7 +119,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageEmpty, _packageV1 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageEmpty, _packageV1 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
@@ -131,7 +131,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV0, _packageEmpty, _packageV1 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV0, _packageEmpty, _packageV1 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.Empty );
@@ -143,7 +143,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageEmpty, _packageV1, _packageV2 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageEmpty, _packageV1, _packageV2 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( false ) );
       Assert.That( result, Is.EquivalentTo( _packageV2 ) ); // Auto resolved to highest version
@@ -155,7 +155,7 @@ namespace PackagesMerge.Test {
       var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageEmpty, _packageV1, _packageV2Net46 ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageEmpty, _packageV1, _packageV2Net46 ).ToList();
 
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
@@ -167,7 +167,7 @@ namespace PackagesMerge.Test {
       var resolver = new ExceptionResolver<Package>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
-      var result = merger.Merge( _packageV1, _packageEmpty, _packageEmpty ).ToList();
+      var result = merger.Merge( "TestFilePath", _packageV1, _packageEmpty, _packageEmpty ).ToList();
 
       Assert.That( result, Is.Empty );
     }

@@ -39,5 +39,17 @@ namespace CsMerge.Core {
     public static bool IsOptionValid<T>( this T item ) where T: IConflictableItem {
       return item == null || item.IsResolveOption;
     }
+
+    public static void AddPropertyIfNotNull( this List<string> propertyNames, object propertyValue, string propertyName = null ) {
+      if ( propertyValue == null ) {
+        return;
+      }
+
+      var text = string.IsNullOrEmpty( propertyName ) ?
+        propertyValue.ToString() :
+        string.Format( "{0}: {1}", propertyName, propertyValue );
+
+      propertyNames.Add( text );
+    }
   }
 }

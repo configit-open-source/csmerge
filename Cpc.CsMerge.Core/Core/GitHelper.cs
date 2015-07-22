@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 using LibGit2Sharp;
 using NLog;
@@ -83,18 +85,18 @@ namespace CsMerge.Core {
      string fullConflictPath,
      XDocument baseContent,
      XDocument localContent,
-     XDocument theirContent,
+     XDocument incomingContent,
      Logger logger,
      string conflict ) {
 
       // Run the standard mergetool to deal with any remaining issues.
       var basePath = fullConflictPath + "_base";
       var localPath = fullConflictPath + "_local";
-      var incomingPath = fullConflictPath + "_theirs";
+      var incomingPath = fullConflictPath + "_incoming";
 
-      Package.WriteXml( basePath, baseContent );
-      Package.WriteXml( localPath, localContent );
-      Package.WriteXml( incomingPath, theirContent );
+      baseContent.WriteXml( basePath );
+      localContent.WriteXml( localPath );
+      incomingContent.WriteXml( incomingPath );
 
       if ( RunStandardMergetool( repository, basePath, localPath, incomingPath, fullConflictPath ) == 0 ) {
         // The merge tool reports that the conflict was resolved
@@ -110,6 +112,72 @@ namespace CsMerge.Core {
 
       File.Delete( basePath );
       File.Delete( incomingPath );
+    }
+
+    public static XElement ResolveWithStandardMergetool(
+     string repositoryRootDirectory,
+     string key,
+     IEnumerable<XElement> baseElements,
+     IEnumerable<XElement> localElements,
+     IEnumerable<XElement> incomingElements,
+     Logger logger = null ) {
+
+      // Run the standard mergetool to merge an item.
+
+      var rootPath = Path.Combine( Path.GetTempPath(), Guid.NewGuid().ToString(), key );
+
+      Directory.CreateDirectory( rootPath );
+
+      var basePath = Path.Combine( rootPath, "Base.tmp" );
+      var localPath = Path.Combine( rootPath, "Local.tmp" );
+      var incomingPath = Path.Combine( rootPath, "Incoming.tmp" );
+      var resolvedPath = Path.Combine( rootPath, "resolved.tmp" );
+
+      var settings = SerialisationHelper.DefaultWriterSettings();
+      settings.OmitXmlDeclaration = true;
+      settings.ConformanceLevel = ConformanceLevel.Fragment;
+
+      baseElements.WriteXml( basePath, settings );
+      localElements.WriteXml( localPath, settings );
+      incomingElements.WriteXml( incomingPath, settings );
+
+      try {
+
+        int returnCode;
+
+        using ( var repository = new Repository( repositoryRootDirectory ) ) {
+          returnCode = RunStandardMergetool( repository, basePath, localPath, incomingPath, resolvedPath );
+        }
+
+        if ( returnCode == 0 ) {
+          // The merge tool reports that the conflict was resolved
+          if ( logger != null ) {
+            logger.Info( "Resolved " + key + " using standad merge tool" );
+          }
+
+          var xml = File.ReadAllText( resolvedPath );
+
+          if ( string.IsNullOrWhiteSpace( xml ) ) {
+            return null;
+          }
+
+          var resolvedElement = XElement.Parse( xml );
+
+          return resolvedElement;
+
+        } else {
+          if ( logger != null ) {
+            logger.Info( "Did not resolve " + key );
+          }
+          throw new OperationCanceledException();
+        }
+      } finally {
+        File.Delete( basePath );
+        File.Delete( incomingPath );
+        File.Delete( localPath );
+        File.Delete( resolvedPath );
+        Directory.Delete( rootPath );
+      }
     }
 
   }

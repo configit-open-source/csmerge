@@ -27,6 +27,7 @@ namespace CsMerge.Core {
     /// Merge prefering newest packages.
     /// </summary>
     public IEnumerable<Package> Merge(
+      string filePath,
       IEnumerable<Package> @base,
       IEnumerable<Package> mine,
       IEnumerable<Package> theirs ) {
@@ -35,7 +36,7 @@ namespace CsMerge.Core {
       var myIds = GetIndex( mine );
       var theirIds = GetIndex( theirs );
 
-      return MergeHelper<Package>.MergeAll( _operation, baseIds, myIds, theirIds, _packageConflictResolver );
+      return MergeHelper<Package>.MergeAll( filePath, _operation, baseIds, myIds, theirIds, _packageConflictResolver );
     }
 
     private IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {

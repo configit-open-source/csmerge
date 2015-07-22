@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using CsMerge.Core.Parsing;
@@ -40,7 +41,7 @@ namespace CsMerge.Core {
       _projectReferenceResolver = projectReferenceResolver;
     }
 
-    private IEnumerable<Reference> MergeReferences( IEnumerable<Reference> baseRefs, IEnumerable<Reference> localRefs, IEnumerable<Reference> incomingRefs ) {
+    private IEnumerable<Reference> MergeReferences( string filePath, IEnumerable<Reference> baseRefs, IEnumerable<Reference> localRefs, IEnumerable<Reference> incomingRefs ) {
 
       var baseRefsList = baseRefs.Distinct().ToList();
       var localRefsList = localRefs.Distinct().ToList();
@@ -62,7 +63,7 @@ namespace CsMerge.Core {
       }
 
       var mergedDuplicates = duplicateKeys.Any() ?
-        MergeHelper<Reference>.MergeAllDuplicates( _operation, baseDuplicates, localDuplicates, incomingDuplicates, _referenceResolver, _duplicateReferenceResolver ) :
+        MergeHelper<Reference>.MergeAllDuplicates( filePath, _operation, baseDuplicates, localDuplicates, incomingDuplicates, _referenceResolver, _duplicateReferenceResolver ) :
         new List<Reference>();
 
       // Discard packages that are no longer installed 
@@ -70,7 +71,7 @@ namespace CsMerge.Core {
       var localByName = localRefsList.Where( r => !duplicateKeys.Contains( r.Key ) ).ToKeyedDictionary();
       var theirByName = incomingRefsList.Where( r => !duplicateKeys.Contains( r.Key ) ).ToKeyedDictionary();
 
-      var mergedNonDuplicates = MergeHelper<Reference>.MergeAll( _operation, baseByName, localByName, theirByName, _referenceResolver );
+      var mergedNonDuplicates = MergeHelper<Reference>.MergeAll( filePath, _operation, baseByName, localByName, theirByName, _referenceResolver );
 
       return mergedNonDuplicates.Union( mergedDuplicates );
     }
@@ -90,17 +91,20 @@ namespace CsMerge.Core {
     /// <param name="baseDocument">The base project xml</param>
     /// <param name="localDocument">The local project xml</param>
     /// <param name="incomingDocument">The incoming project xml</param>
+    /// <param name="filePath">The file containing the conflicts being merged</param>
     /// <returns>Returns the merged items</returns>
     public IEnumerable<Item> Merge(
-      string name,
+      string filePath,
       ProjectPackages projectPackages,
       XDocument baseDocument,
       XDocument localDocument,
       XDocument incomingDocument ) {
 
-      var localProj = CsProjParser.Parse( name, localDocument );
-      var theirProj = CsProjParser.Parse( name, incomingDocument );
-      var baseProj = CsProjParser.Parse( name, baseDocument );
+      var projFileName = Path.GetFileName( filePath );
+
+      var localProj = CsProjParser.Parse( projFileName, localDocument );
+      var theirProj = CsProjParser.Parse( projFileName, incomingDocument );
+      var baseProj = CsProjParser.Parse( projFileName, baseDocument );
 
       var localItems = localProj.GetItemsDictionary<RawItem>();
       var theirItems = theirProj.GetItemsDictionary<RawItem>();
@@ -118,9 +122,9 @@ namespace CsMerge.Core {
       theirRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
       baseRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
 
-      var resolvedItems = MergeHelper<RawItem>.MergeAll( _operation, baseItems, localItems, theirItems, _itemResolver );
-      var resolvedReferences = MergeReferences( baseRefs, localRefs, theirRefs );
-      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll( _operation, baseProjectRefs, localProjectRefs, theirProjectRefs, _projectReferenceResolver );
+      var resolvedItems = MergeHelper<RawItem>.MergeAll( filePath, _operation, baseItems, localItems, theirItems, _itemResolver );
+      var resolvedReferences = MergeReferences( filePath, baseRefs, localRefs, theirRefs );
+      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll( filePath, _operation, baseProjectRefs, localProjectRefs, theirProjectRefs, _projectReferenceResolver );
 
       return resolvedItems.Cast<Item>().Concat( resolvedReferences ).Concat( resolvedProjectReferences );
     }

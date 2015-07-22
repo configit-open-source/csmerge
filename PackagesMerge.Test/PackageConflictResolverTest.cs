@@ -27,7 +27,7 @@ namespace PackagesMerge.Test {
 
       PackageConflictResolver resolver = new PackageConflictResolver( new ExceptionResolver<Package>() );
 
-      var conflict = new Conflict<Package>( PackageKey, _packageV0, _packageV1, _packageV2 );
+      var conflict = new Conflict<Package>( "TestFilePath", PackageKey, _packageV0, _packageV1, _packageV2 );
 
       var result = resolver.Resolve( conflict );
 
@@ -41,7 +41,7 @@ namespace PackagesMerge.Test {
 
       PackageConflictResolver resolver = new PackageConflictResolver( defaultResolver );
 
-      var conflict = new Conflict<Package>( PackageKey, _packageV0, _packageV1, _packageV2UserInstalled );
+      var conflict = new Conflict<Package>( "TestFilePath", PackageKey, _packageV0, _packageV1, _packageV2UserInstalled );
 
       var result = resolver.Resolve( conflict );
 

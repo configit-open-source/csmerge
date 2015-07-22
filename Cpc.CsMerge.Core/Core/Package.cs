@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -75,6 +74,22 @@ namespace CsMerge.Core {
       UserInstalled = userInstalled;
     }
 
+    public Package( XElement packageXml ) {
+      var versionAttribute = packageXml.Attribute( "version" );
+
+      var allowedVersionAttribute = packageXml.Attribute( "allowedVersions" );
+      var targetFrameworkAttribute = packageXml.Attribute( "targetFramework" );
+      var userInstalledAttribute = packageXml.Attribute( "userInstalled" );
+
+      var userInstalled = userInstalledAttribute != null ? userInstalledAttribute.Value : null;
+
+      Id = packageXml.Attribute( "id" ).Value;
+      Version = versionAttribute != null ? PackageVersion.Parse( versionAttribute.Value ) : null;
+      TargetFramework = targetFrameworkAttribute != null ? targetFrameworkAttribute.Value : null;
+      AllowedVersions = allowedVersionAttribute != null ? allowedVersionAttribute.Value : null;
+      UserInstalled = ParseNullableBool( userInstalled );
+    }
+
     public Package Clone() {
       return new Package(
         Id,
@@ -96,12 +111,6 @@ namespace CsMerge.Core {
       return Read( new StringReader( content ) );
     }
 
-    public static void Write( IEnumerable<Package> packages, string path ) {
-      using ( var fw = new StreamWriter( path ) ) {
-        Write( packages, fw );
-      }
-    }
-
     public static IEnumerable<Package> Parse( string content ) {
       if ( string.IsNullOrEmpty( content ) ) {
         return new Package[0];
@@ -114,17 +123,7 @@ namespace CsMerge.Core {
     public static IEnumerable<Package> Read( TextReader reader ) {
       var xml = XElement.Load( reader );
 
-      return from packageXml in xml.Elements( "package" )
-             let versionAttribute = packageXml.Attribute( "version" )
-             let allowedVersionAttribute = packageXml.Attribute( "allowedVersions" )
-             let targetFrameworkAttribute = packageXml.Attribute( "targetFramework" )
-             let userInstalledAttribute = packageXml.Attribute( "userInstalled" )
-             let id = packageXml.Attribute( "id" ).Value
-             let versions = versionAttribute != null ? PackageVersion.Parse( versionAttribute.Value ) : null
-             let allowedVersions = allowedVersionAttribute != null ? allowedVersionAttribute.Value : null
-             let targetFramework = targetFrameworkAttribute != null ? targetFrameworkAttribute.Value : null
-             let userInstalled = userInstalledAttribute != null ? userInstalledAttribute.Value : null
-             select new Package( id, versions, targetFramework, allowedVersions, ParseNullableBool( userInstalled ) );
+      return xml.Elements( "package" ).Select( e => new Package( e ) );
     }
 
     private static bool? ParseNullableBool( string s ) {
@@ -133,54 +132,6 @@ namespace CsMerge.Core {
         return parsed;
       }
       return null;
-    }
-
-    public static void Write( IEnumerable<Package> packages, TextWriter writer, XmlWriterSettings settings = null ) {
-      XElement element = new XElement( "packages" );
-      foreach ( var package in packages ) {
-        var packagesElement = new XElement( "package", new XAttribute( "id", package.Id ) );
-
-        if ( package.Version != null ) {
-          packagesElement.Add( new XAttribute( "version", package.Version ) );
-        }
-
-        if ( package.AllowedVersions != null ) {
-          packagesElement.Add( new XAttribute( "allowedVersions", package.AllowedVersions ) );
-        }
-
-        if ( !string.IsNullOrEmpty( package.TargetFramework ) ) {
-          packagesElement.Add( new XAttribute( "targetFramework", package.TargetFramework ) );
-        }
-
-        if ( package.UserInstalled.HasValue ) {
-          packagesElement.Add( new XAttribute( "userInstalled", package.UserInstalled.Value ) );
-        }
-
-        element.Add( packagesElement );
-      }
-
-      WriteXml( writer, element, settings );
-    }
-
-    public static void WriteXml( string path, XNode root ) {
-      using ( var textWriter = new StreamWriter( path ) ) {
-        WriteXml( textWriter, root );
-      }
-    }
-
-    public static void WriteXml( TextWriter writer, XNode element, XmlWriterSettings settings = null ) {
-      var xmlWriterSettings = settings
-                              ?? new XmlWriterSettings {
-                                Encoding = Encoding.UTF8,
-                                CloseOutput = true,
-                                NewLineChars = "\n",
-                                Indent = true,
-                                NamespaceHandling = NamespaceHandling.OmitDuplicates,
-                                ConformanceLevel = ConformanceLevel.Document,
-                              };
-      using ( var xmlWriter = XmlWriter.Create( writer, xmlWriterSettings ) ) {
-        element.WriteTo( xmlWriter );
-      }
     }
 
     public string AllowedVersions { get; set; }
@@ -193,24 +144,19 @@ namespace CsMerge.Core {
     public bool? UserInstalled { get; set; }
 
     public override string ToString() {
-      StringBuilder s = new StringBuilder();
-      if ( !string.IsNullOrEmpty( Id ) ) {
-        s.AppendLine( "Id: " + Id );
-      }
-      if ( Version != null ) {
-        s.AppendLine( "Version:" + Version + " " );
-      }
-      if ( !string.IsNullOrEmpty( TargetFramework ) ) {
-        s.AppendLine( "TargetFramework: " + TargetFramework );
-      }
-      if ( !string.IsNullOrEmpty( AllowedVersions ) ) {
-        s.AppendLine( "AllowedVersions: " + AllowedVersions + " " );
-      }
+
+      var propertyNames = new List<string>();
+
+      propertyNames.AddPropertyIfNotNull( Id, "Id" );
+      propertyNames.AddPropertyIfNotNull( Version, "Version" );
+      propertyNames.AddPropertyIfNotNull( TargetFramework, "TargetFramework" );
+      propertyNames.AddPropertyIfNotNull( AllowedVersions, "AllowedVersions" );
 
       if ( UserInstalled.HasValue ) {
-        s.AppendLine( "UserInstalled: " + UserInstalled.Value + " " );
+        propertyNames.AddPropertyIfNotNull( UserInstalled.Value, "UserInstalled" );
       }
-      return s.ToString();
+
+      return string.Join( Environment.NewLine, propertyNames );
     }
 
     public string ToPackageFolderName() {
@@ -219,6 +165,45 @@ namespace CsMerge.Core {
 
     public string Key {
       get { return Id; }
+    }
+
+    public XElement ToElement( XNamespace ns ) {
+      var packageElement = new XElement( "package", new XAttribute( "id", Id ) );
+
+      if ( Version != null ) {
+        packageElement.Add( new XAttribute( "version", Version ) );
+      }
+
+      if ( AllowedVersions != null ) {
+        packageElement.Add( new XAttribute( "allowedVersions", AllowedVersions ) );
+      }
+
+      if ( !string.IsNullOrEmpty( TargetFramework ) ) {
+        packageElement.Add( new XAttribute( "targetFramework", TargetFramework ) );
+      }
+
+      if ( UserInstalled.HasValue ) {
+        packageElement.Add( new XAttribute( "userInstalled", UserInstalled.Value ) );
+      }
+
+      return packageElement;
+    }
+
+    public static void Write( IEnumerable<Package> packages, string path ) {
+      using ( var fw = new StreamWriter( path ) ) {
+        Write( packages, fw );
+      }
+    }
+
+    public static void Write( IEnumerable<Package> packages, TextWriter writer, XmlWriterSettings settings = null ) {
+
+      var element = new XElement( "packages" );
+
+      foreach ( var package in packages ) {
+        element.Add( package.ToElement( "" ) );
+      }
+
+      element.WriteXml( writer, settings );
     }
   }
 }
