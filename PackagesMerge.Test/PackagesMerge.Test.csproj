@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GitMergeToolResolverTest.cs" />
     <Compile Include="ProjectMergerTest.cs" />
     <Compile Include="PackageConflictResolverTest.cs" />
     <Compile Include="Resolvers\TestConflictResolver.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Resolvers\ExceptionResolver.cs" />
     <Compile Include="Resolvers\TestDuplicateResolver.cs" />
     <Compile Include="ResourceHelper.cs" />
+    <Compile Include="UserQuestionTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cpc.CsMerge.Core\CsMerge.Core.csproj">

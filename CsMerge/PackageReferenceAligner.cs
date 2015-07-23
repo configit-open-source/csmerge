@@ -4,15 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Xml.Linq;
-
 using CsMerge.Core;
 using CsMerge.Core.Parsing;
-
 using NLog;
-
-using NuGet;
 
 namespace CsMerge {
   public class PackageReferenceAligner {
@@ -226,7 +221,7 @@ namespace CsMerge {
 
       using ( var textWriter = new StreamWriter( projectFile ) ) {
         logger.Info( "Writing " + projectFile );
-        Package.WriteXml( textWriter, projectXml );
+        projectXml.WriteXml( textWriter );
       }
     }
   }

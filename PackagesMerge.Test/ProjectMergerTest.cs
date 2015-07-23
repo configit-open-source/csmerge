@@ -39,8 +39,6 @@ namespace PackagesMerge.Test {
 
       Assert.That( duplicates, Is.Empty );
 
-      #region expectedItems
-
       var expectedItems = new[] {
 
         // Project references
@@ -92,8 +90,6 @@ namespace PackagesMerge.Test {
         "CsMerge.Packages.Duplicate.Different.OtherChanges" // Appears only once. Resolved by duplicateResolver to local[0]
       };
 
-      #endregion
-
       Assert.That( itemKeys, Is.EquivalentTo( expectedItems ) );
 
       AssertReference( items, "CsMerge.Packages.NoChanges", false, true, Version( 1 ) );
@@ -118,7 +114,7 @@ namespace PackagesMerge.Test {
       AssertProjectReference( items, "00000000-0000-0000-0000-000000000021", "CsMerge.OtherProject.AddedInIncoming", @"..\..\OtherProjects\CsMerge.OtherProject.AddedInIncoming.csproj" );
       AssertProjectReference( items, "00000000-0000-0000-0000-000000000022", "CsMerge.OtherProject.AddedInLocal.Identical", @"..\..\OtherProjects\CsMerge.OtherProject.AddedInBoth.Identical.csproj" );
       AssertProjectReference( items, "00000000-0000-0000-0000-000000000023", "CsMerge.OtherProject.AddedInLocal.Identical.Local", @"..\..\OtherProjects\CsMerge.OtherProject.AddedInBoth.Different.csproj" );
-      
+
       Assert.That( projectReferenceResolver.Resolutions.Keys, Is.EquivalentTo( new[] {
         "00000000-0000-0000-0000-000000000005", // DeleteIncomingUpdateLocal
         "00000000-0000-0000-0000-000000000006", // DeleteLocalUpdateIncoming
@@ -143,7 +139,7 @@ namespace PackagesMerge.Test {
     private static void AssertProjectReference( List<Item> items, string key, string expectedName, string expectedPath ) {
       var reference = GetItem<ProjectReference>( items, key );
 
-      Assert.That( reference.Name, Is.EqualTo( expectedName ));
+      Assert.That( reference.Name, Is.EqualTo( expectedName ) );
       Assert.That( reference.CsProjPath, Is.EqualTo( expectedPath ) );
     }
 

@@ -1,20 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using CsMerge.Core;
+﻿using CsMerge.Core;
+using CsMerge.Core.Exceptions;
 using CsMerge.Core.Resolvers;
-
+using CsMerge.UserQuestion;
 using LibGit2Sharp;
 
 namespace CsMerge.Resolvers {
-  internal class UserConflictResolver<T>: IConflictResolver<T> where T: IConflictableItem {
+  public class UserConflictResolver<T>: IConflictResolver<T> where T: class, IConflictableItem {
 
     private readonly string _itemDescriptionWhenNull;
     private readonly string _notResolveOptionText;
     private readonly string _local;
     private readonly string _incoming;
+    private readonly string _repositoryRootDirectory;
 
-    public UserConflictResolver( CurrentOperation operation, string itemDescriptionWhenNull = "Not present", string notResolveOptionText = "Not installed" ) {
+    public UserConflictResolver( CurrentOperation operation, string itemDescriptionWhenNull = "Not present", string notResolveOptionText = "Not installed", string repositoryRootDirectory = null ) {
       _notResolveOptionText = notResolveOptionText;
+      _repositoryRootDirectory = repositoryRootDirectory;
       _itemDescriptionWhenNull = itemDescriptionWhenNull;
 
       _local = MergeTypeExtensions.Local( operation );
@@ -23,53 +24,25 @@ namespace CsMerge.Resolvers {
 
     public T Resolve( Conflict<T> conflict ) {
 
-      string questionText = string.Format( "{1}{0}{2}{0}{3}",
-        Environment.NewLine,
-        FormatQuestionOption( "Base", conflict.Base ),
-        FormatQuestionOption( _local, conflict.Local ),
-        FormatQuestionOption( _incoming, conflict.Incoming )
-        );
+      var options = new UserQuestionOptionsCollection<T>();
 
-      var options = new Dictionary<string, T>();
+      options.AddConditional( "Base", conflict.Base, _itemDescriptionWhenNull, conflict.Base.IsOptionValid(), _notResolveOptionText );
+      options.AddConditional( _local, conflict.Local, _itemDescriptionWhenNull, conflict.Local.IsOptionValid(), _notResolveOptionText );
+      options.AddConditional( _incoming, conflict.Incoming, _itemDescriptionWhenNull, conflict.Incoming.IsOptionValid(), _notResolveOptionText );
 
-      if ( conflict.Base.IsOptionValid() ) {
-        options.Add( "b", conflict.Base );
+      if ( !string.IsNullOrEmpty( _repositoryRootDirectory ) ) {
+        var gitResolver = new GitMergeToolResolver<T>( _repositoryRootDirectory, conflict );
+        options.Add( "G", gitResolver.Resolve, "Git Merge Tool" );
       }
 
-      if ( conflict.Local.IsOptionValid() ) {
-        options.Add( _local[0].ToString(), conflict.Local );
-      }
+      options.Add<MergeAbortException>( "S", "Skip this file" );
+      options.Add<UserQuitException>( "Q", "Quit" );
 
-      if ( conflict.Incoming.IsOptionValid() ) {
-        options.Add( _incoming[0].ToString(), conflict.Incoming );
-      }
+      var questionText = UserQuestion<T>.BuildQuestionText( options, string.Format( "Please resolve conflict in file: {0}", conflict.FilePath ) );
 
       UserQuestion<T> userQuestion = new UserQuestion<T>( questionText, options );
 
       return userQuestion.Resolve();
-    }
-
-    private string FormatQuestionOption( string option, T item ) {
-
-      if ( item.IsOptionValid() ) {
-        return string.Format( "({1}){2}:{0}{3}{0}",
-          Environment.NewLine,
-          option[0].ToString().ToUpper(),
-          option.Substring( 1 ),
-          ToStringOrDefault( item )
-          );
-      }
-
-      return string.Format( "{2} ({1}):{0}{3}{0}",
-          Environment.NewLine,
-          _notResolveOptionText,
-          option,
-          ToStringOrDefault( item )
-          );
-    }
-
-    private string ToStringOrDefault( T item ) {
-      return item == null ? _itemDescriptionWhenNull : item.ToString();
     }
   }
 }

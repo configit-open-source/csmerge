@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace CsMerge.Core {
@@ -62,7 +63,14 @@ namespace CsMerge.Core {
     }
 
     public override string ToString() {
-      return Key;
+
+      var propertyNames = new List<string>();
+
+      propertyNames.AddPropertyIfNotNull( Name, "Name" );
+      propertyNames.AddPropertyIfNotNull( Key, "Key" );
+      propertyNames.AddPropertyIfNotNull( CsProjPath, "Path" );
+
+      return string.Join( Environment.NewLine, propertyNames );
     }
   }
 }

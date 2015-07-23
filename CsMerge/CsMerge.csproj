@@ -72,9 +72,16 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Resolvers\DuplicateItemOption.cs" />
+    <Compile Include="Resolvers\GitMergeToolResolver.cs" />
+    <Compile Include="UserQuestion\IUserQuestionOption.cs" />
     <Compile Include="Resolvers\UserConflictResolver.cs" />
     <Compile Include="Resolvers\UserDuplicateResolver.cs" />
-    <Compile Include="Resolvers\UserQuestion.cs" />
+    <Compile Include="UserQuestion\UserQuestion.cs" />
+    <Compile Include="UserQuestion\UserQuestionActionOption.cs" />
+    <Compile Include="UserQuestion\UserQuestionExceptionOption.cs" />
+    <Compile Include="UserQuestion\UserQuestionLiteralOption.cs" />
+    <Compile Include="UserQuestion\UserQuestionLiteralWithDescriptionOption.cs" />
+    <Compile Include="UserQuestion\UserQuestionOptionsCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

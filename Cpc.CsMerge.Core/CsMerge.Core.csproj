@@ -61,11 +61,13 @@
     <Compile Include="Core\PackagesConfigMerger.cs" />
     <Compile Include="Core\ProjectMerger.cs" />
     <Compile Include="Core\ProjectPackages.cs" />
+    <Compile Include="Core\SerialisationHelper.cs" />
     <Compile Include="Exceptions\InvalidResolutonException.cs" />
     <Compile Include="Exceptions\MergeAbortException.cs" />
+    <Compile Include="Exceptions\UserQuitException.cs" />
     <Compile Include="Resolvers\MergeHelper.cs" />
     <Compile Include="Resolvers\IConflictResolver.cs" />
-    <Compile Include="Core\IKeyedEntry.cs" />
+    <Compile Include="Core\IConflictableItem.cs" />
     <Compile Include="Core\Item.cs" />
     <Compile Include="Core\ItemGroup.cs" />
     <Compile Include="Core\Package.cs" />

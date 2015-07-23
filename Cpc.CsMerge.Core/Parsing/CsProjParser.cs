@@ -30,37 +30,10 @@ namespace CsMerge.Core.Parsing {
       return new ItemGroup(
         itemGroupElement
           .Elements()
-          .Select( ParseItem )
-          .Where( i => i != null )
+          .Select( e => e.ParseAsItem() )
+          .WhereNotNull()
           .ToList()
           .AsReadOnly() );
-    }
-
-    private static Item ParseItem( XElement itemElement ) {
-
-      var includeAttribute = itemElement.Attribute( "Include" );
-
-      if ( includeAttribute == null ) {
-        return null;
-      }
-
-      var include = includeAttribute.Value;
-
-      var xNamespace = itemElement.Name.Namespace;
-
-      switch ( itemElement.Name.LocalName ) {
-        case "Reference":
-          return new Reference( itemElement );
-
-        case "ProjectReference":
-          return new ProjectReference( include,
-                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
-                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value );
-        //case "Compile":
-        //  return new FileIncludeItem( itemElement, include );
-        default:
-          return new RawItem( itemElement, include );
-      }
     }
   }
 }

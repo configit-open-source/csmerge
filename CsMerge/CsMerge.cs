@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using CsMerge.Core;
+using CsMerge.Core.Exceptions;
 using CsMerge.Core.Resolvers;
 using CsMerge.Properties;
 using CsMerge.Resolvers;
+using CsMerge.UserQuestion;
+
 using LibGit2Sharp;
 using NLog;
 using LogLevel = NLog.LogLevel;
@@ -70,9 +73,15 @@ namespace CsMerge {
         operation = repository.Info.CurrentOperation;
       }
 
-      ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
+      try {
+        ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
 
-      ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
+        ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
+      } catch ( UserQuitException ) {
+        Console.WriteLine( "The user quit." );
+      } catch ( Exception exception ) {
+        Console.Write( "An error occured: " + exception.Message );
+      }
     }
 
     private static void ProcessPackagesConfig(
@@ -84,7 +93,7 @@ namespace CsMerge {
 
       var packagesConfigMerger = new PackagesConfigMerger(
         operation,
-        new UserConflictResolver<Package>( operation ) );
+        new UserConflictResolver<Package>( operation, repositoryRootDirectory : rootFolder ) );
 
       foreach ( var conflict in conflictPaths.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
 
@@ -100,15 +109,55 @@ namespace CsMerge {
           continue;
         }
 
-        var result = packagesConfigMerger.Merge(
-            Package.Parse( baseContent ),
-            Package.Parse( localContent ),
-            Package.Parse( incomingContent ) ).ToArray();
+        bool resolved = false;
 
-        Package.Write( result, fullConflictPath );
-        using ( var repository = new Repository( rootFolder ) ) {
-          repository.Stage( conflict );
+        try {
+          var result = packagesConfigMerger.Merge(
+              conflict,
+              Package.Parse( baseContent ),
+              Package.Parse( localContent ),
+              Package.Parse( incomingContent ) ).ToArray();
+
+          Package.Write( result, fullConflictPath );
+
+          using ( var repository = new Repository( rootFolder ) ) {
+            repository.Stage( conflict );
+            resolved = true;
+          }
+
+        } catch ( MergeAbortException ) {
+          logger.Log( LogLevel.Info, "Package merge aborted for {0}", conflict );
+          continue;
+        } catch ( UserQuitException ) {
+          throw;
+        } catch ( Exception exception ) {
+          logger.Log( LogLevel.Error, exception, "Package merge failed for {0}", conflict );
         }
+
+        if ( !resolved ) {
+
+          string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
+          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+
+          if ( userQuestion.Resolve() ) {
+
+            XDocument localDocument = XDocument.Parse( localContent );
+            XDocument theirDocument = XDocument.Parse( incomingContent );
+            XDocument baseDocument = XDocument.Parse( baseContent );
+
+            using ( var repository = new Repository( rootFolder ) ) {
+              GitHelper.ResolveWithStandardMergetool(
+                repository,
+                fullConflictPath,
+                baseDocument,
+                localDocument,
+                theirDocument,
+                logger,
+                conflict );
+            }
+          }
+        }
+
       }
     }
 
@@ -121,10 +170,10 @@ namespace CsMerge {
 
       var merger = new ProjectMerger(
         operation,
-        new UserConflictResolver<ProjectReference>( operation ),
-        new ReferenceConflictResolver( new UserConflictResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText ) ),
-        new UserConflictResolver<RawItem>( operation ),
-        new UserDuplicateResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText ) );
+        new UserConflictResolver<ProjectReference>( operation, repositoryRootDirectory : rootFolder ),
+        new ReferenceConflictResolver( new UserConflictResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText, repositoryRootDirectory : rootFolder ) ),
+        new UserConflictResolver<RawItem>( operation, repositoryRootDirectory : rootFolder ),
+        new UserDuplicateResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText, repositoryRootDirectory : rootFolder ) );
 
       foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
 
@@ -153,14 +202,12 @@ namespace CsMerge {
         var resolved = false;
 
         try {
-          var projFileName = Path.GetFileName( conflict );
-
           var projectFolder = Path.Combine( folder.FullName, conflictFolder );
 
           var packageIndex = new ProjectPackages( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
-          
+
           Item[] items = merger.Merge(
-              projFileName,
+              conflict,
               packageIndex,
               baseDocument,
               localDocument,
@@ -178,7 +225,7 @@ namespace CsMerge {
           if ( localDocument.ToString() == theirDocument.ToString() ) {
             // We handled all the differences
             using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
-              Package.WriteXml( textWriter, localDocument );
+              localDocument.WriteXml( textWriter );
             }
             using ( var repository = new Repository( rootFolder ) ) {
               repository.Stage( conflict );
@@ -186,6 +233,11 @@ namespace CsMerge {
 
             resolved = true;
           }
+        } catch ( MergeAbortException ) {
+          logger.Log( LogLevel.Info, "Project merge aborted for {0}", conflict );
+          continue;
+        } catch ( UserQuitException ) {
+          throw;
         } catch ( Exception exception ) {
           logger.Log( LogLevel.Error, exception, "Project merge failed for {0}", conflict );
         }

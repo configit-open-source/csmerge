@@ -1,8 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using CsMerge.Core;
+using CsMerge.Core.Exceptions;
 using CsMerge.Core.Resolvers;
+using CsMerge.UserQuestion;
+
 using LibGit2Sharp;
 
 namespace CsMerge.Resolvers {
@@ -13,8 +15,10 @@ namespace CsMerge.Resolvers {
     private readonly string _notResolveOptionText;
     private readonly string _local;
     private readonly string _incoming;
+    private readonly string _repositoryRootDirectory;
 
-    public UserDuplicateResolver( CurrentOperation operation, string itemDescriptionWhenNull = "Not present", string notResolveOptionText = "Not installed" ) {
+    public UserDuplicateResolver( CurrentOperation operation, string itemDescriptionWhenNull = "Not present", string notResolveOptionText = "Not installed", string repositoryRootDirectory = null ) {
+      _repositoryRootDirectory = repositoryRootDirectory;
       _itemDescriptionWhenNull = itemDescriptionWhenNull;
       _notResolveOptionText = notResolveOptionText;
       _local = MergeTypeExtensions.Local( operation );
@@ -25,20 +29,36 @@ namespace CsMerge.Resolvers {
 
       var allOptions = GetAllOptions( conflict ).ToList();
 
-      string questionText = string.Join( Environment.NewLine, allOptions.Select( FormatQuestionOptionForItem ) );
-
-      var options = allOptions.Where( o => o.Item.IsOptionValid() ).ToDictionary( o => o.OptionKey, o => o.Item );
-
-      if ( !options.Any() ) {
+      if ( !allOptions.Any( o => o.Item.IsOptionValid() ) ) {
         throw new InvalidResolutonException( conflict.Key );
       }
+
+      var options = new UserQuestionOptionsCollection<T>();
+
+      options.AddRange( allOptions.Select( ToUserQuestionOption ) );
+
+      if ( !string.IsNullOrEmpty( _repositoryRootDirectory ) ) {
+        var gitResolver = new GitMergeToolResolver<T>( _repositoryRootDirectory, conflict );
+        options.Add( "G", gitResolver.Resolve, "Git Merge Tool" );
+      }
+
+      options.Add<MergeAbortException>( "S", "Skip this file" );
+      options.Add<UserQuitException>( "Q", "Quit" );
+
+      var questionText = UserQuestion<T>.BuildQuestionText( options, string.Format( "Please resolve conflict in file: {0}", conflict.FilePath ) );
 
       var userQuestion = new UserQuestion<T>( questionText, options );
 
       return userQuestion.Resolve();
     }
 
-    private IEnumerable<DuplicateItemOption<T>> GetAllOptions( Conflict<IEnumerable<T>> conflict ) {
+    private IUserQuestionOption<T> ToUserQuestionOption( DuplicateItemOption<T> option ) {
+      return option.Item.IsOptionValid()
+        ? new UserQuestionLiteralWithDescriptionOption<T>( option.OptionKey, option.OptionName, option.Item, _itemDescriptionWhenNull )
+        : new UserQuestionLiteralWithDescriptionOption<T>( string.Empty, string.Format( "{0} ({1})", option.OptionName, _notResolveOptionText ), option.Item, _itemDescriptionWhenNull );
+    }
+
+    private IEnumerable<DuplicateItemOption<T>> GetAllOptions( IConflict<IEnumerable<T>> conflict ) {
 
       var baseOptions = GetOptions( conflict.Base, "Base" );
       var localOptions = GetOptions( conflict.Local, _local );
@@ -47,7 +67,7 @@ namespace CsMerge.Resolvers {
       return baseOptions.Union( localOptions ).Union( incomingOptions );
     }
 
-    private IEnumerable<DuplicateItemOption<T>> GetOptions( IEnumerable<T> items, string optionPrefix ) {
+    private static IEnumerable<DuplicateItemOption<T>> GetOptions( IEnumerable<T> items, string optionPrefix ) {
 
       var itemsList = items.Distinct().ToList();
 
@@ -74,26 +94,5 @@ namespace CsMerge.Resolvers {
       return itemCount > 1 ? optionKeyPrefix + itemNumber : optionKeyPrefix;
     }
 
-    private string FormatQuestionOptionForItem( DuplicateItemOption<T> option ) {
-      if ( option.Item.IsOptionValid() ) {
-        return string.Format( "({1}) {2}:{0}{3}{0}",
-          Environment.NewLine,
-          option.OptionKey,
-          option.OptionName,
-          ToStringOrDefault( option.Item )
-          );
-      }
-
-      return string.Format( "{2} ({1}):{0}{3}{0}",
-          Environment.NewLine,
-          _notResolveOptionText,
-          option.OptionName,
-          ToStringOrDefault( option.Item )
-          );
-    }
-
-    private string ToStringOrDefault( T item ) {
-      return item == null ? _itemDescriptionWhenNull : item.ToString();
-    }
   }
 }

@@ -102,6 +102,7 @@ namespace CsMerge.Core.Resolvers {
     }
 
     private static MergeResult<T> MergeDuplicates(
+      string filePath,
       IEnumerable<T> baseDuplicates,
       IEnumerable<T> localDuplicates,
       IEnumerable<T> incomingDuplicates,
@@ -121,6 +122,7 @@ namespace CsMerge.Core.Resolvers {
       // If there are multiple identicle duplicates then we may be able to resolve in the normal way
       if ( distinctBaseItems <= 1 && distinctLocalItems <= 1 && distinctIncomingItems <= 1 ) {
         var conflict = new Conflict<T>(
+          filePath,
           key,
           baseDuplicatesList.FirstOrDefault(),
           localDuplicatesList.FirstOrDefault(),
@@ -129,7 +131,7 @@ namespace CsMerge.Core.Resolvers {
         return Resolve( conflict, conflictResolver );
       }
 
-      var resolved = duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( key, baseDuplicatesList, localDuplicatesList, incomingDuplicatesList ) );
+      var resolved = duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( filePath, key, baseDuplicatesList, localDuplicatesList, incomingDuplicatesList ) );
       return new MergeResult<T>( key, resolved, MergeType.LocalModified | MergeType.IncomingModified );
     }
 
@@ -152,6 +154,7 @@ namespace CsMerge.Core.Resolvers {
     }
 
     public static IEnumerable<T> MergeAll(
+      string filePath,
       CurrentOperation operation,
       IDictionary<string, T> baseObj,
       IDictionary<string, T> localObj,
@@ -159,15 +162,16 @@ namespace CsMerge.Core.Resolvers {
       IConflictResolver<T> conflictResolver ) {
 
       return ( from id in GetKeys( baseObj.Keys, localObj.Keys, incomingObj.Keys )
-               let conflict = new Conflict<T>( id, GetValue( baseObj, id ), GetValue( localObj, id ), GetValue( incomingObj, id ) )
+               let conflict = new Conflict<T>( filePath, id, GetValue( baseObj, id ), GetValue( localObj, id ), GetValue( incomingObj, id ) )
                let mergeResult = Resolve( conflict, conflictResolver )
                orderby mergeResult.Key
                select HandleMergeResult( mergeResult, id, operation ) into mergedObj
-               where mergedObj != null 
+               where mergedObj != null
                select mergedObj ).OrderBy( o => o.Key );
     }
 
     public static IEnumerable<T> MergeAllDuplicates(
+      string filePath,
       CurrentOperation operation,
       IDictionary<string, IEnumerable<T>> baseObj,
       IDictionary<string, IEnumerable<T>> localObj,
@@ -179,7 +183,7 @@ namespace CsMerge.Core.Resolvers {
                let b = GetDuplicates( baseObj, id )
                let m = GetDuplicates( localObj, id )
                let t = GetDuplicates( incomingObj, id )
-               let mergeResult = MergeDuplicates( b, m, t, conflictResolver, duplicateResolver )
+               let mergeResult = MergeDuplicates( filePath, b, m, t, conflictResolver, duplicateResolver )
                orderby mergeResult.Key
                select HandleMergeResult( mergeResult, id, operation ) into mergedObj
                where mergedObj != null

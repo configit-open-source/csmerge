@@ -4,15 +4,17 @@ namespace CsMerge.Core {
 
   public class Conflict<T>: IConflict<T> {
 
-    public Conflict( string key, T @base, T local, T incoming ) {
+    public Conflict( string filePath, string key, T @base, T local, T incoming ) {
       Base = @base;
       Local = local;
       Incoming = incoming;
 
       Key = key;
+      FilePath = filePath;
     }
 
     public string Key { get; private set; }
+    public string FilePath { get; private set; }
 
     public T Base { get; private set; }
     public T Local { get; private set; }
