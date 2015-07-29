@@ -91,43 +91,47 @@ namespace CsMerge {
           return;
         }
         var newestPackage = _idToNewest[package.Id];
+        
         Package newPackage = new Package( package.Id,
-  newestPackage.Version,
-  package.TargetFramework,
-  package.AllowedVersions,
-  package.UserInstalled );
+          newestPackage.Version,
+          package.TargetFramework,
+          package.AllowedVersions,
+          package.UserInstalled );
+
         updatedPackages.Add( newPackage );
 
-        if ( newestPackage.Version != package.Version ) {
-          changed = true;
-          logger.Info( project.Name + ": Upgrading " + package + " to " + newestPackage.Version );
-
-          if ( !_nonInstalledPackages.Contains( newestPackage.Id ) ) {
-            continue;
-          }
-
-          logger.Info( "Install nuget package " + package.Id + " to " + packagesRelativePath );
-          var nugetExe = Path.Combine( _baseFolder, @".nuget\nuget.exe" );
-          if ( !File.Exists( nugetExe ) ) {
-            throw new Exception( "cannot find " + nugetExe );
-          }
-
-          var processStartInfo = new ProcessStartInfo( nugetExe,
-            "install " + package.Id + " -Version " + newestPackage.Version );
-          processStartInfo.RedirectStandardOutput = true;
-
-          processStartInfo.WorkingDirectory = packagesFolder;
-          processStartInfo.UseShellExecute = false;
-          processStartInfo.CreateNoWindow = true;
-
-          var process = Process.Start( processStartInfo );
-          logger.Info( process.StandardOutput.ReadToEnd() );
-
-          if ( process.ExitCode != 0 ) {
-            throw new Exception( "Failed to execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
-          }
-          _nonInstalledPackages.Remove( newestPackage.Id );
+        if ( newestPackage.Version == package.Version ) {
+          continue;
         }
+
+        changed = true;
+        logger.Info( project.Name + ": Upgrading " + package + " to " + newestPackage.Version );
+
+        if ( !_nonInstalledPackages.Contains( newestPackage.Id ) ) {
+          continue;
+        }
+
+        logger.Info( "Install nuget package " + package.Id + " to " + packagesRelativePath );
+        var nugetExe = Path.Combine( _baseFolder, @".nuget\nuget.exe" );
+        if ( !File.Exists( nugetExe ) ) {
+          throw new Exception( "cannot find " + nugetExe );
+        }
+
+        var processStartInfo = new ProcessStartInfo( nugetExe,
+          "install " + package.Id + " -Version " + newestPackage.Version + " -Prerelease" );
+        processStartInfo.RedirectStandardOutput = true;
+
+        processStartInfo.WorkingDirectory = packagesFolder;
+        processStartInfo.UseShellExecute = false;
+        processStartInfo.CreateNoWindow = true;
+
+        var process = Process.Start( processStartInfo );
+        logger.Info( process.StandardOutput.ReadToEnd() );
+
+        if ( process.ExitCode != 0 ) {
+          throw new Exception( "Failed to execute " + processStartInfo.FileName + " " + processStartInfo.Arguments );
+        }
+        _nonInstalledPackages.Remove( newestPackage.Id );
       }
 
       if ( !changed ) {

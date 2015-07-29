@@ -99,7 +99,7 @@ namespace CsMerge.UserQuestion {
     public static IEnumerable<IUserQuestionOption<bool>> YesNoOptions() {
       return new[] {
         new UserQuestionLiteralOption<bool>( "y", "Yes", true ), 
-        new UserQuestionLiteralOption<bool>( "y", "No", false )
+        new UserQuestionLiteralOption<bool>( "n", "No", false )
       };
     }
 

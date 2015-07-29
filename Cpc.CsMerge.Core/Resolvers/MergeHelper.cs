@@ -109,29 +109,39 @@ namespace CsMerge.Core.Resolvers {
       IConflictResolver<T> conflictResolver,
       IDuplicateResolver<T> duplicateResolver ) {
 
-      var baseDuplicatesList = baseDuplicates.ToList();
-      var localDuplicatesList = localDuplicates.ToList();
-      var incomingDuplicatesList = incomingDuplicates.ToList();
+      var distinctBaseItems = baseDuplicates.Distinct().ToList();
+      var distinctLocalItems = localDuplicates.Distinct().ToList();
+      var distinctIncomingItems = incomingDuplicates.Distinct().ToList();
 
-      string key = KeyHelper.GetKeyFromCollections( baseDuplicatesList, localDuplicatesList, incomingDuplicatesList );
-
-      var distinctBaseItems = baseDuplicatesList.DistinctCount();
-      var distinctLocalItems = localDuplicatesList.DistinctCount();
-      var distinctIncomingItems = incomingDuplicatesList.DistinctCount();
+      var key = KeyHelper.GetKeyFromCollections( distinctBaseItems, distinctLocalItems, distinctIncomingItems );
 
       // If there are multiple identicle duplicates then we may be able to resolve in the normal way
-      if ( distinctBaseItems <= 1 && distinctLocalItems <= 1 && distinctIncomingItems <= 1 ) {
+      if ( distinctBaseItems.Count <= 1 && distinctLocalItems.Count <= 1 && distinctIncomingItems.Count <= 1 ) {
         var conflict = new Conflict<T>(
           filePath,
           key,
-          baseDuplicatesList.FirstOrDefault(),
-          localDuplicatesList.FirstOrDefault(),
-          incomingDuplicatesList.FirstOrDefault() );
+          distinctBaseItems.FirstOrDefault(),
+          distinctLocalItems.FirstOrDefault(),
+          distinctIncomingItems.FirstOrDefault() );
 
         return Resolve( conflict, conflictResolver );
       }
 
-      var resolved = duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( filePath, key, baseDuplicatesList, localDuplicatesList, incomingDuplicatesList ) );
+      // If duplicates in base, but deleted on both incoming and local, then auto resolve to deleted.
+      if ( distinctIncomingItems.Count == 0 && distinctLocalItems.Count == 0 ) {
+        return new MergeResult<T>( key, null, MergeType.IncomingDeleted | MergeType.LocalDeleted );
+      }
+
+      // If duplicates in base, but modified in both incoming and local, and incoming and local are identical, then auto resolve to to the modified item.
+      if ( distinctIncomingItems.Count == 1 && distinctLocalItems.Count == 1 && distinctIncomingItems.First() == distinctLocalItems.First() ) {
+        var mergeType = distinctBaseItems.Any()
+          ? MergeType.IncomingModified | MergeType.LocalModified
+          : MergeType.LocalAdded | MergeType.IncomingAdded;
+
+        return new MergeResult<T>( key, distinctLocalItems.First(), mergeType );
+      }
+
+      var resolved = duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( filePath, key, distinctBaseItems, distinctLocalItems, distinctIncomingItems ) );
       return new MergeResult<T>( key, resolved, MergeType.LocalModified | MergeType.IncomingModified );
     }
 
