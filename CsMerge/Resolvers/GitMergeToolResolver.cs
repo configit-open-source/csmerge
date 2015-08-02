@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Xml.Linq;
 using CsMerge.Core;
-using CsMerge.Core.Parsing;
 
 namespace CsMerge.Resolvers {
 
@@ -17,9 +16,9 @@ namespace CsMerge.Resolvers {
     public GitMergeToolResolver( string repositoryRootDirectory, Conflict<T> conflict ) {
       _key = conflict.Key;
       _repositoryRootDirectory = repositoryRootDirectory;
-      _baseElements = new[] { conflict.Base.ToElement( "" ) };
-      _localElements = new[] { conflict.Local.ToElement( "" ) };
-      _incomingElements = new[] { conflict.Incoming.ToElement( "" ) };
+      _baseElements = GetElements( conflict.Base );
+      _localElements = GetElements( conflict.Local );
+      _incomingElements = GetElements( conflict.Incoming );
     }
 
     public GitMergeToolResolver( string repositoryRootDirectory, Conflict<IEnumerable<T>> conflict ) {
@@ -50,6 +49,10 @@ namespace CsMerge.Resolvers {
       }
 
       throw new InvalidResolutonException( _key );
+    }
+    
+    private static IEnumerable<XElement> GetElements( T item ) {
+      return item == null ? new XElement[0] : new[] { item.ToElement( "" ) };
     }
   }
 }

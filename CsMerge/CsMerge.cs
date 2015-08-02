@@ -33,54 +33,54 @@ namespace CsMerge {
         Debugger.Launch();
       }
 
-      if ( args.Length == 0 ) {
-        args = new[] { Directory.GetCurrentDirectory() };
-      }
-
-      DirectoryInfo folder = new DirectoryInfo( args[0] );
-      var logger = LogManager.GetCurrentClassLogger();
-
-      var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
-
-      if ( args.Length >= 2 && args[1] == "--upgrade" ) {
-        logger.Info( "Aligning references in " + rootFolder );
-
-        string pattern = args.Length == 5 ? args[2] : null;
-        string patternVersion = args.Length == 5 ? args[3] : null;
-        string framework = args.Length == 5 ? args[4] : null;
-
-        var aligner =
-          new PackageReferenceAligner( rootFolder,
-          FindRelativePathOfPackagesFolder( rootFolder ), pattern, patternVersion, framework );
-
-        foreach ( var projectFile in folder.GetFiles( "*.csproj", SearchOption.AllDirectories ) ) {
-          aligner.AlignReferences( projectFile.FullName );
+      try {
+        if ( args.Length == 0 ) {
+          args = new[] { Directory.GetCurrentDirectory() };
         }
-        return;
-      }
 
-      logger.Info( "Looking for things to merge in " + folder );
+        DirectoryInfo folder = new DirectoryInfo( args[0] );
+        var logger = LogManager.GetCurrentClassLogger();
 
-      string[] conflictPaths;
-      CurrentOperation operation;
+        var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
 
-      using ( var repository = new Repository( rootFolder ) ) {
-        if ( repository.Index.IsFullyMerged ) {
-          logger.Info( "Nothing to do, already fully merged" );
+        if ( args.Length >= 2 && args[1] == "--upgrade" ) {
+          logger.Info( "Aligning references in " + rootFolder );
+
+          string pattern = args.Length == 5 ? args[2] : null;
+          string patternVersion = args.Length == 5 ? args[3] : null;
+          string framework = args.Length == 5 ? args[4] : null;
+
+          var aligner =
+            new PackageReferenceAligner( rootFolder,
+            FindRelativePathOfPackagesFolder( rootFolder ), pattern, patternVersion, framework );
+
+          foreach ( var projectFile in folder.GetFiles( "*.csproj", SearchOption.AllDirectories ) ) {
+            aligner.AlignReferences( projectFile.FullName );
+          }
           return;
         }
-        conflictPaths = repository.Index.Conflicts.Select( c => c.GetPath() ).ToArray();
-        operation = repository.Info.CurrentOperation;
-      }
 
-      try {
+        logger.Info( "Looking for things to merge in " + folder );
+
+        string[] conflictPaths;
+        CurrentOperation operation;
+
+        using ( var repository = new Repository( rootFolder ) ) {
+          if ( repository.Index.IsFullyMerged ) {
+            logger.Info( "Nothing to do, already fully merged" );
+            return;
+          }
+          conflictPaths = repository.Index.Conflicts.Select( c => c.GetPath() ).ToArray();
+          operation = repository.Info.CurrentOperation;
+        }
+
         ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
 
         ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
       } catch ( UserQuitException ) {
         Console.WriteLine( "The user quit." );
       } catch ( Exception exception ) {
-        Console.Write( "An error occured: " + exception.Message );
+        Console.Write( "An error occured: " + Environment.NewLine + exception.ToString() );
       }
     }
 
