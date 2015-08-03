@@ -4,6 +4,10 @@ using CsMerge.Core.Resolvers;
 using CsMerge.UserQuestion;
 using LibGit2Sharp;
 
+using Integration;
+
+using Project;
+
 namespace CsMerge.Resolvers {
   public class UserConflictResolver<T>: IConflictResolver<T> where T : class, IConflictableItem {
 

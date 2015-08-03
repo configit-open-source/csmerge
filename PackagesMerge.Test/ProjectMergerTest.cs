@@ -1,12 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
+
 using CsMerge.Core;
+
 using LibGit2Sharp;
+
+using Integration;
+
 using NUnit.Framework;
 using PackagesMerge.Test.Resolvers;
-using Reference = CsMerge.Core.Reference;
+
+using Project;
+
 using Version = System.Version;
+using Reference = Project.Reference;
 
 namespace PackagesMerge.Test {
 
@@ -23,13 +32,13 @@ namespace PackagesMerge.Test {
 
       var projectMerger = new ProjectMerger( CurrentOperation.Merge, projectReferenceResolver, referenceResolver, itemResolver, duplicateResolver );
 
-      string packagesConfigPath = Path.GetFullPath( @"..\..\TestFiles\" );
+      string packagesConfigPath = Path.GetFullPath( @"..\..\TestFiles\src\Project" );
 
       var projectPackages = new ProjectPackages( packagesConfigPath, @"..\..\Packages" );
 
-      var baseDocument = ResourceHelper.LoadXml( "TestFiles.Base.csproj" );
-      var localDocument = ResourceHelper.LoadXml( "TestFiles.Local.csproj" );
-      var incomingDocument = ResourceHelper.LoadXml( "TestFiles.Incoming.csproj" );
+      var baseDocument = XDocument.Load( Path.Combine( packagesConfigPath, "Base.csproj" ) );
+      var localDocument = XDocument.Load( Path.Combine( packagesConfigPath, "Local.csproj" ) );
+      var incomingDocument = XDocument.Load( Path.Combine( packagesConfigPath, "Incoming.csproj" ) );
 
       var items = projectMerger.Merge( "Test.csproj", projectPackages, baseDocument, localDocument, incomingDocument ).ToList();
 
@@ -151,7 +160,7 @@ namespace PackagesMerge.Test {
       var reference = GetItem<Reference>( items, key );
 
       Assert.That( reference.SpecificVersion, Is.EqualTo( specificVersion ), "Unexpected SpecificVersion value for " + key );
-      Assert.That( reference.ReferenceAssemblyName.Version, Is.EqualTo( version ), "Unexpected Version value for " + key );
+      Assert.That( reference.ReferenceAssemblyVersion, Is.EqualTo( version ), "Unexpected Version value for " + key );
       Assert.That( reference.Private, Is.EqualTo( isPrivate ), "Unexpected Private value for " + key );
     }
 
