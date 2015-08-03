@@ -51,9 +51,9 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void PackageQuestion() {
-      var optionValue = new Package( "TestPackageId", new PackageVersion( 1, 2, 3, 4 ), "net45" );
-      var option = new UserQuestionLiteralWithDescriptionOption<Package>( "A", "Option A", optionValue, "WasNull" );
-      Assert.That( option.GetQuestionText(), Is.EqualTo( "(A) Option A:\r\nId: TestPackageId\r\nVersion: 1.2.3.4\r\nTargetFramework: net45\r\n" ) );
+      var optionValue = new ConfigitPackageReference( "TestPackageId", "1.2.3.4", "net45" );
+      var option = new UserQuestionLiteralWithDescriptionOption<ConfigitPackageReference>( "A", "Option A", optionValue, "WasNull" );
+      Assert.That( option.GetQuestionText(), Is.EqualTo( "(A) Option A:\r\nId: TestPackageId\r\nVersion: 1.2.3.4\r\nTargetFramework: net45\r\n\r\n" ) );
       Assert.That( option.GetValue(), Is.EqualTo( optionValue ) );
     }
 
