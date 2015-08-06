@@ -61,12 +61,6 @@ namespace CsMerge.Core {
           writer.WritePackageEntry( package );
         }
       }
-
-      // XElement element = new XElement( "packages" );
-      //element.Add( packages.Select( p => p.ToElement( element.Name.Namespace ) ) );
-      //using ( var xmlWriter = XmlWriter.Create( writer, settings ) ) {
-      //  element.WriteTo( xmlWriter );
-      //}
     }
 
     public static string ToFolderName( this PackageReference reference ) {

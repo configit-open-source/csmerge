@@ -100,10 +100,8 @@
     <Compile Include="Core\MergeResult.cs" />
     <Compile Include="Core\MergeType.cs" />
     <Compile Include="Core\MergeTypeExtensions.cs" />
-    <Compile Include="Core\NuGetExtensions.cs" />
     <Compile Include="Core\PackagesConfigMerger.cs" />
     <Compile Include="Core\ProjectMerger.cs" />
-    <Compile Include="Core\ProjectPackages.cs" />
     <Compile Include="Core\SerialisationHelper.cs" />
     <Compile Include="Exceptions\InvalidResolutonException.cs" />
     <Compile Include="Exceptions\MergeAbortException.cs" />

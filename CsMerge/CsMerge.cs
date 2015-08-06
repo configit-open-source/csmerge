@@ -59,25 +59,7 @@ namespace CsMerge {
       }
     }
 
-    private static void ProcessAlign( Logger logger, string rootFolder, CsMergeOptions options, DirectoryInfo folder ) {
-      logger.Info( "Updating/aligning references in " + rootFolder );
 
-      string pattern = options.UpgradePrefix;
-      string patternVersion = options.UpgradeVersion;
-      string framework = options.UpgradeFramework;
-
-      // TODO: Check specifically for known VS extensions only
-      var projectFiles = folder.GetFiles( "*.*sproj", SearchOption.AllDirectories ).Select( f => f.FullName ).ToArray();
-
-      // Restore packages now
-      NuGetExtensions.RestorePackages( rootFolder );
-
-      TargetPackageIndex targetPackageIndex = new TargetPackageIndex( projectFiles, pattern, patternVersion, framework );
-
-      foreach ( var projectFile in projectFiles ) {
-        new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
-      }
-    }
 
     private static void ProcessMerge( Logger logger, DirectoryInfo folder, string rootFolder ) {
       logger.Info( "Looking for things to merge in " + folder );
