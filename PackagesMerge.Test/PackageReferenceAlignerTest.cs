@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 
 using CsMerge;
-using CsMerge.Core;
 
 using NuGet.Frameworks;
 using NuGet.Packaging;
@@ -9,6 +8,8 @@ using NuGet.PackagingCore;
 using NuGet.Versioning;
 
 using NUnit.Framework;
+
+using Project;
 
 namespace PackagesMerge.Test {
 

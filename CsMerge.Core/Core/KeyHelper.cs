@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
+using Project;
+
 namespace CsMerge.Core {
   public class KeyHelper {
 

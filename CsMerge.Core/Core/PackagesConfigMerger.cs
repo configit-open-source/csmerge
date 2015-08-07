@@ -5,6 +5,8 @@ using LibGit2Sharp;
 
 using NuGet;
 
+using Project;
+
 namespace CsMerge.Core {
 
   /// <summary>

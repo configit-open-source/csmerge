@@ -5,6 +5,10 @@ using NuGet;
 using NuGet.Packaging;
 using NuGet.Versioning;
 
+using Integration;
+
+using Project;
+
 namespace CsMerge.Core.Resolvers {
 
   public class PackageConflictResolver: IConflictResolver<ConfigitPackageReference> {

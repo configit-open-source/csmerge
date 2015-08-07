@@ -7,6 +7,10 @@ using CsMerge.UserQuestion;
 
 using LibGit2Sharp;
 
+using Integration;
+
+using Project;
+
 namespace CsMerge.Resolvers {
 
   internal class UserDuplicateResolver<T>: IDuplicateResolver<T> where T: class, IConflictableItem {

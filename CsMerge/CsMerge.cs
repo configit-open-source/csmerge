@@ -14,8 +14,14 @@ using CsMerge.UserQuestion;
 
 using LibGit2Sharp;
 using NLog;
+
+using Integration;
+
+using Project;
+
 using LogLevel = NLog.LogLevel;
-using Reference = CsMerge.Core.Reference;
+using Reference = Project.Reference;
+using SerialisationHelper = CsMerge.Core.SerialisationHelper;
 
 namespace CsMerge {
   /// <summary>
@@ -251,7 +257,7 @@ namespace CsMerge {
           if ( localDocument.ToString() == theirDocument.ToString() ) {
             // We handled all the differences
             using ( var textWriter = new StreamWriter( fullConflictPath ) ) {
-              localDocument.WriteXml( textWriter );
+              SerialisationHelper.WriteXml( localDocument, textWriter );
             }
             using ( var repository = new Repository( rootFolder ) ) {
               repository.Stage( conflict );

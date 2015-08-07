@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using CsMerge.Core.Exceptions;
+
 using LibGit2Sharp;
 using NLog;
+
+using Integration;
+
+using Project;
 
 namespace CsMerge.Core.Resolvers {
 

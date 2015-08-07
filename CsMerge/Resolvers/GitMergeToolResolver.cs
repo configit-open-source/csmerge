@@ -2,6 +2,13 @@
 using System.Linq;
 using System.Xml.Linq;
 using CsMerge.Core;
+using CsMerge.Core.Exceptions;
+
+using Integration;
+
+using Project;
+
+using SerialisationHelper = CsMerge.Core.SerialisationHelper;
 
 namespace CsMerge.Resolvers {
 
@@ -42,7 +49,7 @@ namespace CsMerge.Resolvers {
         return null;
       }
 
-      var resolved = xmlElement.ParseAsConflictableItem() as T;
+      var resolved = SerialisationHelper.ParseAsConflictableItem( xmlElement ) as T;
 
       if ( resolved != null ) {
         return resolved;

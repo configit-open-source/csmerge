@@ -4,6 +4,8 @@ using NUnit.Framework;
 
 using PackagesMerge.Test.Resolvers;
 
+using Project;
+
 namespace PackagesMerge.Test {
 
   [TestFixture]

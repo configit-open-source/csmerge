@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CsMerge.Core {
+namespace CsMerge.Core.Exceptions {
   public class InvalidResolutonException: Exception {
 
     public InvalidResolutonException( string itemKey )

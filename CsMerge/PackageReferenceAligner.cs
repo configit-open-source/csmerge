@@ -6,15 +6,19 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 
-using CsMerge.Core;
-using CsMerge.Core.Parsing;
-
 using NLog;
 
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
+
+using Integration;
+
+using Project;
+
+using ProjectPackages = Integration.ProjectPackages;
+using SerialisationHelper = CsMerge.Core.SerialisationHelper;
 
 namespace CsMerge {
   public class PackageReferenceAligner {
@@ -73,15 +77,15 @@ namespace CsMerge {
           }
           Reference reference = item as Reference;
 
-          if ( !oldPackagesConfig.IsPackageReference( reference ) ) {
+          if ( !oldPackagesConfig.IsPackageReference( reference.HintPath ) ) {
             items.Add( item ); // we keep any non package references (ie System.Xml)
             continue;
           }
 
-          var referencedInOldPackage = oldPackagesConfig.IsPackageReferenced( reference );
+          var referencedInOldPackage = oldPackagesConfig.IsPackageReferenced( reference.HintPath );
 
           if ( !referencedInOldPackage
-               && !updatedPackagesConfig.IsPackageReferenced( reference ) ) {
+               && !updatedPackagesConfig.IsPackageReferenced( reference.HintPath ) ) {
             logger.Info( "Removing " + reference + " as package not listed in packages.config" );
             changed = true;
             continue; // remove reference
@@ -124,7 +128,7 @@ namespace CsMerge {
 
       using ( var textWriter = new StreamWriter( _projectFile ) ) {
         logger.Info( "Writing " + _projectFile );
-        projectXml.WriteXml( textWriter );
+        SerialisationHelper.WriteXml( projectXml, textWriter );
       }
     }
 

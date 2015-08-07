@@ -4,11 +4,18 @@ using System.Linq;
 using System.Xml.Linq;
 
 using CsMerge.Core;
+
 using LibGit2Sharp;
+
+using Integration;
+
 using NUnit.Framework;
 using PackagesMerge.Test.Resolvers;
-using Reference = CsMerge.Core.Reference;
+
+using Project;
+
 using Version = System.Version;
+using Reference = Project.Reference;
 
 namespace PackagesMerge.Test {
 

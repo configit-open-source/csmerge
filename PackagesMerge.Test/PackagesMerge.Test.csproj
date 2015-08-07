@@ -110,6 +110,14 @@
       <Project>{4EBE13DA-83CD-4B07-99ED-098EDE83F5E5}</Project>
       <Name>CsMerge</Name>
     </ProjectReference>
+    <ProjectReference Include="..\NuGetHelpers\Integration.csproj">
+      <Project>{DB65377A-F2EC-47DF-BB8B-3DB53CDF354A}</Project>
+      <Name>Integration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Project\Project.csproj">
+      <Project>{c3657091-fe14-4695-b531-6cabdaa40fb7}</Project>
+      <Name>Project</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">

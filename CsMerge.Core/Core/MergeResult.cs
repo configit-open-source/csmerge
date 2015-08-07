@@ -1,4 +1,6 @@
-﻿namespace CsMerge.Core {
+﻿using Integration;
+
+namespace CsMerge.Core {
 
   public class MergeResult<T> {
 

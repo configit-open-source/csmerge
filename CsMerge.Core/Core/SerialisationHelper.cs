@@ -8,6 +8,8 @@ using System.Xml.Linq;
 
 using NuGet.Packaging;
 
+using Project;
+
 namespace CsMerge.Core {
 
   public static class SerialisationHelper {
@@ -50,9 +52,7 @@ namespace CsMerge.Core {
         case "ProjectReference":
           return new ProjectReference( include,
                                        Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
-                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value );
-        //case "Compile":
-        //  return new FileIncludeItem( itemElement, include );
+                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value, itemElement );
         default:
           return new RawItem( itemElement, include );
       }

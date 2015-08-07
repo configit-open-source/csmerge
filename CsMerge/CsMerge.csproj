@@ -122,6 +122,14 @@
       <Project>{bd6af56e-5128-4e09-852d-159bb21972d3}</Project>
       <Name>CsMerge.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\NuGetHelpers\Integration.csproj">
+      <Project>{DB65377A-F2EC-47DF-BB8B-3DB53CDF354A}</Project>
+      <Name>Integration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Project\Project.csproj">
+      <Project>{c3657091-fe14-4695-b531-6cabdaa40fb7}</Project>
+      <Name>Project</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

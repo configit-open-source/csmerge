@@ -2,9 +2,15 @@
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using CsMerge.Core.Parsing;
+
 using CsMerge.Core.Resolvers;
 using LibGit2Sharp;
+
+using Integration;
+
+using Project;
+
+using Reference = Project.Reference;
 
 namespace CsMerge.Core {
 
