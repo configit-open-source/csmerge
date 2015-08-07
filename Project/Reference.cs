@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
+
+using CsMerge.Core;
 
 using Mono.Cecil;
 
-namespace CsMerge.Core {
+namespace Project {
   public class Reference: Item {
 
     public string Include { get; set; }
@@ -152,10 +153,5 @@ namespace CsMerge.Core {
         RequiredTargetFramework = RequiredTargetFramework,
       };
     }
-
-    public void ApplyIsResolveOption( ProjectPackages projectPackages ) {
-      IsResolveOption = !projectPackages.IsPackageReference( this ) || projectPackages.IsPackageReferenced( this );
-    }
-
   }
 }

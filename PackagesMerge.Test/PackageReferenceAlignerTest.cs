@@ -10,6 +10,8 @@ using NuGet.Versioning;
 
 using NUnit.Framework;
 
+using Project;
+
 namespace PackagesMerge.Test {
 
   [TestFixture]

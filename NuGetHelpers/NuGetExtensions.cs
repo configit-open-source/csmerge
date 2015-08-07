@@ -14,6 +14,8 @@ using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
 
+using NuGetHelpers;
+
 namespace CsMerge.Core {
   public static class NuGetExtensions {
 

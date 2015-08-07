@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+using CsMerge;
+
 using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
 
-namespace CsMerge {
+namespace CsUpdate.Core {
 
   /// <summary>
   /// Provides information about which version is the newest / targetted version for <see cref="PackageReferenceAligner"/>

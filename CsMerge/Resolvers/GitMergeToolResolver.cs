@@ -3,6 +3,8 @@ using System.Linq;
 using System.Xml.Linq;
 using CsMerge.Core;
 
+using Project;
+
 namespace CsMerge.Resolvers {
 
   public class GitMergeToolResolver<T> where T: class, IConflictableItem {

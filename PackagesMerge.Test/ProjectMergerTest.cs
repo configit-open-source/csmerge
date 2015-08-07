@@ -5,9 +5,11 @@ using System.Xml.Linq;
 
 using CsMerge.Core;
 using LibGit2Sharp;
+
+using NuGetHelpers;
+
 using NUnit.Framework;
 using PackagesMerge.Test.Resolvers;
-using Reference = CsMerge.Core.Reference;
 using Version = System.Version;
 
 namespace PackagesMerge.Test {
@@ -18,10 +20,10 @@ namespace PackagesMerge.Test {
     [Test]
     public void Test() {
 
-      var referenceResolver = new TestConflictResolver<Reference>( ConflictItemType.Local );
+      var referenceResolver = new TestConflictResolver<Project.Reference>( ConflictItemType.Local );
       var projectReferenceResolver = new TestConflictResolver<ProjectReference>( ConflictItemType.Local );
       var itemResolver = new TestConflictResolver<RawItem>( ConflictItemType.Local );
-      var duplicateResolver = new TestDuplicateResolver<Reference>( ConflictItemType.Local );
+      var duplicateResolver = new TestDuplicateResolver<Project.Reference>( ConflictItemType.Local );
 
       var projectMerger = new ProjectMerger( CurrentOperation.Merge, projectReferenceResolver, referenceResolver, itemResolver, duplicateResolver );
 
@@ -150,7 +152,7 @@ namespace PackagesMerge.Test {
     }
 
     private static void AssertReference( IEnumerable<Item> items, string key, bool? specificVersion, bool? isPrivate, Version version ) {
-      var reference = GetItem<Reference>( items, key );
+      var reference = GetItem<Project.Reference>( items, key );
 
       Assert.That( reference.SpecificVersion, Is.EqualTo( specificVersion ), "Unexpected SpecificVersion value for " + key );
       Assert.That( reference.ReferenceAssemblyVersion, Is.EqualTo( version ), "Unexpected Version value for " + key );

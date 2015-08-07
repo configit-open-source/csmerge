@@ -6,9 +6,13 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
+using CsMerge.Core;
+
 using NuGet.Packaging;
 
-namespace CsMerge.Core {
+using NuGetHelpers;
+
+namespace Project {
 
   public static class SerialisationHelper {
 

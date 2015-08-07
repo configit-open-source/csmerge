@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using LibGit2Sharp;
 
+using NuGetHelpers;
+
+using Reference = Project.Reference;
+
 namespace CsMerge.Core {
 
   public static class MergeTypeExtensions {
@@ -65,6 +69,11 @@ namespace CsMerge.Core {
         values.Add( Incoming( operation ) + " " + _modifiedSuffix );
       }
       return string.Join( "+", values );
+    }
+
+    public static void ApplyIsResolveOption( this Reference reference, ProjectPackages projectPackages ) {
+      reference.IsResolveOption = !projectPackages.IsPackageReference( reference.HintPath ) ||
+                                   projectPackages.IsPackageReferenced( reference.HintPath );
     }
   }
 }

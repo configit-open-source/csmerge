@@ -9,6 +9,8 @@ using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
 
+using NuGetHelpers;
+
 using NUnit.Framework;
 
 using PackagesMerge.Test.Resolvers;

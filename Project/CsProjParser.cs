@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
+using Project;
+
 namespace CsMerge.Core.Parsing {
   public class CsProjParser {
 

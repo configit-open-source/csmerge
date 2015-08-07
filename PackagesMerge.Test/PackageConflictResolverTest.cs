@@ -1,5 +1,8 @@
 ﻿using CsMerge.Core;
 using CsMerge.Core.Resolvers;
+
+using NuGetHelpers;
+
 using NUnit.Framework;
 
 using PackagesMerge.Test.Resolvers;

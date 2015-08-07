@@ -6,6 +6,10 @@ using CsMerge.Core.Parsing;
 using CsMerge.Core.Resolvers;
 using LibGit2Sharp;
 
+using NuGetHelpers;
+
+using Reference = Project.Reference;
+
 namespace CsMerge.Core {
 
   /// <summary>

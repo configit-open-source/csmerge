@@ -5,6 +5,8 @@ using NuGet;
 using NuGet.Packaging;
 using NuGet.Versioning;
 
+using NuGetHelpers;
+
 namespace CsMerge.Core.Resolvers {
 
   public class PackageConflictResolver: IConflictResolver<ConfigitPackageReference> {

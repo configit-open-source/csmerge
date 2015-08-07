@@ -5,13 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
+using CsMerge.Core;
+
 using NLog;
 
 using NuGet.Packaging;
 using NuGet.PackagingCore;
-using NuGet.Versioning;
 
-namespace CsMerge.Core {
+namespace NuGetHelpers {
 
   /// <summary>
   /// Information about what packages are installed, and the location of the package folder.
@@ -55,23 +56,23 @@ namespace CsMerge.Core {
       return File.Exists( Path.Combine( _projectFolder, path ) );
     }
 
-    public bool IsPackageReference( Reference reference ) {
+    public bool IsPackageReference( string path ) {
       // Correctly installed nuget package references have a hintpath
       // pointing to the package folder
-      return reference.HintPath != null &&
-             reference.HintPath.StartsWith( _packagesRelativePath, StringComparison.InvariantCultureIgnoreCase );
+      return path != null &&
+             path.StartsWith( _packagesRelativePath, StringComparison.InvariantCultureIgnoreCase );
     }
 
     /// <summary>
     /// Returns true if the reference is a package reference, and
     /// the corresponding package is referenced by packages.config.
     /// </summary>
-    public bool IsPackageReferenced( Reference reference ) {
+    public bool IsPackageReferenced( string reference ) {
       if ( !IsPackageReference( reference ) ) {
         return false;
       }
 
-      var packageFolder = GetPackageFolderFromHintPath( reference.HintPath );
+      var packageFolder = GetPackageFolderFromHintPath( reference );
       return _packagesByIdentityString.ContainsKey( packageFolder );
     }
 

@@ -10,4 +10,9 @@ namespace CsMerge.Core {
 
     All = 7
   }
+  public static class ConflictItemTypeExtensions {
+    public static bool IsSet( this ConflictItemType conflictItemType, ConflictItemType value ) {
+      return ( conflictItemType & value ) == value;
+    }
+  }
 }

@@ -8,6 +8,8 @@ using System.Xml.Linq;
 using LibGit2Sharp;
 using NLog;
 
+using Project;
+
 namespace CsMerge.Core {
 
   public class GitHelper {

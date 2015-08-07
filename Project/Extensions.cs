@@ -32,10 +32,6 @@ namespace CsMerge.Core {
       return items == null ? 0 : items.Distinct().Count();
     }
 
-    public static bool IsSet( this ConflictItemType conflictItemType, ConflictItemType value ) {
-      return ( conflictItemType & value ) == value;
-    }
-
     public static bool IsOptionValid<T>( this T item ) where T: IConflictableItem {
       return item == null || item.IsResolveOption;
     }

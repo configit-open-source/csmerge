@@ -1,12 +1,14 @@
 ﻿using System.Text;
 using System.Xml.Linq;
 
+using CsMerge.Core;
+
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
 
-namespace CsMerge.Core {
+namespace NuGetHelpers {
   public class ConfigitPackageReference: IConflictableItem {
     private readonly PackageReference _reference;
 

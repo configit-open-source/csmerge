@@ -9,6 +9,10 @@ using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
 
+using NuGetHelpers;
+
+using Project;
+
 namespace PackagesMerge.Test {
 
   [TestFixture]
@@ -26,8 +30,8 @@ namespace PackagesMerge.Test {
         new PackageReference( new PackageIdentity( "C.1V1", NuGetVersion.Parse( "1.2.3" ) ), NuGetFramework.Parse( "net45" ), false )
       } );
 
-      Assert.That( projectPackages.IsPackageReferenced( new Reference( string.Empty, null, null, "C.1V1.1.2.3" ) ), Is.True );
-      Assert.That( projectPackages.IsPackageReferenced( new Reference( string.Empty, null, null, "C.2V1.1.2.3" ) ), Is.False );
+      Assert.That( projectPackages.IsPackageReferenced( new Reference( string.Empty, null, null, "C.1V1.1.2.3" ).HintPath ), Is.True );
+      Assert.That( projectPackages.IsPackageReferenced( new Reference( string.Empty, null, null, "C.2V1.1.2.3" ).HintPath ), Is.False );
     }
   }
 }

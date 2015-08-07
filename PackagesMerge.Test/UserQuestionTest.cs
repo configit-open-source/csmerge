@@ -3,7 +3,12 @@ using System.Xml.Linq;
 using CsMerge.Core;
 using CsMerge.Core.Exceptions;
 using CsMerge.UserQuestion;
+
+using NuGetHelpers;
+
 using NUnit.Framework;
+
+using Project;
 
 namespace PackagesMerge.Test {
 

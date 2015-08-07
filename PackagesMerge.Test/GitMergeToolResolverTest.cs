@@ -3,6 +3,8 @@ using CsMerge.Core;
 using CsMerge.Resolvers;
 using NUnit.Framework;
 
+using Project;
+
 namespace PackagesMerge.Test {
 
   [TestFixture]

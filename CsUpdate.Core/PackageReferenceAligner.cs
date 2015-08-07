@@ -9,12 +9,18 @@ using System.Xml.Linq;
 using CsMerge.Core;
 using CsMerge.Core.Parsing;
 
+using CsUpdate.Core;
+
 using NLog;
 
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.PackagingCore;
 using NuGet.Versioning;
+
+using NuGetHelpers;
+
+using Project;
 
 namespace CsMerge {
   public class PackageReferenceAligner {
@@ -73,15 +79,15 @@ namespace CsMerge {
           }
           Reference reference = item as Reference;
 
-          if ( !oldPackagesConfig.IsPackageReference( reference ) ) {
+          if ( !oldPackagesConfig.IsPackageReference( reference.HintPath ) ) {
             items.Add( item ); // we keep any non package references (ie System.Xml)
             continue;
           }
 
-          var referencedInOldPackage = oldPackagesConfig.IsPackageReferenced( reference );
+          var referencedInOldPackage = oldPackagesConfig.IsPackageReferenced( reference.HintPath );
 
           if ( !referencedInOldPackage
-               && !updatedPackagesConfig.IsPackageReferenced( reference ) ) {
+               && !updatedPackagesConfig.IsPackageReferenced( reference.HintPath ) ) {
             logger.Info( "Removing " + reference + " as package not listed in packages.config" );
             changed = true;
             continue; // remove reference

@@ -21,15 +21,15 @@ namespace CsUpdate {
         return;
       }
 
-      ProcessAlign(  );
+      // ProcessAlign(  );
     }
 
     private static void ProcessAlign( Logger logger, string rootFolder, CsUpdateOptions options, DirectoryInfo folder ) {
       logger.Info( "Updating/aligning references in " + rootFolder );
 
-      string pattern = options.Upgrade;
-      string patternVersion = options.UpgradeVersion;
-      string framework = options.UpgradeFramework;
+      //string pattern = options.Upgrade;
+      //string patternVersion = options.UpgradeVersion;
+      //string framework = options.UpgradeFramework;
 
       // TODO: Check specifically for known VS extensions only
       var projectFiles = folder.GetFiles( "*.*sproj", SearchOption.AllDirectories ).Select( f => f.FullName ).ToArray();
@@ -37,11 +37,11 @@ namespace CsUpdate {
       // Restore packages now
       NuGetExtensions.RestorePackages( rootFolder );
 
-      TargetPackageIndex targetPackageIndex = new TargetPackageIndex( projectFiles, pattern, patternVersion, framework );
+      //TargetPackageIndex targetPackageIndex = new TargetPackageIndex( projectFiles, pattern, patternVersion, framework );
 
-      foreach ( var projectFile in projectFiles ) {
-        new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
-      }
+      //foreach ( var projectFile in projectFiles ) {
+      //  new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
+      //}
     }
   }
 }

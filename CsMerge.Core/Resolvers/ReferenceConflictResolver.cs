@@ -4,6 +4,8 @@ using System.Linq;
 
 using NLog;
 
+using Project;
+
 namespace CsMerge.Core.Resolvers {
 
   public class ReferenceConflictResolver: IConflictResolver<Reference> {

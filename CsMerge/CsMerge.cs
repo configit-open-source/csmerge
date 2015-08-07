@@ -14,8 +14,13 @@ using CsMerge.UserQuestion;
 
 using LibGit2Sharp;
 using NLog;
+
+using NuGetHelpers;
+
+using Project;
+
 using LogLevel = NLog.LogLevel;
-using Reference = CsMerge.Core.Reference;
+using Reference = Project.Reference;
 
 namespace CsMerge {
   /// <summary>
@@ -43,13 +48,7 @@ namespace CsMerge {
 
       try {
         var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
-
-        if ( options.Mode == Mode.Align ) {
-          ProcessAlign( logger, rootFolder, options, folder );
-        }
-        else if ( options.Mode == Mode.Merge ) {
-          ProcessMerge( logger, folder, rootFolder );
-        }
+        ProcessMerge( logger, folder, rootFolder );
       }
       catch ( UserQuitException ) {
         Console.WriteLine( "The user quit." );
@@ -58,8 +57,6 @@ namespace CsMerge {
         Console.Write( "An error occured: " + Environment.NewLine + exception );
       }
     }
-
-
 
     private static void ProcessMerge( Logger logger, DirectoryInfo folder, string rootFolder ) {
       logger.Info( "Looking for things to merge in " + folder );
