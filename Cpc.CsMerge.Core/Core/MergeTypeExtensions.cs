@@ -34,10 +34,12 @@ namespace CsMerge.Core {
       switch ( type ) {
         case MergeType.NoChanges:
           return type.ToString();
-        case MergeType.LocalAdded | MergeType.IncomingAdded:
+        case MergeType.BothAdded:
           return "Both Added";
-        case MergeType.LocalDeleted | MergeType.IncomingDeleted:
+        case MergeType.BothDeleted:
           return "Both Deleted";
+        case MergeType.BothModified:
+          return "Both Modified";
       }
 
       List<string> values = new List<string>();
@@ -64,7 +66,21 @@ namespace CsMerge.Core {
       if ( type.HasFlag( MergeType.IncomingModified ) ) {
         values.Add( Incoming( operation ) + " " + _modifiedSuffix );
       }
-      return string.Join( "+", values );
+      return string.Join( ", ", values );
     }
+
+    public static string ToString( this ConflictItemType conflictItemType, CurrentOperation operation ) {
+      switch ( conflictItemType ) {
+        case ConflictItemType.Local:
+          return Local( operation );
+        case ConflictItemType.Incoming:
+          return Incoming( operation );
+        case ConflictItemType.Unknown:
+          return "Custom";
+        default:
+          return conflictItemType.ToString();
+      }
+    }
+
   }
 }

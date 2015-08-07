@@ -18,7 +18,7 @@ namespace CsMerge.Core {
       _packagesPrefix = packagesPrefix;
       var packages = Package.Read( Path.Combine( baseFolder, "packages.config" ) ).ToArray();
 
-      _packages = packages.ToDictionary( p => p.Id, p => p );
+      _packages = packages.ToDictionary( p => p.Id );
     }
 
     public bool IsPackageReference( Reference reference ) {

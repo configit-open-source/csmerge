@@ -10,7 +10,7 @@ namespace CsMerge.Core {
     }
 
     public static IDictionary<string, T> ToKeyedDictionary<T>( this IEnumerable<T> items ) where T: IConflictableItem {
-      return items.ToDictionary( i => i.Key, r => r );
+      return items.ToDictionary( i => i.Key );
     }
 
     public static IDictionary<string, IEnumerable<T>> ToDuplicatesDictionary<T>( this IEnumerable<T> items ) where T: IConflictableItem {
@@ -45,11 +45,45 @@ namespace CsMerge.Core {
         return;
       }
 
-      var text = string.IsNullOrEmpty( propertyName ) ?
-        propertyValue.ToString() :
-        string.Format( "{0}: {1}", propertyName, propertyValue );
+      var text = string.IsNullOrEmpty( propertyName ) 
+        ? propertyValue.ToString() 
+        : $"{propertyName}: {propertyValue}";
 
       propertyNames.Add( text );
+    }
+
+    public static MergeType GetMergeType<T>( this Conflict<T> conflict ) where T: IConflictableItem {
+      
+      var baseItem = conflict.Base;
+      var localItem = conflict.Local;
+      var incomingItem = conflict.Incoming;
+      
+      if ( baseItem == null ) {
+        var localChange = localItem == null ? MergeType.NoChanges : MergeType.LocalAdded;
+        var incomingChange = incomingItem == null ? MergeType.NoChanges : MergeType.IncomingAdded;
+        return localChange | incomingChange;
+      } else {
+        var localChange = localItem == null ? MergeType.LocalDeleted : Equals( baseItem, localItem ) ? MergeType.NoChanges : MergeType.LocalModified;
+        var incomingChange = incomingItem == null ? MergeType.IncomingDeleted : Equals( baseItem, incomingItem ) ? MergeType.NoChanges : MergeType.IncomingModified;
+        return localChange | incomingChange;
+      }
+    }
+
+    public static MergeType GetMergeType<T>( this Conflict<IEnumerable<T>> conflict ) where T : IConflictableItem {
+
+      var baseItems = conflict.Base.OrderBy( i => i.ToString() ).ToList();
+      var localItems = conflict.Local.OrderBy( i => i.ToString() ).ToList();
+      var incomingItems = conflict.Incoming.OrderBy( i => i.ToString() ).ToList();
+
+      if ( baseItems.IsNullOrEmpty() ) {
+        var localChange = localItems.IsNullOrEmpty() ? MergeType.NoChanges : MergeType.LocalAdded;
+        var incomingChange = incomingItems.IsNullOrEmpty() ? MergeType.NoChanges : MergeType.IncomingAdded;
+        return localChange | incomingChange;
+      } else {
+        var localChange = localItems.IsNullOrEmpty() ? MergeType.LocalDeleted : baseItems.SequenceEqual( localItems ) ? MergeType.NoChanges : MergeType.LocalModified;
+        var incomingChange = incomingItems.IsNullOrEmpty() ? MergeType.IncomingDeleted : baseItems.SequenceEqual( incomingItems ) ? MergeType.NoChanges : MergeType.IncomingModified;
+        return localChange | incomingChange;
+      }
     }
   }
 }

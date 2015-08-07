@@ -6,9 +6,9 @@ using NLog;
 
 namespace CsMerge.Core.Resolvers {
 
-  public class MergeHelper<T> where T: class, IConflictableItem {
+  public class MergeHelper<T> where T : class, IConflictableItem {
 
-    public static MergeResult<T> Resolve( Conflict<T> conflict, IConflictResolver<T> conflictResolver ) {
+    private static MergeResult<T> Resolve( Conflict<T> conflict, IConflictResolver<T> conflictResolver ) {
 
       var baseItem = conflict.Base;
       var localItem = conflict.Local;
@@ -18,7 +18,7 @@ namespace CsMerge.Core.Resolvers {
 
       // No Change
       if ( Equals( baseItem, incomingItem ) && Equals( baseItem, localItem ) ) {
-        return new MergeResult<T>( key, baseItem, MergeType.NoChanges );
+        return AttemptToResolveWith( conflict, baseItem, MergeType.NoChanges, ConflictItemType.Base, conflictResolver );
       }
 
       // Added on mine, theirs or both
@@ -26,22 +26,26 @@ namespace CsMerge.Core.Resolvers {
 
         // Added on both but identicle
         if ( Equals( localItem, incomingItem ) ) {
-          return new MergeResult<T>( key, localItem, MergeType.LocalAdded | MergeType.IncomingAdded );
+          return AttemptToResolveWith( conflict, localItem, MergeType.BothAdded, ConflictItemType.Local, conflictResolver );
         }
 
         // Added on both but different
         if ( incomingItem != null && localItem != null ) {
-          var resolvedItem = conflictResolver.Resolve( conflict );
-          return new MergeResult<T>( conflict.Key, resolvedItem, MergeType.LocalAdded | MergeType.IncomingAdded );
+          return conflictResolver.Resolve( conflict );
         }
 
         // Added on either mine or theirs
-        return new MergeResult<T>( key, incomingItem ?? localItem, incomingItem == null ? MergeType.LocalAdded : MergeType.IncomingAdded );
+        return AttemptToResolveWith(
+          conflict,
+          incomingItem ?? localItem,
+          incomingItem == null ? MergeType.LocalAdded : MergeType.IncomingAdded,
+          incomingItem == null ? ConflictItemType.Local : ConflictItemType.Incoming,
+          conflictResolver );
       }
 
       // Deleted on mine and theirs
       if ( localItem == null && incomingItem == null ) {
-        return new MergeResult<T>( key, MergeType.LocalDeleted | MergeType.IncomingDeleted );
+        return AttemptToResolveWith( conflict, null, MergeType.BothDeleted, ConflictItemType.Local, conflictResolver );
       }
 
       // Deleted on mine only...
@@ -49,12 +53,11 @@ namespace CsMerge.Core.Resolvers {
 
         // Deleted on mine and unchanged on theirs
         if ( incomingItem.Equals( baseItem ) ) {
-          return new MergeResult<T>( key, MergeType.LocalDeleted );
+          return AttemptToResolveWith( conflict, null, MergeType.LocalDeleted, ConflictItemType.Local, conflictResolver );
         }
 
         // Deleted on mine, updated in theirs
-        var resolvedItem = conflictResolver.Resolve( conflict );
-        return new MergeResult<T>( conflict.Key, resolvedItem, MergeType.LocalDeleted | MergeType.IncomingModified );
+        return conflictResolver.Resolve( conflict );
       }
 
       // Deleted on theirs only...
@@ -62,30 +65,35 @@ namespace CsMerge.Core.Resolvers {
 
         // Deleted on theirs and unchanged on mine
         if ( Equals( localItem, baseItem ) ) {
-          return new MergeResult<T>( key, MergeType.IncomingDeleted );
+          return AttemptToResolveWith( conflict, null, MergeType.IncomingDeleted, ConflictItemType.Incoming, conflictResolver );
         }
 
         // Deleted on theirs, updated in mine
-        var resolvedItem = conflictResolver.Resolve( conflict );
-        return new MergeResult<T>( conflict.Key, resolvedItem, MergeType.LocalModified | MergeType.IncomingDeleted );
+        return conflictResolver.Resolve( conflict );
       }
 
       // Updated to be the same in mine and theirs
       if ( Equals( localItem, incomingItem ) ) {
-        return new MergeResult<T>( key, localItem, MergeType.LocalModified | MergeType.IncomingModified );
+        return AttemptToResolveWith( conflict, localItem, MergeType.BothModified, ConflictItemType.Local, conflictResolver );
       }
 
       // Updated on theirs and unchanged on mine
       if ( Equals( baseItem, localItem ) && !Equals( baseItem, incomingItem ) ) {
-        return new MergeResult<T>( key, incomingItem, MergeType.IncomingModified );
+        return AttemptToResolveWith( conflict, incomingItem, MergeType.IncomingModified, ConflictItemType.Incoming, conflictResolver );
       }
 
       // Updated on mine and unchanged on theirs
       if ( Equals( baseItem, incomingItem ) && !Equals( baseItem, localItem ) ) {
-        return new MergeResult<T>( key, localItem, MergeType.LocalModified );
+        return AttemptToResolveWith( conflict, localItem, MergeType.LocalModified, ConflictItemType.Local, conflictResolver );
       }
 
-      var validItems = conflict.GetItems().Where( i => i.IsOptionValid() ).ToList();
+      // If we got this far, then the conflict involve changes on both local and incoming and they were not the same.
+
+      var validItems = new List<Tuple<ConflictItemType, T>> {
+          new Tuple<ConflictItemType, T>( ConflictItemType.Local, conflict.Local),
+          new Tuple<ConflictItemType, T>( ConflictItemType.Incoming, conflict.Incoming)
+        }.Where( r => r.Item2.IsOptionValid() ).ToList();
+
       var validCount = validItems.Count();
 
       if ( validCount == 0 ) {
@@ -93,74 +101,105 @@ namespace CsMerge.Core.Resolvers {
       }
 
       if ( validCount == 1 ) {
-        return new MergeResult<T>( conflict.Key, validItems.Single(), MergeType.LocalModified | MergeType.IncomingModified );
+        var resolvedItem = validItems.Single();
+        return AttemptToResolveWith( conflict, resolvedItem.Item2, MergeType.BothModified, resolvedItem.Item1, conflictResolver );
       }
 
       // Updated on both
-      var resolved = conflictResolver.Resolve( conflict );
-      return new MergeResult<T>( conflict.Key, resolved, MergeType.LocalModified | MergeType.IncomingModified );
+      return conflictResolver.Resolve( conflict );
+    }
+
+    private static MergeResult<T> AttemptToResolveWith( Conflict<T> conflict, T resolveWithItem, MergeType mergeType, ConflictItemType resolvedWith, IConflictResolver<T> conflictResolver ) {
+      if ( resolveWithItem.IsOptionValid() ) {
+        return new MergeResult<T>( conflict.Key, resolveWithItem, mergeType, resolvedWith );
+      }
+
+      return conflictResolver.Resolve( conflict );
+    }
+
+    private static T Resolve( ConflictContext<T> context, string key, IConflictResolver<T> conflictResolver ) {
+
+      var conflict = context.CreateItemConflict( key );
+
+      var mergeResult = Resolve( conflict, conflictResolver );
+
+      return HandleMergeResult( mergeResult, context.FilePath, key, context.Operation );
+    }
+
+    private static T Resolve( ConflictContext<IEnumerable<T>> context, string key, IConflictResolver<T> conflictResolver, IDuplicateResolver<T> duplicateResolver ) {
+
+      var conflict = context.CreateItemConflict( key );
+
+      var mergeResult = MergeDuplicates( context.FilePath, conflict, conflictResolver, duplicateResolver );
+
+      return HandleMergeResult( mergeResult, context.FilePath, key, context.Operation );
     }
 
     private static MergeResult<T> MergeDuplicates(
       string filePath,
-      IEnumerable<T> baseDuplicates,
-      IEnumerable<T> localDuplicates,
-      IEnumerable<T> incomingDuplicates,
+      IConflict<IEnumerable<T>> conflict,
       IConflictResolver<T> conflictResolver,
       IDuplicateResolver<T> duplicateResolver ) {
 
-      var distinctBaseItems = baseDuplicates.Distinct().ToList();
-      var distinctLocalItems = localDuplicates.Distinct().ToList();
-      var distinctIncomingItems = incomingDuplicates.Distinct().ToList();
+      var distinctBaseItems = conflict.Base.Distinct().ToList();
+      var distinctLocalItems = conflict.Local.Distinct().ToList();
+      var distinctIncomingItems = conflict.Incoming.Distinct().ToList();
 
       var key = KeyHelper.GetKeyFromCollections( distinctBaseItems, distinctLocalItems, distinctIncomingItems );
 
       // If there are multiple identicle duplicates then we may be able to resolve in the normal way
       if ( distinctBaseItems.Count <= 1 && distinctLocalItems.Count <= 1 && distinctIncomingItems.Count <= 1 ) {
-        var conflict = new Conflict<T>(
+        var itemConflict = new Conflict<T>(
           filePath,
           key,
           distinctBaseItems.FirstOrDefault(),
           distinctLocalItems.FirstOrDefault(),
           distinctIncomingItems.FirstOrDefault() );
 
-        return Resolve( conflict, conflictResolver );
+        return Resolve( itemConflict, conflictResolver );
       }
 
       // If duplicates in base, but deleted on both incoming and local, then auto resolve to deleted.
       if ( distinctIncomingItems.Count == 0 && distinctLocalItems.Count == 0 ) {
-        return new MergeResult<T>( key, null, MergeType.IncomingDeleted | MergeType.LocalDeleted );
+        return new MergeResult<T>( key, null, MergeType.BothDeleted, ConflictItemType.Local );
       }
 
       // If duplicates in base, but modified in both incoming and local, and incoming and local are identical, then auto resolve to to the modified item.
-      if ( distinctIncomingItems.Count == 1 && distinctLocalItems.Count == 1 && distinctIncomingItems.First() == distinctLocalItems.First() ) {
-        var mergeType = distinctBaseItems.Any()
-          ? MergeType.IncomingModified | MergeType.LocalModified
-          : MergeType.LocalAdded | MergeType.IncomingAdded;
-
-        return new MergeResult<T>( key, distinctLocalItems.First(), mergeType );
+      if ( distinctIncomingItems.Count == 1 && distinctLocalItems.Count == 1 && distinctIncomingItems.First() == distinctLocalItems.First() && distinctLocalItems.First().IsOptionValid() ) {
+        var mergeType = distinctBaseItems.Any() ? MergeType.BothModified : MergeType.BothAdded;
+        return new MergeResult<T>( key, distinctLocalItems.First(), mergeType, ConflictItemType.Local );
       }
 
-      var resolved = duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( filePath, key, distinctBaseItems, distinctLocalItems, distinctIncomingItems ) );
-      return new MergeResult<T>( key, resolved, MergeType.LocalModified | MergeType.IncomingModified );
+      return duplicateResolver.Resolve( new Conflict<IEnumerable<T>>( filePath, key, distinctBaseItems, distinctLocalItems, distinctIncomingItems ) );
     }
 
-    private static T HandleMergeResult( MergeResult<T> mergeResult, string key, CurrentOperation operation ) {
+    private static T HandleMergeResult( MergeResult<T> mergeResult, string filePath, string key, CurrentOperation operation ) {
       var logger = LogManager.GetCurrentClassLogger();
 
       if ( mergeResult.MergeType == MergeType.NoChanges ) {
         return mergeResult.ResolvedItem;
       }
 
-      if ( mergeResult.ResolvedItem != null ) {
-        if ( !mergeResult.ResolvedItem.IsOptionValid() ) {
-          throw new InvalidResolutonException( key );
-        }
-        logger.Info( mergeResult.MergeType.ToString( operation ) + " resolved to\n" + mergeResult.ResolvedItem );
-      } else {
-        logger.Info( mergeResult.MergeType.ToString( operation ) + " resolved to delete of\n" + key );
+      if ( !mergeResult.ResolvedItem.IsOptionValid() ) {
+        throw new InvalidResolutonException( key );
       }
+
+      var resolutionSummary = GetResolutionSummary( filePath, key, mergeResult, operation );
+
+      logger.Info( resolutionSummary );
+
       return mergeResult.ResolvedItem;
+    }
+
+    private static string GetResolutionSummary( string filePath, string key, MergeResult<T> mergeResult, CurrentOperation operation ) {
+
+      var newLine = Environment.NewLine;
+      var changesDescription = mergeResult.MergeType.ToString( operation );
+      var newLineWithIndent = newLine + "  ";
+      var resolutionDescription = mergeResult.ResolvedItem == null ? "Deleted" : ( newLineWithIndent + mergeResult.ResolvedItem.ToString().Replace( Environment.NewLine, newLineWithIndent ) );
+      var resolvedWithDescription = mergeResult.ResolvedWith == ConflictItemType.Unknown ? "Custom" : mergeResult.ResolvedWith.ToString( operation );
+
+      return $"{LogHelper.Header}{newLine}Resolution Summary{newLine}File: {filePath}{newLine}Key: {key}{newLine}Changes: {changesDescription}{newLine}Resolution: {resolvedWithDescription}{resolutionDescription}";
     }
 
     public static IEnumerable<T> MergeAll(
@@ -171,13 +210,16 @@ namespace CsMerge.Core.Resolvers {
       IDictionary<string, T> incomingObj,
       IConflictResolver<T> conflictResolver ) {
 
-      return ( from id in GetKeys( baseObj.Keys, localObj.Keys, incomingObj.Keys )
-               let conflict = new Conflict<T>( filePath, id, GetValue( baseObj, id ), GetValue( localObj, id ), GetValue( incomingObj, id ) )
-               let mergeResult = Resolve( conflict, conflictResolver )
-               orderby mergeResult.Key
-               select HandleMergeResult( mergeResult, id, operation ) into mergedObj
-               where mergedObj != null
-               select mergedObj ).OrderBy( o => o.Key );
+      var context = new ConflictContext<T>( filePath, operation, baseObj, localObj, incomingObj );
+
+      return MergeAll( context, conflictResolver );
+    }
+
+    public static IEnumerable<T> MergeAll( ConflictContext<T> context, IConflictResolver<T> conflictResolver ) {
+
+      return context.GetKeys()
+        .Select( key => Resolve( context, key, conflictResolver ) )
+        .WhereNotNull();
     }
 
     public static IEnumerable<T> MergeAllDuplicates(
@@ -189,27 +231,18 @@ namespace CsMerge.Core.Resolvers {
       IConflictResolver<T> conflictResolver,
       IDuplicateResolver<T> duplicateResolver ) {
 
-      return ( from id in GetKeys( baseObj.Keys, localObj.Keys, incomingObj.Keys )
-               let b = GetDuplicates( baseObj, id )
-               let m = GetDuplicates( localObj, id )
-               let t = GetDuplicates( incomingObj, id )
-               let mergeResult = MergeDuplicates( filePath, b, m, t, conflictResolver, duplicateResolver )
-               orderby mergeResult.Key
-               select HandleMergeResult( mergeResult, id, operation ) into mergedObj
-               where mergedObj != null
-               select mergedObj ).OrderBy( o => o.Key );
+      var context = new ConflictContext<IEnumerable<T>>( filePath, operation, baseObj, localObj, incomingObj );
+
+      return MergeAllDuplicates( context, conflictResolver, duplicateResolver );
     }
 
-    private static IEnumerable<string> GetKeys( IEnumerable<string> baseItems, IEnumerable<string> localItems, IEnumerable<string> incomingItems ) {
-      return baseItems.Union( localItems ).Union( incomingItems ).OrderBy( i => i, StringComparer.OrdinalIgnoreCase );
-    }
+    public static IEnumerable<T> MergeAllDuplicates( ConflictContext<IEnumerable<T>> context,
+      IConflictResolver<T> conflictResolver,
+      IDuplicateResolver<T> duplicateResolver ) {
 
-    private static T GetValue( IDictionary<string, T> baseObj, string id ) {
-      return baseObj.ContainsKey( id ) ? baseObj[id] : null;
-    }
-
-    private static IEnumerable<T> GetDuplicates( IDictionary<string, IEnumerable<T>> duplicateDictionary, string id ) {
-      return duplicateDictionary.ContainsKey( id ) ? duplicateDictionary[id] : null;
+      return context.GetKeys()
+        .Select( key => Resolve( context, key, conflictResolver, duplicateResolver ) )
+        .WhereNotNull();
     }
   }
 }

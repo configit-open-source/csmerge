@@ -5,7 +5,7 @@ using CsMerge.UserQuestion;
 using LibGit2Sharp;
 
 namespace CsMerge.Resolvers {
-  public class UserConflictResolver<T>: IConflictResolver<T> where T: class, IConflictableItem {
+  public class UserConflictResolver<T>: IConflictResolver<T> where T : class, IConflictableItem {
 
     private readonly string _itemDescriptionWhenNull;
     private readonly string _notResolveOptionText;
@@ -22,7 +22,7 @@ namespace CsMerge.Resolvers {
       _incoming = MergeTypeExtensions.Incoming( operation );
     }
 
-    public T Resolve( Conflict<T> conflict ) {
+    public MergeResult<T> Resolve( Conflict<T> conflict ) {
 
       var options = new UserQuestionOptionsCollection<T>();
 
@@ -38,11 +38,27 @@ namespace CsMerge.Resolvers {
       options.Add<MergeAbortException>( "S", "Skip this file" );
       options.Add<UserQuitException>( "Q", "Quit" );
 
-      var questionText = UserQuestion<T>.BuildQuestionText( options, string.Format( "Please resolve conflict in file: {0}", conflict.FilePath ) );
+      var questionText = UserQuestion<T>.BuildQuestionText( options, $"Please resolve conflict in file: {conflict.FilePath}" );
 
       UserQuestion<T> userQuestion = new UserQuestion<T>( questionText, options );
 
-      return userQuestion.Resolve();
+      var resolvedItem = userQuestion.Resolve();
+
+      ConflictItemType resolvedWith;
+
+      var userOption = userQuestion.ResolvedOption.ToLower();
+
+      if ( userOption == "b" ) {
+        resolvedWith = ConflictItemType.Base;
+      } else if ( userOption == _local[0].ToString().ToLower() ) {
+        resolvedWith = ConflictItemType.Local;
+      } else if ( userOption == _incoming[0].ToString().ToLower() ) {
+        resolvedWith = ConflictItemType.Incoming;
+      } else {
+        resolvedWith = ConflictItemType.Unknown;
+      }
+
+      return new MergeResult<T>( conflict.Key, resolvedItem, conflict.GetMergeType(), resolvedWith );
     }
   }
 }

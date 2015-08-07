@@ -50,6 +50,8 @@
   <ItemGroup>
     <Compile Include="Core\AutoResolveType.cs" />
     <Compile Include="Core\Conflict.cs" />
+    <Compile Include="Core\ConflictContext.cs" />
+    <Compile Include="Core\LogHelper.cs" />
     <Compile Include="Core\Extensions.cs" />
     <Compile Include="Core\GitHelper.cs" />
     <Compile Include="Core\IConflict.cs" />

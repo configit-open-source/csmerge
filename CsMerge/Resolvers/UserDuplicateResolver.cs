@@ -9,7 +9,7 @@ using LibGit2Sharp;
 
 namespace CsMerge.Resolvers {
 
-  internal class UserDuplicateResolver<T>: IDuplicateResolver<T> where T: class, IConflictableItem {
+  internal class UserDuplicateResolver<T>: IDuplicateResolver<T> where T : class, IConflictableItem {
 
     private readonly string _itemDescriptionWhenNull;
     private readonly string _notResolveOptionText;
@@ -25,7 +25,7 @@ namespace CsMerge.Resolvers {
       _incoming = MergeTypeExtensions.Incoming( operation );
     }
 
-    public T Resolve( Conflict<IEnumerable<T>> conflict ) {
+    public MergeResult<T> Resolve( Conflict<IEnumerable<T>> conflict ) {
 
       var allOptions = GetAllOptions( conflict ).ToList();
 
@@ -45,17 +45,33 @@ namespace CsMerge.Resolvers {
       options.Add<MergeAbortException>( "S", "Skip this file" );
       options.Add<UserQuitException>( "Q", "Quit" );
 
-      var questionText = UserQuestion<T>.BuildQuestionText( options, string.Format( "Please resolve conflict in file: {0}", conflict.FilePath ) );
+      var questionText = UserQuestion<T>.BuildQuestionText( options, $"Please resolve conflict in file: {conflict.FilePath}" );
 
       var userQuestion = new UserQuestion<T>( questionText, options );
 
-      return userQuestion.Resolve();
+      var resolvedItem = userQuestion.Resolve();
+
+      ConflictItemType resolvedWith;
+
+      var userOption = userQuestion.ResolvedOption.ToLower();
+
+      if ( userOption.StartsWith( "b" ) ) {
+        resolvedWith = ConflictItemType.Base;
+      } else if ( userOption.StartsWith( _local[0].ToString().ToLower() ) ) {
+        resolvedWith = ConflictItemType.Local;
+      } else if ( userOption.StartsWith( _incoming[0].ToString().ToLower() ) ) {
+        resolvedWith = ConflictItemType.Incoming;
+      } else {
+        resolvedWith = ConflictItemType.Unknown;
+      }
+
+      return new MergeResult<T>( conflict.Key, resolvedItem, conflict.GetMergeType(), resolvedWith );
     }
 
     private IUserQuestionOption<T> ToUserQuestionOption( DuplicateItemOption<T> option ) {
       return option.Item.IsOptionValid()
         ? new UserQuestionLiteralWithDescriptionOption<T>( option.OptionKey, option.OptionName, option.Item, _itemDescriptionWhenNull )
-        : new UserQuestionLiteralWithDescriptionOption<T>( string.Empty, string.Format( "{0} ({1})", option.OptionName, _notResolveOptionText ), option.Item, _itemDescriptionWhenNull );
+        : new UserQuestionLiteralWithDescriptionOption<T>( string.Empty, $"{option.OptionName} ({_notResolveOptionText})", option.Item, _itemDescriptionWhenNull );
     }
 
     private IEnumerable<DuplicateItemOption<T>> GetAllOptions( IConflict<IEnumerable<T>> conflict ) {
@@ -86,12 +102,18 @@ namespace CsMerge.Resolvers {
     }
 
     private static string GetOptionName( string optionName, int itemNumber, int itemCount ) {
-      return itemCount > 1 ? string.Format( "{0} {1}", optionName, itemNumber ) : optionName;
+      var paddedItemNumber = PadItemNumber( itemNumber, itemCount );
+      return itemCount > 1 ? $"{optionName} {paddedItemNumber}" : optionName;
     }
 
     private static string GetOptionKey( string optionName, int itemNumber, int itemCount ) {
       var optionKeyPrefix = optionName[0].ToString().ToUpper();
-      return itemCount > 1 ? optionKeyPrefix + itemNumber : optionKeyPrefix;
+      var paddedItemNumber = PadItemNumber( itemNumber, itemCount );
+      return itemCount > 1 ? optionKeyPrefix + paddedItemNumber : optionKeyPrefix;
+    }
+
+    private static string PadItemNumber( int itemNumber, int itemCount ) {
+      return itemNumber.ToString( "D" + itemCount.ToString().Length );
     }
 
   }

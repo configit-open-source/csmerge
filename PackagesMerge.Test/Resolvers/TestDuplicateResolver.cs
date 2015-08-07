@@ -20,7 +20,7 @@ namespace PackagesMerge.Test.Resolvers {
       Resolutions = new Dictionary<string, T>();
     }
 
-    public T Resolve( Conflict<IEnumerable<T>> conflict ) {
+    public MergeResult<T> Resolve( Conflict<IEnumerable<T>> conflict ) {
       var items = GetCollection( conflict ).Where( i => i.IsOptionValid() ).ToList();
 
       var itemIndex = Math.Min( _autoResolveItemIndex, items.Count - 1 );
@@ -29,7 +29,7 @@ namespace PackagesMerge.Test.Resolvers {
 
       Resolutions.Add( GetKey( conflict ), resolution );
 
-      return resolution;
+      return new MergeResult<T>( conflict.Key, resolution, conflict.GetMergeType(), _conflictItemType );
     }
 
     private static string GetKey( Conflict<IEnumerable<T>> conflict ) {
