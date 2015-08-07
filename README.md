@@ -1,10 +1,18 @@
-# (Almost) painless way to handle conflicts on nuget packages
+# A tool to assist in handling packages.config and project files during conflicts and upgrades
+
+The primary purpose of the CsMerge tool is to provide intelligent merging of project files and packages.config files while also offering help in dealing with project file vs packages.config file inconsistencies.
 
 ## Disclaimer
 Always backup your branch content before running this merge tool, its probably completely broken and will
 eat your project files for lunch.
 
-The code in this repository is WIP, and currently quite hacky in an attempt to get a minimal viable tool, so don´t complain about it :)
+The tool makes certain assumptions about your usage of NuGet packages and versioning. In particular:
+
+- You use git for version control.
+- You never want to use different versions of a package in the same repository.
+- When resolving conflicts, you want the newest version among the two.
+- You don´t use upper limits on allowed package versions
+- Its okay to re-order project files (makes it hard to handle conflicts for people *not* using the tool)
 
 ## Setup
 
@@ -29,30 +37,23 @@ By placing it under `.git\info` it will not be versioned and so will not affect 
 
 You can also set it up system wide, see [http://git-scm.com/docs/gitattributes](http://git-scm.com/docs/gitattributes "Git Attributes") for details.
 
-### Step 3 : Install binaries
-Copy the content of the `binaries` folder to a location that is included in the value of the PATH environment variable.
+### Step 3 : Install
+Run the binaries\CsMerge.Setup.msi installer. The installer has no UI, but will install to programs files
+and add CsMerge.exe to path. Alternatively you can build it from source.
 
-## Usage
+## Usage in Merge mode
+The default mode of the tool is 'merge' where it looks for conflicting project and packages.config files. Run the tool after starting a merge or rebase.
 
 When packages.config files or csproj are modified in both branches, the configured failmerge merge driver
 will make sure they are always considered conflicting, and not accidentally merged as text files.
 
-You can now execute `CsMerge.exe`. Either provide the path to the git folder as an argument, or run it from the
-folder you want to resolve conflicts for.
+Simply run CsMerge.exe in the git repository or with the --input <root folder path>.
 
 ### packages.config
 The tool resolves packages.config files first to make sure that we know what packages we need to reference 
 in the project files.
 
-If both branches modified the package entry, the highest version will be used. If only one branch has made changes to a package (including delete), then that change is simply applied. In case of conflicting changes (for example modify vs delete), the tool will ask the user to choose:
-
-    Theirs deleted p1/10.0.0.0/net40-Client while Mine changed to add-p1/90.0.0.0/net45
-    (b)ase: p1/10.0.0.0/net40-Client
-    (m)ine: p1/90.0.0.0/net45
-    (t)heirs: not installed
-    Choose resolution:
-    m
-	Auto-merging packages.config
+If both branches modified the package entry, the highest version will be used. If only one branch has made changes to a package (including delete), then that change is simply applied. In case of conflicting changes (for example modify vs delete), the tool will ask the user to choose.
 
 The merge tool uses Mine/Theirs correctly when rebasing and merging, so Mine is the changes in your branch, and not reversed as it is in non-rebase aware tools.
 
@@ -67,3 +68,24 @@ A non-NuGet reference will conflict if the same assembly name (ie. Configit.Core
 The remaining items are resolved using their Include value (if present) as key, and if no Include is specified, the entire content of the item element is used to compare.
 
 In the current implementation the project files ItemGroups are restructured to have one ItemGroup per item action (ie Compile, None etc.) and sorted on that action. The items are ordered according to their key (Package Id, Include path, Project Guid etc). While this will initially cause a major restructuring, but otherwise keep a consistent ordering.
+
+## Usage in Align mode
+The Align mode has two purposes:
+- Ensure that the same (most recent) version of a package is used throughout the repository (even if there are multiple solution files in the current version).
+- Allow batch upgrade of related packages
+
+To simply align references to existing packages simply run:
+
+```
+CsMerge --mode align
+```
+
+This will cause CsMerge to restore package for all solution files in the repository folder, after which CsMerge will scan all packages.config files to find the most recent version of each package. It will then update packages.config files appropriately and finally fixup assembly references in the project files.
+
+You can include batch upgrade of related packages by specifying for example:
+
+```
+CsMerge --mode align --upgrade-prefix A.B --version 1.5.0 -framework net45
+```
+
+This will cause CsMerge to upgrade any currently installed packages with an Id starting with A.B to version 1.5.0 and targeting net45.

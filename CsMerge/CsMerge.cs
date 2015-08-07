@@ -2,7 +2,9 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
+
 using CsMerge.Core;
 using CsMerge.Core.Exceptions;
 using CsMerge.Core.Resolvers;
@@ -12,11 +14,15 @@ using CsMerge.UserQuestion;
 
 using LibGit2Sharp;
 using NLog;
+
+using NuGetHelpers;
+
+using Project;
+
 using LogLevel = NLog.LogLevel;
-using Reference = CsMerge.Core.Reference;
+using Reference = Project.Reference;
 
 namespace CsMerge {
-
   /// <summary>
   /// See README.md
   /// </summary>
@@ -28,60 +34,47 @@ namespace CsMerge {
     /// See README.md
     /// </summary>
     public static void Main( string[] args ) {
-
       if ( Settings.Default.Debug ) {
         Debugger.Launch();
       }
 
+      var options = new CsMergeOptions();
+      if ( !CommandLine.Parser.Default.ParseArguments( args, options ) ) {
+        return;
+      }
+
+      DirectoryInfo folder = new DirectoryInfo( options.InputFolder ?? Directory.GetCurrentDirectory() );
+      var logger = LogManager.GetCurrentClassLogger();
+
       try {
-        if ( args.Length == 0 ) {
-          args = new[] { Directory.GetCurrentDirectory() };
-        }
-
-        DirectoryInfo folder = new DirectoryInfo( args[0] );
-        var logger = LogManager.GetCurrentClassLogger();
-
         var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
+        ProcessMerge( logger, folder, rootFolder );
+      }
+      catch ( UserQuitException ) {
+        Console.WriteLine( "The user quit." );
+      }
+      catch ( Exception exception ) {
+        Console.Write( "An error occured: " + Environment.NewLine + exception );
+      }
+    }
 
-        if ( args.Length >= 2 && args[1] == "--upgrade" ) {
-          logger.Info( "Aligning references in " + rootFolder );
+    private static void ProcessMerge( Logger logger, DirectoryInfo folder, string rootFolder ) {
+      logger.Info( "Looking for things to merge in " + folder );
 
-          string pattern = args.Length == 5 ? args[2] : null;
-          string patternVersion = args.Length == 5 ? args[3] : null;
-          string framework = args.Length == 5 ? args[4] : null;
+      string[] conflictPaths;
+      CurrentOperation operation;
 
-          var aligner =
-            new PackageReferenceAligner( rootFolder,
-            FindRelativePathOfPackagesFolder( rootFolder ), pattern, patternVersion, framework );
-
-          foreach ( var projectFile in folder.GetFiles( "*.csproj", SearchOption.AllDirectories ) ) {
-            aligner.AlignReferences( projectFile.FullName );
-          }
+      using ( var repository = new Repository( rootFolder ) ) {
+        if ( repository.Index.IsFullyMerged ) {
+          logger.Info( "Nothing to do, already fully merged" );
           return;
         }
-
-        logger.Info( "Looking for things to merge in " + folder );
-
-        string[] conflictPaths;
-        CurrentOperation operation;
-
-        using ( var repository = new Repository( rootFolder ) ) {
-          if ( repository.Index.IsFullyMerged ) {
-            logger.Info( "Nothing to do, already fully merged" );
-            return;
-          }
-          conflictPaths = repository.Index.Conflicts.Select( c => c.GetPath() ).ToArray();
-          operation = repository.Info.CurrentOperation;
-        }
-
-        ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
-
-        ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
-      } catch ( UserQuitException ) {
-        Console.WriteLine( "The user quit." );
-      } catch ( Exception exception ) {
-        Console.Write( "An error occured: " + Environment.NewLine + exception.ToString() );
+        conflictPaths = repository.Index.Conflicts.Select( c => c.GetPath() ).ToArray();
+        operation = repository.Info.CurrentOperation;
       }
+
+      ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
+      ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
     }
 
     private static void ProcessPackagesConfig(
@@ -93,7 +86,7 @@ namespace CsMerge {
 
       var packagesConfigMerger = new PackagesConfigMerger(
         operation,
-        new UserConflictResolver<Package>( operation, repositoryRootDirectory : rootFolder ) );
+        new UserConflictResolver<ConfigitPackageReference>( operation, repositoryRootDirectory: rootFolder ) );
 
       foreach ( var conflict in conflictPaths.Where( p => Path.GetFileName( p ) == "packages.config" ) ) {
 
@@ -104,6 +97,7 @@ namespace CsMerge {
         var localContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Ours, conflict );
         var incomingContent = GitHelper.GetConflictContent( rootFolder, StageLevel.Theirs, conflict );
 
+        // TODO: Is this correct? if base is not null then we have a deletion of the packages config file
         if ( string.IsNullOrEmpty( localContent ) || string.IsNullOrEmpty( incomingContent ) ) {
           logger.Log( LogLevel.Info, "Skipping '{0}' - no content on one side", conflict );
           continue;
@@ -114,50 +108,54 @@ namespace CsMerge {
         try {
           var result = packagesConfigMerger.Merge(
               conflict,
-              Package.Parse( baseContent ),
-              Package.Parse( localContent ),
-              Package.Parse( incomingContent ) ).ToArray();
+              NuGetExtensions.ReadPackageReferences( baseContent ),
+              NuGetExtensions.ReadPackageReferences( localContent ),
+              NuGetExtensions.ReadPackageReferences( incomingContent ) ).ToArray();
 
-          Package.Write( result, fullConflictPath );
+          result.Write( fullConflictPath );
 
           using ( var repository = new Repository( rootFolder ) ) {
             repository.Stage( conflict );
             resolved = true;
           }
 
-        } catch ( MergeAbortException ) {
+        }
+        catch ( MergeAbortException ) {
           logger.Log( LogLevel.Info, "Package merge aborted for {0}", conflict );
           continue;
-        } catch ( UserQuitException ) {
+        }
+        catch ( UserQuitException ) {
           throw;
-        } catch ( Exception exception ) {
+        }
+        catch ( Exception exception ) {
           logger.Log( LogLevel.Error, exception, "Package merge failed for {0}", conflict );
         }
 
-        if ( !resolved ) {
-
-          string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
-          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
-
-          if ( userQuestion.Resolve() ) {
-
-            XDocument localDocument = XDocument.Parse( localContent );
-            XDocument theirDocument = XDocument.Parse( incomingContent );
-            XDocument baseDocument = XDocument.Parse( baseContent );
-
-            using ( var repository = new Repository( rootFolder ) ) {
-              GitHelper.ResolveWithStandardMergetool(
-                repository,
-                fullConflictPath,
-                baseDocument,
-                localDocument,
-                theirDocument,
-                logger,
-                conflict );
-            }
-          }
+        if ( resolved ) {
+          continue;
         }
 
+        string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
+        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+
+        if ( !userQuestion.Resolve() ) {
+          continue;
+        }
+
+        XDocument localDocument = XDocument.Parse( localContent );
+        XDocument theirDocument = XDocument.Parse( incomingContent );
+        XDocument baseDocument = baseContent == null ? new XDocument() : XDocument.Parse( baseContent );
+
+        using ( var repository = new Repository( rootFolder ) ) {
+          GitHelper.ResolveWithStandardMergetool(
+            repository,
+            fullConflictPath,
+            baseDocument,
+            localDocument,
+            theirDocument,
+            logger,
+            conflict );
+        }
       }
     }
 
@@ -170,10 +168,10 @@ namespace CsMerge {
 
       var merger = new ProjectMerger(
         operation,
-        new UserConflictResolver<ProjectReference>( operation, repositoryRootDirectory : rootFolder ),
-        new ReferenceConflictResolver( new UserConflictResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText, repositoryRootDirectory : rootFolder ) ),
-        new UserConflictResolver<RawItem>( operation, repositoryRootDirectory : rootFolder ),
-        new UserDuplicateResolver<Reference>( operation, notResolveOptionText : PackageNotInstalledText, repositoryRootDirectory : rootFolder ) );
+        new UserConflictResolver<ProjectReference>( operation, repositoryRootDirectory: rootFolder ),
+        new ReferenceConflictResolver( new UserConflictResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) ),
+        new UserConflictResolver<RawItem>( operation, repositoryRootDirectory: rootFolder ),
+        new UserDuplicateResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) );
 
       foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
 
@@ -204,13 +202,20 @@ namespace CsMerge {
         try {
           var projectFolder = Path.Combine( folder.FullName, conflictFolder );
 
-          var packageIndex = new ProjectPackages( projectFolder, FindRelativePathOfPackagesFolder( projectFolder ) );
+          var packagesConfigFilePath = ProjectPackages.GetPackagesConfigFilePath( projectFolder );
+
+          var packagesConfig = ProjectPackages.TryLoadPackagesConfig( packagesConfigFilePath );
+          if ( packagesConfig == null ) {
+            continue;
+          }
+
+          var packageIndex = new ProjectPackages( projectFolder, NuGetExtensions.FindRelativePathOfPackagesFolder( projectFolder ), packagesConfig );
 
           Item[] items = merger.Merge(
               conflict,
-              packageIndex,
-              baseDocument,
-              localDocument,
+            packageIndex,
+            baseDocument,
+            localDocument,
               theirDocument ).ToArray();
 
           // Now remove everything we have handled, to check if we are done.
@@ -233,55 +238,42 @@ namespace CsMerge {
 
             resolved = true;
           }
-        } catch ( MergeAbortException ) {
+
+        }
+        catch ( FileNotFoundException e ) {
+        }
+        catch ( MergeAbortException ) {
           logger.Log( LogLevel.Info, "Project merge aborted for {0}", conflict );
           continue;
-        } catch ( UserQuitException ) {
+        }
+        catch ( UserQuitException ) {
           throw;
-        } catch ( Exception exception ) {
+        }
+        catch ( Exception exception ) {
           logger.Log( LogLevel.Error, exception, "Project merge failed for {0}", conflict );
         }
 
-        if ( !resolved ) {
+        if ( resolved ) {
+          continue;
+        }
 
-          string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
-          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+        string userQuestionText = string.Format( "Could not resolve conflict: {0}{1}Would you like to resolve the conflict with the mergetool?", conflict, Environment.NewLine );
+        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
 
-          if ( userQuestion.Resolve() ) {
+        if ( userQuestion.Resolve() ) {
 
-            using ( var repository = new Repository( rootFolder ) ) {
-              GitHelper.ResolveWithStandardMergetool(
-                repository,
-                fullConflictPath,
-                baseDocument,
-                localDocument,
-                theirDocument,
-                logger,
-                conflict );
-            }
+          using ( var repository = new Repository( rootFolder ) ) {
+            GitHelper.ResolveWithStandardMergetool(
+              repository,
+              fullConflictPath,
+              baseDocument,
+              localDocument,
+              theirDocument,
+              logger,
+              conflict );
           }
         }
       }
-    }
-
-    /// <summary>
-    /// Gets the relative path of the packages folder.
-    /// </summary>
-    /// <param name="folder">The folder that the returned path should be relative to. If null then the current directory is used.</param>
-    public static string FindRelativePathOfPackagesFolder( string folder = null ) {
-      var current = new DirectoryInfo( folder ?? Directory.GetCurrentDirectory() );
-
-      int depth = 0;
-
-      while ( !new DirectoryInfo( Path.Combine( current.FullName, ".git" ) ).Exists ) {
-        depth++;
-        current = current.Parent;
-        if ( current == null ) {
-          throw new Exception( "Could not locate \".git\" folder" );
-        }
-      }
-
-      return Enumerable.Repeat( "..", depth ).Aggregate( "packages", ( current1, e ) => Path.Combine( e, current1 ) );
     }
   }
 }
