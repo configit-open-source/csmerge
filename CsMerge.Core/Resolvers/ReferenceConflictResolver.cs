@@ -5,7 +5,6 @@ using System.Linq;
 using CsMerge.Core.Exceptions;
 
 using NLog;
-
 using Project;
 
 namespace CsMerge.Core.Resolvers {
@@ -18,6 +17,7 @@ namespace CsMerge.Core.Resolvers {
       _userConflictResolver = userConflictResolver;
     }
 
+    public MergeResult<Reference> Resolve( Conflict<Reference> conflict ) {
 
       if ( conflict.Local != null && conflict.Incoming != null ) {
 
@@ -44,28 +44,28 @@ namespace CsMerge.Core.Resolvers {
 
         // To get here, they must both be valid options.
         // See if they are the same apart from the version, if so we can auto resolve to the highest version.
-        if ( conflict.Local.ReferenceAssemblyName.Version != null && conflict.Incoming.ReferenceAssemblyName.Version != null ) {
-        var local = conflict.Local;
-        var incoming = conflict.Incoming;
-        var localName = local.GetAssemblyName();
-        var incomingName = incoming.GetAssemblyName(); // TODO: This can throw an exception if version is unparsable (say $(MyVersion))
+        if ( conflict.Local.ReferenceAssemblyName != null && conflict.Incoming.ReferenceAssemblyVersion != null ) {
+          var local = conflict.Local;
+          var incoming = conflict.Incoming;
+          var localName = local.GetAssemblyName();
+          var incomingName = incoming.GetAssemblyName(); // TODO: This can throw an exception if version is unparsable (say $(MyVersion))
           var localVersionHigher = localName.Version > incomingName.Version;
           var maxVersion = localVersionHigher ? localName.Version : incomingName.Version;
 
-        localName.Version = maxVersion;
-        incomingName.Version = maxVersion;
+          localName.Version = maxVersion;
+          incomingName.Version = maxVersion;
 
-        local = local.CloneWith( include: localName.ToString() );
-        incoming = incoming.CloneWith( include: localName.ToString() );
+          local = local.CloneWith( include: localName.ToString() );
+          incoming = incoming.CloneWith( include: localName.ToString() );
 
-        if ( local == incoming ) {
+          if ( local == incoming ) {
             var changeDescription = conflict.Base == null ? "added" : "modified";
             var message = $"{LogHelper.Header}{Environment.NewLine}Both {changeDescription}: {conflict.Key}{Environment.NewLine}Picking highest version:{Environment.NewLine}{local}";
             logger.Info( message );
             var resolvedWith = localVersionHigher ? ConflictItemType.Local : ConflictItemType.Incoming;
             return new MergeResult<Reference>( conflict.Key, local, conflict.GetMergeType(), resolvedWith );
+          }
         }
-      }
       }
 
       if ( conflict.GetItems().All( i => !i.IsOptionValid() ) ) {
@@ -75,6 +75,5 @@ namespace CsMerge.Core.Resolvers {
       // We cannot auto resolve, let the user choose the resolution
       return _userConflictResolver.Resolve( conflict );
     }
-
   }
 }

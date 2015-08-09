@@ -7,7 +7,7 @@ using Reference = Project.Reference;
 
 namespace Integration {
 
-  public static class MergeTypeExtensions {
+  public static class MergeTypeIntegrationExtensions {
 
     private static string _addedSuffix;
     private static string _deletedSuffix;
@@ -70,19 +70,6 @@ namespace Integration {
         values.Add( Incoming( operation ) + " " + _modifiedSuffix );
       }
       return string.Join( ", ", values );
-    }
-
-    public static string ToString( this ConflictItemType conflictItemType, CurrentOperation operation ) {
-      switch ( conflictItemType ) {
-        case ConflictItemType.Local:
-          return Local( operation );
-        case ConflictItemType.Incoming:
-          return Incoming( operation );
-        case ConflictItemType.Unknown:
-          return "Custom";
-        default:
-          return conflictItemType.ToString();
-      }
     }
 
     public static void ApplyIsResolveOption( this Reference reference, ProjectPackages projectPackages ) {

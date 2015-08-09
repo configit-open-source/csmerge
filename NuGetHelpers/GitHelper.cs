@@ -29,9 +29,9 @@ namespace Integration {
       string cmdLine =
         GetMergeCmdLine( repository )
           .Replace( "$BASE", @base )
-          .Replace( "$LOCAL", MergeTypeExtensions.Local( currentOperation ) == MergeTypeExtensions.Mine ? local : incoming )
+          .Replace( "$LOCAL", MergeTypeIntegrationExtensions.Local( currentOperation ) == MergeTypeIntegrationExtensions.Mine ? local : incoming )
           .Replace( "$MERGED", resolved )
-          .Replace( "$REMOTE", MergeTypeExtensions.Local( currentOperation ) == MergeTypeExtensions.Mine ? incoming : local );
+          .Replace( "$REMOTE", MergeTypeIntegrationExtensions.Local( currentOperation ) == MergeTypeIntegrationExtensions.Mine ? incoming : local );
 
       logger.Debug( "Invoking:\n" + cmdLine );
 

@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
+using NuGet.Frameworks;
+using NuGet.Packaging;
+using NuGet.Versioning;
+
 namespace Project {
 
   public static class Extensions {
@@ -48,38 +52,16 @@ namespace Project {
       propertyNames.Add( text );
     }
 
-    public static MergeType GetMergeType<T>( this Conflict<T> conflict ) where T: IConflictableItem {
-      
-      var baseItem = conflict.Base;
-      var localItem = conflict.Local;
-      var incomingItem = conflict.Incoming;
-      
-      if ( baseItem == null ) {
-        var localChange = localItem == null ? MergeType.NoChanges : MergeType.LocalAdded;
-        var incomingChange = incomingItem == null ? MergeType.NoChanges : MergeType.IncomingAdded;
-        return localChange | incomingChange;
-      } else {
-        var localChange = localItem == null ? MergeType.LocalDeleted : Equals( baseItem, localItem ) ? MergeType.NoChanges : MergeType.LocalModified;
-        var incomingChange = incomingItem == null ? MergeType.IncomingDeleted : Equals( baseItem, incomingItem ) ? MergeType.NoChanges : MergeType.IncomingModified;
-        return localChange | incomingChange;
-      }
-    }
+    public static bool Equals( PackageReference ref1, PackageReference ref2 ) {
+      var frameworkComparer = new NuGetFrameworkFullComparer();
+      var versionRangeComparer = new VersionRangeComparer();
 
-    public static MergeType GetMergeType<T>( this Conflict<IEnumerable<T>> conflict ) where T : IConflictableItem {
-
-      var baseItems = conflict.Base.OrderBy( i => i.ToString() ).ToList();
-      var localItems = conflict.Local.OrderBy( i => i.ToString() ).ToList();
-      var incomingItems = conflict.Incoming.OrderBy( i => i.ToString() ).ToList();
-
-      if ( baseItems.IsNullOrEmpty() ) {
-        var localChange = localItems.IsNullOrEmpty() ? MergeType.NoChanges : MergeType.LocalAdded;
-        var incomingChange = incomingItems.IsNullOrEmpty() ? MergeType.NoChanges : MergeType.IncomingAdded;
-        return localChange | incomingChange;
-      } else {
-        var localChange = localItems.IsNullOrEmpty() ? MergeType.LocalDeleted : baseItems.SequenceEqual( localItems ) ? MergeType.NoChanges : MergeType.LocalModified;
-        var incomingChange = incomingItems.IsNullOrEmpty() ? MergeType.IncomingDeleted : baseItems.SequenceEqual( incomingItems ) ? MergeType.NoChanges : MergeType.IncomingModified;
-        return localChange | incomingChange;
-      }
+      return ref1.IsDevelopmentDependency == ref2.IsDevelopmentDependency &&
+             ref1.RequireReinstallation == ref2.RequireReinstallation &&
+             ref1.IsUserInstalled == ref2.IsUserInstalled &&
+             frameworkComparer.Equals( ref1.TargetFramework, ref2.TargetFramework ) &&
+             ref1.PackageIdentity.Equals( ref2.PackageIdentity ) &&
+             versionRangeComparer.Equals( ref1.AllowedVersions, ref2.AllowedVersions );
     }
   }
 }

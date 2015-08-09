@@ -32,7 +32,7 @@ namespace PackagesMerge.Test {
 
       var conflict = new Conflict<ConfigitPackageReference>( "TestFilePath", PackageKey, _packageV0, _packageV1, _packageV2 );
 
-      ConfigitPackageReference result = resolver.Resolve( conflict );
+      var result = resolver.Resolve( conflict );
 
       Assert.That( result.ResolvedItem, Is.EqualTo( _packageV2 ) );
     }

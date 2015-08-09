@@ -23,18 +23,6 @@ namespace Integration {
       return result;
     }
 
-    public static bool Equals( PackageReference ref1, PackageReference ref2 ) {
-      var frameworkComparer = new NuGetFrameworkFullComparer();
-      var versionRangeComparer = new VersionRangeComparer();
-
-      return ref1.IsDevelopmentDependency == ref2.IsDevelopmentDependency &&
-             ref1.RequireReinstallation == ref2.RequireReinstallation &&
-             ref1.IsUserInstalled == ref2.IsUserInstalled &&
-             frameworkComparer.Equals( ref1.TargetFramework, ref2.TargetFramework ) &&
-             ref1.PackageIdentity.Equals( ref2.PackageIdentity ) &&
-             versionRangeComparer.Equals( ref1.AllowedVersions, ref2.AllowedVersions );
-    }
-
     public static string ToFolderName( this PackageIdentity identity ) {
       return identity.Id + "." + identity.Version;
     }
@@ -67,7 +55,12 @@ namespace Integration {
       return reference.PackageIdentity.Id + "." + reference.PackageIdentity.Version;
     }
 
-    public static PackageReference Clone( PackageReference source, NuGetVersion version = null ) {
+
+    public static ConfigitPackageReference Clone( this ConfigitPackageReference source, NuGetVersion version = null ) {
+      return ( (PackageReference) source ).Clone( version );
+    }
+
+    public static PackageReference Clone( this PackageReference source, NuGetVersion version = null ) {
       return new PackageReference( new PackageIdentity( source.PackageIdentity.Id, version ?? source.PackageIdentity.Version ),
                                    source.TargetFramework,
                                    source.IsUserInstalled,

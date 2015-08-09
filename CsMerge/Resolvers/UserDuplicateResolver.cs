@@ -25,8 +25,8 @@ namespace CsMerge.Resolvers {
       _repositoryRootDirectory = repositoryRootDirectory;
       _itemDescriptionWhenNull = itemDescriptionWhenNull;
       _notResolveOptionText = notResolveOptionText;
-      _local = MergeTypeExtensions.Local( operation );
-      _incoming = MergeTypeExtensions.Incoming( operation );
+      _local = MergeTypeIntegrationExtensions.Local( operation );
+      _incoming = MergeTypeIntegrationExtensions.Incoming( operation );
     }
 
     public MergeResult<T> Resolve( Conflict<IEnumerable<T>> conflict ) {

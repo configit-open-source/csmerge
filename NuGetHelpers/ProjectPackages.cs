@@ -28,8 +28,11 @@ namespace Integration {
     public ProjectPackages( IEnumerable<PackageReference> packageReferences, string projectFolder = null, string packagesPrefix = null ) {
       _projectFolder = projectFolder ?? string.Empty;
       _packagesRelativePath = packagesPrefix ?? string.Empty;
-      _packagesFolder = Path.GetFullPath( Path.Combine( _projectFolder, _packagesRelativePath ) );
 
+      if ( !string.IsNullOrEmpty( _projectFolder ) && !string.IsNullOrEmpty( packagesPrefix ) ) {
+        _packagesFolder = Path.GetFullPath( Path.Combine( _projectFolder, _packagesRelativePath ) );
+      }
+      
       var references = packageReferences.ToArray();
 
       _packagesById = references.ToDictionary( p => p.PackageIdentity.Id, p => p );
@@ -120,8 +123,8 @@ namespace Integration {
 
       string packagesConfigFilePath = GetPackagesConfigFilePath( projectFolder );
       if ( !File.Exists( packagesConfigFilePath ) ) {
-        logger.Log( LogLevel.Info, "No packages.config exists at " + packagesConfigFilePath );
-        return null;
+        logger.Log( LogLevel.Error, "No packages.config exists at " + packagesConfigFilePath );
+        return new XDocument( new XElement( "packages" ) );
       }
 
       try {

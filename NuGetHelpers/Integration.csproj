@@ -70,7 +70,7 @@
     <Compile Include="GitHelper.cs" />
     <Compile Include="LibGit2SharpExtensions.cs" />
     <Compile Include="MergeType.cs" />
-    <Compile Include="MergeTypeExtensions.cs" />
+    <Compile Include="MergeTypeIntegrationExtensions.cs" />
     <Compile Include="NuGetExtensions.cs" />
     <Compile Include="ProjectPackages.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -15,42 +15,46 @@ namespace CsMerge.Core.Resolvers {
 
     private readonly IConflictResolver<ConfigitPackageReference> _defaultConflictResolver;
 
+    private readonly VersionComparer _versionComparer = new VersionComparer();
+
     public PackageConflictResolver( IConflictResolver<ConfigitPackageReference> defaultConflictResolver ) {
 
       if ( defaultConflictResolver == null ) {
-        throw new ArgumentNullException( "defaultConflictResolver" );
+        throw new ArgumentNullException( nameof( defaultConflictResolver ) );
       }
 
       _defaultConflictResolver = defaultConflictResolver;
     }
 
-    public ConfigitPackageReference Resolve( Conflict<ConfigitPackageReference> conflict ) {
+    public MergeResult<ConfigitPackageReference> Resolve( Conflict<ConfigitPackageReference> conflict ) {
 
       // If both local and incoming are updated, we may be able to auto resolve to the highest version, but only if there are no other differences.
-      PackageReference conflictLocal = conflict.Local;
-      PackageReference conflictIncoming = conflict.Incoming;
+      var incoming = (PackageReference) conflict.Incoming;
 
-      if ( conflictLocal != null && conflictIncoming != null ) {
+      var local = (PackageReference) conflict.Local;
 
-        var localWithIncomingVersion = new PackageReference( 
-          conflictIncoming.PackageIdentity, 
-          conflictLocal.TargetFramework, 
-          conflictLocal.IsUserInstalled, 
-          conflictLocal.IsDevelopmentDependency, 
-          conflictLocal.RequireReinstallation );
+      if ( local != null && incoming != null ) {
 
-        if ( NuGetExtensions.Equals( localWithIncomingVersion, conflictIncoming ) ) {
+        var localWithIncomingVersion = local.Clone( incoming.PackageIdentity.Version );
+
+        if ( Extensions.Equals(localWithIncomingVersion, incoming ) ) {
           var logger = LogManager.GetCurrentClassLogger();
 
-          VersionComparer versionComparer = new VersionComparer();
+          var localVersionHigher = _versionComparer.Compare( local.PackageIdentity.Version, incoming.PackageIdentity.Version ) >= 0;
 
-          var mineHigher = versionComparer.Compare( conflictLocal.PackageIdentity.Version, conflictIncoming.PackageIdentity.Version ) >= 0;
+          var resolvedPackage = localVersionHigher ? local : incoming;
+          var otherPackage = localVersionHigher ? incoming : local;
+          var changeDescription = conflict.Base == null ? "added" : "modified";
+          var newLine = Environment.NewLine;
+          var resolvedPackageDescription = resolvedPackage.ToString().Replace( newLine, newLine + "  " );
+          var otherPackageDescription = otherPackage.ToString().Replace( newLine, newLine + "  " );
+          var message = $"{LogHelper.Header}{newLine}Both {changeDescription}: {conflict.Key}{newLine}Picking{newLine}{resolvedPackageDescription}{newLine}over{newLine}{otherPackageDescription}";
+          logger.Info( message );
 
-          PackageReference package = mineHigher ? conflictLocal : conflictIncoming;
+          var mergeType = conflict.Base == null ? MergeType.BothAdded : MergeType.BothModified;
+          var resolvedWith = localVersionHigher ? ConflictItemType.Local : ConflictItemType.Incoming;
 
-          logger.Info( "Both modified: " + conflict.Key + "\nPicking\n" + package + " over\n" + ( mineHigher ? conflictIncoming : conflictLocal ) );
-
-          return package;
+          return new MergeResult<ConfigitPackageReference>( conflict.Key, resolvedPackage, mergeType, resolvedWith );
         }
       }
 

@@ -59,14 +59,10 @@ namespace CsMerge {
           }
       catch ( UserQuitException ) {
         Console.WriteLine( "The user quit." );
-      } catch ( Exception exception ) {
-        Console.Write( "An error occured: " + Environment.NewLine + exception.ToString() );
-      } catch ( Exception exception ) {
-        Console.WriteLine( $"An error occured: {Environment.NewLine}{exception}" );
       }
       catch ( Exception exception ) {
-        Console.Write( "An error occured: " + Environment.NewLine + exception );
-    }
+        Console.WriteLine( $"An error occured: {Environment.NewLine}{exception}" );
+      }
     }
 
     private static void ProcessAlign( Logger logger, string rootFolder, CsMergeOptions options, DirectoryInfo folder ) {
@@ -171,7 +167,8 @@ namespace CsMerge {
           continue;
         }
 
-
+        XDocument localDocument = XDocument.Parse( localContent );
+        XDocument theirDocument = XDocument.Parse( incomingContent );
         XDocument baseDocument = baseContent == null ? new XDocument() : XDocument.Parse( baseContent );
 
             using ( var repository = new Repository( rootFolder ) ) {

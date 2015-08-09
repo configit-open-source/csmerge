@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Security.Policy;
+using System.Text;
 using System.Xml.Linq;
 
 using NuGet.Frameworks;
@@ -15,17 +16,15 @@ namespace Project {
     }
 
     public static implicit operator PackageReference( ConfigitPackageReference reference ) {
-      return reference == null ? null : reference._reference;
+      return reference?._reference;
     }
 
-    public string Key { get { return _reference.PackageIdentity.Id; } }
+    public string Key => _reference.PackageIdentity.Id;
 
-    public bool IsResolveOption {
-      get { return true; }
-    }
+    public bool IsResolveOption => true;
 
     protected bool Equals( ConfigitPackageReference other ) {
-      return Equals( _reference, other._reference );
+      return Extensions.Equals( _reference, other._reference );
     }
 
     public override bool Equals( object obj ) {
@@ -40,7 +39,7 @@ namespace Project {
     }
 
     public override int GetHashCode() {
-      return _reference != null ? _reference.GetHashCode() : 0;
+      return _reference?.GetHashCode() ?? 0;
     }
 
     public static bool operator ==( ConfigitPackageReference left, ConfigitPackageReference right ) {
