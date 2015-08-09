@@ -2,6 +2,6 @@
 
   public interface IConflictResolver<T> {
 
-    T Resolve( Conflict<T> conflict );
+    MergeResult<T> Resolve( Conflict<T> conflict );
   }
 }

@@ -2,6 +2,7 @@
 
 namespace CsMerge.Core.Resolvers {
   public interface IDuplicateResolver<T> {
-    T Resolve( Conflict<IEnumerable<T>> conflict );
+
+    MergeResult<T> Resolve( Conflict<IEnumerable<T>> conflict );
   }
 }

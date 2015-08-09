@@ -16,7 +16,7 @@ namespace PackagesMerge.Test.Resolvers {
       Resolutions = new Dictionary<string, T>();
     }
 
-    public T Resolve( Conflict<T> conflict ) {
+    public MergeResult<T> Resolve( Conflict<T> conflict ) {
 
       Called = true;
 
@@ -24,7 +24,7 @@ namespace PackagesMerge.Test.Resolvers {
 
       Resolutions.Add( GetKey( conflict ), item );
 
-      return item;
+      return new MergeResult<T>( conflict.Key, item, conflict.GetMergeType(), _resolveTo );
     }
 
     private static string GetKey( Conflict<T> conflict ) {

@@ -31,7 +31,7 @@ namespace PackagesMerge.Test {
 
       var result = resolver.Resolve( conflict );
 
-      Assert.That( result, Is.EqualTo( _packageV2 ) );
+      Assert.That( result.ResolvedItem, Is.EqualTo( _packageV2 ) );
     }
 
     [Test]
@@ -46,7 +46,7 @@ namespace PackagesMerge.Test {
       var result = resolver.Resolve( conflict );
 
       Assert.That( defaultResolver.Called, Is.EqualTo( true ) );
-      Assert.That( result, Is.EqualTo( _packageV0 ) );
+      Assert.That( result.ResolvedItem, Is.EqualTo( _packageV0 ) );
     }
   }
 }

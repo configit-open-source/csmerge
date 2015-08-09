@@ -39,8 +39,8 @@ namespace CsMerge.Core {
       return MergeHelper<Package>.MergeAll( filePath, _operation, baseIds, myIds, theirIds, _packageConflictResolver );
     }
 
-    private IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
-      return pc.ToDictionary( p => p.Id, p => p );
+    private static IDictionary<string, Package> GetIndex( IEnumerable<Package> pc ) {
+      return pc.ToDictionary( p => p.Id );
     }
 
   }

@@ -10,6 +10,10 @@ namespace CsMerge.Core {
     LocalAdded = 1 << 2,
     IncomingAdded = 1 << 3,
     IncomingModified = 1 << 4,
-    LocalModified = 1 << 5
+    LocalModified = 1 << 5,
+
+    BothAdded = LocalAdded | IncomingAdded,
+    BothModified = LocalModified | IncomingModified,
+    BothDeleted = LocalDeleted | IncomingDeleted
   }
 }
