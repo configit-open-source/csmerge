@@ -31,12 +31,13 @@ namespace Cpc.CsMerge.Test {
       return new XElement( "Reference", new XAttribute( "Include", assemblyName ) );
     }
 
-    private static XElement NuGetReference( string assemblyName, bool specificVersion, string hintPath ) {
+    private static XElement NuGetReference( string assemblyName, bool specificVersion, string hintPath, bool isPrivate ) {
       return new XElement(
         "Reference", 
         new XAttribute( "Include", assemblyName ), 
         new XElement( "SpecificVersion", specificVersion ), 
-        new XElement( "HintPath", hintPath )
+        new XElement( "HintPath", hintPath ),
+        new XElement( "Private", isPrivate )
       );
     }
 
@@ -95,13 +96,14 @@ namespace Cpc.CsMerge.Test {
 
     [Test]
     public void ReferenceToXelement() {
-      var nuGetReference = NuGetReference( "blah", true, "mypath" );
-      var reference = new Reference( nuGetReference );
+      
+      var reference = new Reference( "blah", true, true, "mypath" );
       var element = reference.ToElement( XNamespace.None );
 
       Assert.That( element.SameNsElement( "HintPath" ).Value, Is.EqualTo( "mypath" ) );
-      Assert.That( element.SameNsElement( "SpecificVersion" ).Value, Is.EqualTo( "true" ) );
+      Assert.That( element.SameNsElement( "SpecificVersion" ).Value, Is.EqualTo( "True" ) );
       Assert.That( element.Attribute( "Include" ).Value, Is.EqualTo( "blah" ) );
+      Assert.That( element.SameNsElement( "Private" ).Value, Is.EqualTo( "True" ) );
     }
 
     //[Test]
@@ -144,15 +146,17 @@ namespace Cpc.CsMerge.Test {
 
       var proj = Project( ItemGroup( NuGetReference(
         AssemblyName,
-        false,
-        HintPath
+        true,
+        HintPath,
+        true
       ) ) );
 
       var item = proj.ItemGroups.Single().Items.OfType<Reference>().Single();
 
       Assert.That( item.Include, Is.EqualTo( AssemblyName ) );
-      Assert.That( item.SpecificVersion, Is.EqualTo( false ) );
+      Assert.That( item.SpecificVersion, Is.EqualTo( true ) );
       Assert.That( item.HintPath, Is.EqualTo( HintPath ) );
+      Assert.That( item.Private, Is.EqualTo( true ) );
     }
 
     [Test]
