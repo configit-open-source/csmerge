@@ -45,10 +45,10 @@ namespace CsMerge.Core {
       AddElement( e, "Name", Name );
       AddElement( e, "FusionName", FusionName );
       AddElement( e, "HintPath", HintPath );
-      AddElement( e, "Private", Private );
+      AddBooleanElement( e, "Private", Private );
       AddElement( e, "EmbedInteropTypes", EmbedInteropTypes );
       AddElement( e, "Aliases", Aliases );
-      AddElement( e, "SpecificVersion", SpecificVersion );
+      AddBooleanElement( e, "SpecificVersion", SpecificVersion );
       AddElement( e, "RequiredTargetFramework", RequiredTargetFramework );
       return e;
     }
@@ -56,6 +56,12 @@ namespace CsMerge.Core {
     private static void AddElement( XElement parent, string elementName, object value ) {
       if ( value != null ) {
         parent.Add( new XElement( parent.Name.Namespace.GetName( elementName ), value ) );
+      }
+    }
+
+    private static void AddBooleanElement( XElement parent, string elementName, bool? value ) {
+      if ( value.HasValue ) {
+        AddElement( parent, elementName, value.Value.ToString() );
       }
     }
 
