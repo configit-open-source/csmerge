@@ -47,7 +47,7 @@ namespace CsMerge.Core.Resolvers {
           var local = conflict.Local;
           var incoming = conflict.Incoming;
           var localName = local.GetAssemblyName();
-          var incomingName = incoming.GetAssemblyName(); // TODO: This can throw an exception if version is unparsable (say $(MyVersion))
+          var incomingName = incoming.GetAssemblyName();
           var localVersionHigher = localName.Version > incomingName.Version;
           var maxVersion = localVersionHigher ? localName.Version : incomingName.Version;
 
@@ -62,7 +62,8 @@ namespace CsMerge.Core.Resolvers {
             var message = $"{LogHelper.Header}{Environment.NewLine}Both {changeDescription}: {conflict.Key}{Environment.NewLine}Picking highest version:{Environment.NewLine}{local}";
             logger.Info( message );
             var resolvedWith = localVersionHigher ? ConflictItemType.Local : ConflictItemType.Incoming;
-            return new MergeResult<Reference>( conflict.Key, local, conflict.GetMergeType(), resolvedWith );
+            var resolvedItem = localVersionHigher ? local : incoming;
+            return new MergeResult<Reference>( conflict.Key, resolvedItem, conflict.GetMergeType(), resolvedWith );
           }
         }
       }

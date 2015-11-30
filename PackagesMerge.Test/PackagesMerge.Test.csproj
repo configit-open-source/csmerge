@@ -92,6 +92,7 @@
     <Compile Include="PackageReferenceAlignerTest.cs" />
     <Compile Include="ProjectMergerTest.cs" />
     <Compile Include="PackageConflictResolverTest.cs" />
+    <Compile Include="ReferenceConflictResolverTest.cs" />
     <Compile Include="Resolvers\TestConflictResolver.cs" />
     <Compile Include="PackageIdentityParseTest.cs" />
     <Compile Include="PackagesMergeTest.cs" />

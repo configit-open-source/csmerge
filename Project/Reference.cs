@@ -47,9 +47,8 @@ namespace Project {
     public string Aliases { get; private set; }
     public string FusionName { get; private set; }
 
-    public override string Key {
-      get { return ReferenceAssemblyName; }
-    }
+    // In case we cannot parse the assembly name we fall back to the full assembly name.
+    public override string Key => ReferenceAssemblyName ?? ReferenceAssemblyFullName;
 
     public override string ToString() {
 
@@ -117,9 +116,9 @@ namespace Project {
 
     public override int GetHashCode() {
       unchecked {
-        var hashCode = HintPath != null ? HintPath.GetHashCode() : 0;
+        var hashCode = HintPath?.GetHashCode() ?? 0;
         hashCode = ( hashCode * 397 ) ^ SpecificVersion.GetHashCode();
-        hashCode = ( hashCode * 397 ) ^ ( Include != null ? Include.GetHashCode() : 0 );
+        hashCode = ( hashCode * 397 ) ^ ( Include?.GetHashCode() ?? 0 );
         return hashCode;
       }
     }
@@ -128,18 +127,7 @@ namespace Project {
       _originalItemElement = originalItemElement;
       Include = originalItemElement.Attribute( "Include" ).Value;
 
-      try {
-        AssemblyNameReference reference = AssemblyNameReference.Parse( Include );
-        ReferenceAssemblyVersion = reference.Version;
-        ReferenceAssemblyFullName = reference.FullName;
-        ReferenceAssemblyName = reference.Name;
-      }
-      catch ( Exception ) {
-        // Sometimes we cannot parse the full name due say $(MyVersion) in the project file
-        // so for now we use this hack.
-        ReferenceAssemblyFullName = Include.Split( new[] { ',' }, StringSplitOptions.RemoveEmptyEntries )[0];
-        ReferenceAssemblyVersion = null;
-      }
+      SetAssemblyName( Include );
 
       Name = originalItemElement.SameNsElement( "Name" ).GetValueOrNull();
       EmbedInteropTypes = originalItemElement.SameNsElement( "EmbedInteropTypes" ).GetBoolOrNull();
@@ -151,8 +139,24 @@ namespace Project {
       HintPath = originalItemElement.SameNsElement( "HintPath" ).GetValueOrNull();
     }
 
+    private void SetAssemblyName( string include ) {
+      try {
+        AssemblyNameReference reference = AssemblyNameReference.Parse( include );
+        ReferenceAssemblyVersion = reference.Version;
+        ReferenceAssemblyFullName = reference.FullName;
+        ReferenceAssemblyName = reference.Name;
+      }
+      catch ( Exception ) {
+        // Sometimes we cannot parse the full name due say $(MyVersion) in the project file
+        // so for now we use this hack.
+        ReferenceAssemblyFullName = Include.Split( new[] { ',' }, StringSplitOptions.RemoveEmptyEntries )[0];
+        ReferenceAssemblyVersion = null;
+      }
+    }
+
     public Reference( string include, bool? specificVersion, bool? @private, string hintPath ) {
       Include = include;
+      SetAssemblyName( Include );
       SpecificVersion = specificVersion;
       Private = @private;
       HintPath = hintPath;

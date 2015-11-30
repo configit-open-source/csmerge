@@ -20,8 +20,6 @@ namespace CsMerge.Core {
     public T Local { get; private set; }
     public T Incoming { get; private set; }
 
-
-
     public IEnumerable<T> GetItems( ConflictItemType conflictItemType = ConflictItemType.All ) {
 
       if ( conflictItemType.IsSet( ConflictItemType.Base ) ) {
