@@ -34,8 +34,10 @@ namespace Project {
       return GetItems<TItem>().ToDictionary( r => r.Key );
     }
 
-    public IEnumerable<TItem> GetItems<TItem>() where TItem: Item {
-      return ItemGroups.SelectMany( ig => ig.Items ).OfType<TItem>().Distinct();
+    public IEnumerable<TItem> GetItems<TItem>() where TItem : Item {
+      return ItemGroups.SelectMany( ig => ig.Items )
+                       .Where( item => item.GetType() == typeof( TItem ) ) // exact type
+                       .Cast<TItem>().Distinct().ToArray();
     }
 
     public static void DeleteItems( XDocument document ) {

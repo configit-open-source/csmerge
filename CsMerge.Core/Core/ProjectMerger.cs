@@ -112,25 +112,29 @@ namespace CsMerge.Core {
       var theirProj = CsProjParser.Parse( projFileName, incomingDocument );
       var baseProj = CsProjParser.Parse( projFileName, baseDocument );
 
-      var localItems = localProj.GetItemsDictionary<RawItem>();
-      var theirItems = theirProj.GetItemsDictionary<RawItem>();
-      var baseItems = baseProj.GetItemsDictionary<RawItem>();
 
       var localRefs = localProj.GetItems<Reference>().ToList();
       var theirRefs = theirProj.GetItems<Reference>().ToList();
       var baseRefs = baseProj.GetItems<Reference>().ToList();
 
-      var localProjectRefs = localProj.GetItemsDictionary<ProjectReference>();
-      var theirProjectRefs = theirProj.GetItemsDictionary<ProjectReference>();
-      var baseProjectRefs = baseProj.GetItemsDictionary<ProjectReference>();
-
       localRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
       theirRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
       baseRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
 
-      var resolvedItems = MergeHelper<RawItem>.MergeAll( filePath, _operation, baseItems, localItems, theirItems, _itemResolver );
+      var localProjectRefs = localProj.GetItemsDictionary<ProjectReference>();
+      var theirProjectRefs = theirProj.GetItemsDictionary<ProjectReference>();
+      var baseProjectRefs = baseProj.GetItemsDictionary<ProjectReference>();
+
+      var localItems = localProj.GetItemsDictionary<RawItem>();
+      var theirItems = theirProj.GetItemsDictionary<RawItem>();
+      var baseItems = baseProj.GetItemsDictionary<RawItem>();
+
+      var resolvedItems = MergeHelper<RawItem>.MergeAll( 
+        filePath, _operation, baseItems, localItems, theirItems, _itemResolver );
       var resolvedReferences = MergeReferences( filePath, baseRefs, localRefs, theirRefs );
-      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll( filePath, _operation, baseProjectRefs, localProjectRefs, theirProjectRefs, _projectReferenceResolver );
+
+      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll( 
+        filePath, _operation, baseProjectRefs, localProjectRefs, theirProjectRefs, _projectReferenceResolver );
 
       return resolvedItems.Cast<Item>().Concat( resolvedReferences ).Concat( resolvedProjectReferences );
     }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace Project {
-  public class ProjectReference: RawItem {
+  public class ProjectReference: RawItem, IEquatable<ProjectReference> {
     public string CsProjPath { get; private set; }
     public Guid ProjectId { get; private set; }
     public string Name { get; private set; }
@@ -60,7 +60,8 @@ namespace Project {
       }
     }
 
-    public ProjectReference( string csProjPath, Guid project, string name, XElement element ) : base( element ) {
+    public ProjectReference( string csProjPath, Guid project, string name, XElement element ) 
+      : base( element, project.ToString() ) {
       Name = name;
       ProjectId = project;
       CsProjPath = csProjPath;

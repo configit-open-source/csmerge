@@ -118,10 +118,9 @@ namespace Integration {
       return GetEnumerator();
     }
 
-    public static XDocument TryLoadPackagesConfig( string projectFolder ) {
+    public static XDocument TryLoadPackagesConfig( string packagesConfigFilePath ) {
       var logger = LogManager.GetCurrentClassLogger();
 
-      string packagesConfigFilePath = GetPackagesConfigFilePath( projectFolder );
       if ( !File.Exists( packagesConfigFilePath ) ) {
         logger.Log( LogLevel.Error, "No packages.config exists at " + packagesConfigFilePath );
         return new XDocument( new XElement( "packages" ) );

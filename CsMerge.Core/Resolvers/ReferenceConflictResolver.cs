@@ -18,7 +18,6 @@ namespace CsMerge.Core.Resolvers {
     }
 
     public MergeResult<Reference> Resolve( Conflict<Reference> conflict ) {
-
       if ( conflict.Local != null && conflict.Incoming != null ) {
 
         var logger = LogManager.GetCurrentClassLogger();

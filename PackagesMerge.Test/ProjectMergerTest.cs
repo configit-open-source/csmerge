@@ -31,7 +31,7 @@ namespace PackagesMerge.Test {
       var duplicateResolver = new TestDuplicateResolver<Reference>( ConflictItemType.Local );
 
       var projectMerger = new ProjectMerger( CurrentOperation.Merge, projectReferenceResolver, referenceResolver, itemResolver, duplicateResolver );
-
+      
       string packagesConfigPath = Path.GetFullPath( @"..\..\TestFiles\src\Project" );
 
       var projectPackages = new ProjectPackages( packagesConfigPath, @"..\..\Packages" );

@@ -6,7 +6,7 @@ using System.Xml.Linq;
 using Mono.Cecil;
 
 namespace Project {
-  public class Reference: Item {
+  public sealed class Reference: Item {
     private XElement _originalItemElement;
 
     public string Include { get; private set; }
@@ -28,9 +28,11 @@ namespace Project {
       return copy;
     }
 
-    public string ReferenceAssemblyName {
+    public string ReferenceAssemblyFullName {
       get; private set;
     }
+
+    public string ReferenceAssemblyName { get; private set; }
 
     public AssemblyName GetAssemblyName() {
       return new AssemblyName( Include );
@@ -129,12 +131,13 @@ namespace Project {
       try {
         AssemblyNameReference reference = AssemblyNameReference.Parse( Include );
         ReferenceAssemblyVersion = reference.Version;
-        ReferenceAssemblyName = reference.FullName;
+        ReferenceAssemblyFullName = reference.FullName;
+        ReferenceAssemblyName = reference.Name;
       }
       catch ( Exception ) {
         // Sometimes we cannot parse the full name due say $(MyVersion) in the project file
         // so for now we use this hack.
-        ReferenceAssemblyName = Include.Split( new[] { ',' }, StringSplitOptions.RemoveEmptyEntries )[0];
+        ReferenceAssemblyFullName = Include.Split( new[] { ',' }, StringSplitOptions.RemoveEmptyEntries )[0];
         ReferenceAssemblyVersion = null;
       }
 
