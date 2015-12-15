@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using CsMerge.Core;
 using CsMerge.Core.Resolvers;
+
+using Project;
 
 namespace PackagesMerge.Test.Resolvers {
 
