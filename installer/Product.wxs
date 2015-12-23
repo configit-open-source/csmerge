@@ -50,6 +50,9 @@
         <File Source="$(var.CsUpdate.TargetDir)\CsUpdate.Core.dll" />
       </Component>
       <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsUpdate.TargetDir)\Project.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
         <File Source="$(var.CsMerge.TargetDir)\CsMerge.Core.dll" />
       </Component>
       <Component Directory="INSTALLFOLDER">
