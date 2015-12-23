@@ -75,6 +75,10 @@ namespace CsUpdate.Core {
           Reference reference = item as Reference;
 
           if ( !oldPackagesConfig.IsPackageReference( reference.HintPath ) ) {
+            if ( itemMap.ContainsKey( item ) ) {
+              logger.Error(
+                $"{_projectFile} has duplicate entry\n{item.ToElement( XNamespace.None )}\nThis has been fixed automatically." );
+            }
             itemMap.Add( item, item ); // we keep any non package references (ie System.Xml)
             continue;
           }
