@@ -20,9 +20,14 @@ namespace CsUpdate {
     }
 
     private static void ProcessAlign( string rootFolder, CsUpdateOptions options ) {
+      if(! Directory.Exists( rootFolder ) ) {
+        LogManager.GetCurrentClassLogger().Error( "Target folder " + rootFolder + " does not exist" );
+        return;
+      }
+
       LogManager.GetCurrentClassLogger().Info( "Updating/aligning references in " + rootFolder );
 
-      // TODO: Check specifically for known VS extensions only
+      // TODO: Check specifically for known VS extensions only"
       var projectFiles = new DirectoryInfo( rootFolder ).GetFiles( "*.*sproj", SearchOption.AllDirectories ).Select( f => f.FullName ).ToArray();
 
       // Restore packages now

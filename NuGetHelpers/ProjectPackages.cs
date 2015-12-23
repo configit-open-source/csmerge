@@ -127,7 +127,7 @@ namespace Integration {
       }
 
       if ( !File.Exists( packagesConfigPath ) ) {
-        logger.Log( LogLevel.Error, "No packages.config exists at " + packagesConfigPath );
+        logger.Log( LogLevel.Warn, "No packages.config exists at " + packagesConfigPath );
         return new XDocument( new XElement( "packages" ) );
       }
 

@@ -38,50 +38,25 @@ namespace CsMerge {
       if ( Settings.Default.Debug ) {
         Debugger.Launch();
       }
-      
+
       var options = new CsMergeOptions();
       if ( !CommandLine.Parser.Default.ParseArguments( args, options ) ) {
         return;
       }
 
       DirectoryInfo folder = new DirectoryInfo( options.InputFolder ?? Directory.GetCurrentDirectory() );
-        var logger = LogManager.GetCurrentClassLogger();
+      var logger = LogManager.GetCurrentClassLogger();
 
       try {
         var rootFolder = GitHelper.FindRepoRoot( folder.FullName );
 
-        if ( options.Mode == Mode.Align ) {
-          ProcessAlign( logger, rootFolder, options, folder );
-          }
-        else if ( options.Mode == Mode.Merge ) {
-          ProcessMerge( logger, folder, rootFolder );
-        }
-          }
+        ProcessMerge( logger, folder, rootFolder );
+      }
       catch ( UserQuitException ) {
         Console.WriteLine( "The user quit." );
       }
       catch ( Exception exception ) {
         Console.WriteLine( $"An error occurred: {Environment.NewLine}{exception}" );
-      }
-    }
-
-    private static void ProcessAlign( Logger logger, string rootFolder, CsMergeOptions options, DirectoryInfo folder ) {
-      logger.Info( "Updating/aligning references in " + rootFolder );
-
-      string pattern = options.UpgradePrefix;
-      string patternVersion = options.UpgradeVersion;
-      string framework = options.UpgradeFramework;
-
-      // TODO: Check specifically for known VS extensions only
-      var projectFiles = folder.GetFiles( "*.*sproj", SearchOption.AllDirectories ).Select( f => f.FullName ).ToArray();
-
-      // Restore packages now
-      NuGetExtensions.RestorePackages( rootFolder );
-
-      TargetPackageIndex targetPackageIndex = new TargetPackageIndex( projectFiles, pattern, patternVersion, framework );
-
-      foreach ( var projectFile in projectFiles ) {
-        new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
       }
     }
 
@@ -133,9 +108,9 @@ namespace CsMerge {
         bool resolved = false;
 
         try {
-          var result = packagesConfigMerger.Merge(
-              conflict,
-              NuGetExtensions.ReadPackageReferences( baseContent ),
+          var result = packagesConfigMerger.Merge( conflict,
+              baseContent == null ? new ConfigitPackageReference[0]: 
+                                   NuGetExtensions.ReadPackageReferences( baseContent ),
               NuGetExtensions.ReadPackageReferences( localContent ),
               NuGetExtensions.ReadPackageReferences( incomingContent ) ).ToArray();
 
@@ -220,7 +195,7 @@ namespace CsMerge {
 
         var localDocument = XDocument.Parse( localContent );
         var incomingDocument = XDocument.Parse( incomingContent );
-        var baseDocument = XDocument.Parse( baseContent );
+        var baseDocument = XDocument.Parse( baseContent ?? "<?xml version=\"1.0\" encoding=\"utf - 8\"?><Project/>" );
 
         var resolved = false;
 

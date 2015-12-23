@@ -41,6 +41,9 @@ namespace Project {
     }
 
     public static void DeleteItems( XDocument document ) {
+      if ( document == null ) {
+        return;
+      }
       var root = document.Root;
 
       Debug.Assert( root != null );
