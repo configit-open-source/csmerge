@@ -33,7 +33,7 @@
 
 	<Fragment>
     <ComponentGroup Id="ProductComponents">
-      <Component Id="ProductComponent" Directory="INSTALLFOLDER">
+      <Component Id="CsMergeComponent" Directory="INSTALLFOLDER">
         <File KeyPath="yes" Source="$(var.CsMerge.TargetPath)" />
         <Environment Id="PATH"
              Name="PATH"
@@ -42,6 +42,12 @@
              Part="last"
              Action="set"
              System="yes" />
+      </Component>
+      <Component Id="CsUpdateComponent" Directory="INSTALLFOLDER">
+        <File KeyPath="yes" Source="$(var.CsUpdate.TargetPath)" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsUpdate.TargetDir)\CsUpdate.Core.dll" />
       </Component>
       <Component Directory="INSTALLFOLDER">
         <File Source="$(var.CsMerge.TargetDir)\CsMerge.Core.dll" />
