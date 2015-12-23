@@ -118,19 +118,24 @@ namespace Integration {
       return GetEnumerator();
     }
 
-    public static XDocument TryLoadPackagesConfig( string packagesConfigFilePath ) {
+    /// <param name="packagesConfigPath">Either a direct path to packages.config or a folder containing it</param>
+    public static XDocument TryLoadPackagesConfig( string packagesConfigPath ) {
       var logger = LogManager.GetCurrentClassLogger();
 
-      if ( !File.Exists( packagesConfigFilePath ) ) {
-        logger.Log( LogLevel.Error, "No packages.config exists at " + packagesConfigFilePath );
+      if ( Directory.Exists( packagesConfigPath ) ) {
+        packagesConfigPath = Path.Combine( packagesConfigPath, "packages.config" );
+      }
+
+      if ( !File.Exists( packagesConfigPath ) ) {
+        logger.Log( LogLevel.Error, "No packages.config exists at " + packagesConfigPath );
         return new XDocument( new XElement( "packages" ) );
       }
 
       try {
-        return XDocument.Parse( File.ReadAllText( packagesConfigFilePath ) );
+        return XDocument.Parse( File.ReadAllText( packagesConfigPath ) );
       }
       catch ( Exception e ) {
-        logger.Log( LogLevel.Warn, "Failed to parse contents of " + packagesConfigFilePath + " will be skipped" );
+        logger.Log( LogLevel.Warn, "Failed to parse contents of " + packagesConfigPath + " will be skipped" );
         return null;
       }
     }
