@@ -31,7 +31,7 @@ namespace CsUpdate.Core {
     public NuGetFramework TargetFramework { get; private set; }
 
     public PackageReference ReTarget( PackageReference reference ) {
-      if ( IsTargeted( reference.PackageIdentity.Id ) ) {
+      if ( !IsTargeted( reference.PackageIdentity.Id ) ) {
         return reference;
       }
 
@@ -45,7 +45,7 @@ namespace CsUpdate.Core {
       if ( string.IsNullOrWhiteSpace( packageId ) ) {
         return false;
       }
-      return !IsPrefix ? packageId.Equals( IdFilter ) : packageId.StartsWith( IdFilter );
+      return IsPrefix ? packageId.StartsWith( IdFilter ) : packageId.Equals( IdFilter );
     }
   }
 }
