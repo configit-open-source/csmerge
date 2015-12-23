@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+
 using CsMerge.Core;
 using CsMerge.Resolvers;
 using NUnit.Framework;
+
+using Project;
 
 namespace PackagesMerge.Test {
 

@@ -1,39 +1,51 @@
 ﻿using System.Linq;
-using CsMerge;
+
 using CsMerge.Core;
+
 using LibGit2Sharp;
+
+using NuGet.Frameworks;
+using NuGet.Packaging;
+using NuGet.PackagingCore;
+using NuGet.Versioning;
+
 using NUnit.Framework;
+
 using PackagesMerge.Test.Resolvers;
+
+using Project;
 
 namespace PackagesMerge.Test {
   [TestFixture]
   public class PackagesMergeTest {
 
-    private Package[] _packageV0;
-    private Package[] _packageV1;
-    private Package[] _packageV2;
-    private Package[] _packageV2Net46;
-    private Package[] _packageEmpty;
+    private ConfigitPackageReference[] _packageV0;
+    private ConfigitPackageReference[] _packageV1;
+    private ConfigitPackageReference[] _packageV2;
+    private ConfigitPackageReference[] _packageV2Net46;
+    private ConfigitPackageReference[] _packageEmpty;
 
-    private static Package[] CreatePackage( string id, string targetFramework, string allowedVersions, params int[] versionComponents ) {
+    private static ConfigitPackageReference[] CreatePackage( string id, string targetFramework, string allowedVersions, string version ) {
       return new[] {
-        new Package( id, new PackageVersion( versionComponents ), targetFramework, allowedVersions ), 
+        (ConfigitPackageReference)
+        new PackageReference( new PackageIdentity( id, new NuGetVersion( version )),
+          NuGetFramework.Parse(targetFramework), false, false, false, allowedVersions != null ? VersionRange.Parse( allowedVersions ) : null )
       };
     }
 
     [TestFixtureSetUp]
     public void TestFixtureSetUp() {
-      _packageV0 = CreatePackage( "MP", ".net45", null, 1, 0, 0 );
-      _packageV1 = CreatePackage( "MP", ".net45", null, 1, 0, 1 );
-      _packageV2 = CreatePackage( "MP", ".net45", null, 1, 0, 2 );
-      _packageV2Net46 = CreatePackage( "MP", ".net46", null, 1, 0, 2 );
-      _packageEmpty = new Package[0];
+      _packageV0 = CreatePackage( "MP", ".net45", null, "1.0.0" );
+      _packageV1 = CreatePackage( "MP", ".net45", null, "1.0.1" );
+      _packageV2 = CreatePackage( "MP", ".net45", null, "1.0.2" );
+      _packageV2Net46 = CreatePackage( "MP", ".net46", null, "1.0.2" );
+      _packageEmpty = new ConfigitPackageReference[0];
     }
 
     [Test]
     public void NoChanges() {
 
-      var resolver = new ExceptionResolver<Package>();
+      var resolver = new ExceptionResolver<ConfigitPackageReference>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageV0, _packageV0 ).ToList();
@@ -44,7 +56,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void TheirsUpdated() {
 
-      var resolver = new ExceptionResolver<Package>();
+      var resolver = new ExceptionResolver<ConfigitPackageReference>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageV0, _packageV1 ).ToList();
@@ -55,7 +67,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void MineUpdated() {
 
-      var resolver = new ExceptionResolver<Package>();
+      var resolver = new ExceptionResolver<ConfigitPackageReference>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageV0 ).ToList();
@@ -66,7 +78,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void BothUpdatedAutoResolved() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       // CurrentOperation.Merge causes local to be set to mine
@@ -79,7 +91,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void BothUpdated() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       // CurrentOperation.Merge causes local to be set to mine
@@ -92,7 +104,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void TheirsDeletedMineUpdated_ResolveMine() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageEmpty ).ToList();
@@ -100,11 +112,10 @@ namespace PackagesMerge.Test {
       Assert.That( resolver.Called, Is.EqualTo( true ) );
       Assert.That( result, Is.EquivalentTo( _packageV1 ) );
     }
-
     [Test]
     public void TheirsDeletedMineUpdated_ResolveTheirs() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Incoming );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageV1, _packageEmpty ).ToList();
@@ -116,7 +127,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void MineDeletedTheirsUpdated_ResolveTheirs() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Incoming );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Incoming );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageEmpty, _packageV1 ).ToList();
@@ -128,7 +139,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void MineDeletedTheirsUpdated_ResolveMine() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV0, _packageEmpty, _packageV1 ).ToList();
@@ -139,8 +150,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void BothAddedAutoResolved() {
-
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageEmpty, _packageV1, _packageV2 ).ToList();
@@ -152,7 +162,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void BothAddedUserResolved() {
 
-      var resolver = new TestConflictResolver<Package>( ConflictItemType.Local );
+      var resolver = new TestConflictResolver<ConfigitPackageReference>( ConflictItemType.Local );
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageEmpty, _packageV1, _packageV2Net46 ).ToList();
@@ -164,7 +174,7 @@ namespace PackagesMerge.Test {
     [Test]
     public void BothDeleted() {
 
-      var resolver = new ExceptionResolver<Package>();
+      var resolver = new ExceptionResolver<ConfigitPackageReference>();
       var merger = new PackagesConfigMerger( CurrentOperation.Merge, resolver );
 
       var result = merger.Merge( "TestFilePath", _packageV1, _packageEmpty, _packageEmpty ).ToList();

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  
+	<Product Id="*" Name="CsMerge" Language="1033" Version="0.0.0.1" 
+           Manufacturer="Configit A/S" 
+           UpgradeCode="4103bf4b-77ea-477a-ab77-0f4279ac7a70">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate EmbedCab="yes" />
+
+		<Feature Id="ProductFeature" Title="Installer" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CsMerge">
+          <Directory Id="NATIVEBIN" Name="NativeBinaries">
+            <Directory Id="NATIVEBINx64" Name="amd64"/>
+            <Directory Id="NATIVEBINx86" Name="x86"/>
+          </Directory>
+        </Directory>
+        </Directory>
+		</Directory>
+    
+    <!-- TODO: UI
+    <Property Id="WixUI_InstallDir" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_InstallDir" />-->
+	</Fragment>
+
+	<Fragment>
+    <ComponentGroup Id="ProductComponents">
+      <Component Id="CsMergeComponent" Directory="INSTALLFOLDER">
+        <File KeyPath="yes" Source="$(var.CsMerge.TargetPath)" />
+        <Environment Id="PATH"
+             Name="PATH"
+             Value="[INSTALLFOLDER]"
+             Permanent="yes"
+             Part="last"
+             Action="set"
+             System="yes" />
+      </Component>
+      <Component Id="CsUpdateComponent" Directory="INSTALLFOLDER">
+        <File KeyPath="yes" Source="$(var.CsUpdate.TargetPath)" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsUpdate.TargetDir)\CsUpdate.Core.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsUpdate.TargetDir)\Project.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\CsMerge.Core.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\CsMerge.exe.config" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\Integration.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NLog.config" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NLog.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NuGet.Frameworks.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NuGet.Packaging.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NuGet.PackagingCore.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NuGet.Versioning.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\NuGet.Configuration.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\LibGit2Sharp.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\Mono.Cecil.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\CommandLine.dll" />
+      </Component>
+      <Component Id="amd" Directory="NATIVEBINx64" Guid="8FCD7635-2D07-4178-8ACD-B54D8FDB5BA0">
+        <File Id="amd" Source="$(var.CsMerge.TargetDir)\NativeBinaries\amd64\git2-a56db99.dll" />
+      </Component>
+      <Component Id="x86" Directory="NATIVEBINx86" Guid="0029EA89-62B3-4B00-89D0-A9081B7AD116">
+        <File Id="x86" Source="$(var.CsMerge.TargetDir)\NativeBinaries\x86\git2-a56db99.dll" />
+      </Component>
+      <Component Id="amdother" Directory="NATIVEBINx64" Guid="18CA1DFA-7CA2-4F9F-AB32-3DA83E23B01A">
+        <File Id="amdother" Source="$(var.CsMerge.TargetDir)\NativeBinaries\amd64\git2-e0902fb.dll" />
+      </Component>
+      <Component Id="x86other" Directory="NATIVEBINx86" Guid="55680313-3D42-4BF3-9977-F16B54C9E331">
+        <File Id="x86other" Source="$(var.CsMerge.TargetDir)\NativeBinaries\x86\git2-e0902fb.dll" />
+      </Component>
+    </ComponentGroup>
+	</Fragment>
+</Wix>

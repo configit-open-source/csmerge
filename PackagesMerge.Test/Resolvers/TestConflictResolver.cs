@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using CsMerge.Core;
 using CsMerge.Core.Resolvers;
+
+using Project;
 
 namespace PackagesMerge.Test.Resolvers {
   public class TestConflictResolver<T>: IConflictResolver<T> where T: class, IConflictableItem {

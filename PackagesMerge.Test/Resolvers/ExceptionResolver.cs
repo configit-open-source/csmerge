@@ -1,4 +1,5 @@
 ﻿using System;
+
 using CsMerge.Core;
 using CsMerge.Core.Resolvers;
 

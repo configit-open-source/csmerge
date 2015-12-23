@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Xml.Linq;
-using CsMerge.Core;
+
 using CsMerge.Core.Exceptions;
 using CsMerge.UserQuestion;
 using NUnit.Framework;
+
+using Project;
 
 namespace PackagesMerge.Test {
 
@@ -34,7 +36,7 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void ProjectReferenceQuestion() {
-      var optionValue = new ProjectReference( "ProjPath", new Guid( "76606c7b-5bf1-497c-9b0f-9695a6a8788d" ), "ProjectName" );
+      var optionValue = new ProjectReference( "ProjPath", new Guid( "76606c7b-5bf1-497c-9b0f-9695a6a8788d" ), "ProjectName", new XElement( "ProjectReference" ) );
       var option = new UserQuestionLiteralWithDescriptionOption<ProjectReference>( "A", "Option A", optionValue, "WasNull" );
       Assert.That( option.GetQuestionText(), Is.EqualTo( "(A) Option A:\r\nName: ProjectName\r\nKey: 76606c7b-5bf1-497c-9b0f-9695a6a8788d\r\nPath: ProjPath\r\n" ) );
       Assert.That( option.GetValue(), Is.EqualTo( optionValue ) );
@@ -51,9 +53,9 @@ namespace PackagesMerge.Test {
 
     [Test]
     public void PackageQuestion() {
-      var optionValue = new Package( "TestPackageId", new PackageVersion( 1, 2, 3, 4 ), "net45" );
-      var option = new UserQuestionLiteralWithDescriptionOption<Package>( "A", "Option A", optionValue, "WasNull" );
-      Assert.That( option.GetQuestionText(), Is.EqualTo( "(A) Option A:\r\nId: TestPackageId\r\nVersion: 1.2.3.4\r\nTargetFramework: net45\r\n" ) );
+      var optionValue = new ConfigitPackageReference( "TestPackageId", "1.2.3.4", "net45" );
+      var option = new UserQuestionLiteralWithDescriptionOption<ConfigitPackageReference>( "A", "Option A", optionValue, "WasNull" );
+      Assert.That( option.GetQuestionText(), Is.EqualTo( "(A) Option A:\r\nId: TestPackageId\r\nVersion: 1.2.3.4\r\nTargetFramework: net45\r\n\r\n" ) );
       Assert.That( option.GetValue(), Is.EqualTo( optionValue ) );
     }
 
