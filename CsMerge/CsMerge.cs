@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 using CsMerge.Core;
@@ -11,7 +10,6 @@ using CsMerge.Core.Resolvers;
 using CsMerge.Properties;
 using CsMerge.Resolvers;
 using CsMerge.UserQuestion;
-
 using LibGit2Sharp;
 using NLog;
 
@@ -75,8 +73,69 @@ namespace CsMerge {
         operation = repository.Info.CurrentOperation;
       }
 
+      ProcessSolutionFiles( operation, conflictPaths, folder, logger, rootFolder );
       ProcessPackagesConfig( operation, conflictPaths, folder, logger, rootFolder );
       ProcessProjectFiles( operation, conflictPaths, folder, logger, rootFolder );
+    }
+
+    private static void ProcessSolutionFiles(
+      CurrentOperation operation,
+      string[] conflictPaths,
+      DirectoryInfo folder, 
+      Logger logger,
+      string rootFolder ) {
+
+      foreach ( var conflictPath in conflictPaths.Where( cp => cp.EndsWith( ".sln" ) ) ) {
+        ProcessSolutionFile( operation, folder, logger, rootFolder, conflictPath );
+      }
+    }
+
+    private static void ProcessSolutionFile(
+      CurrentOperation operation,
+      DirectoryInfo folder,
+      Logger logger,
+      string rootFolder,
+      string conflictPath ) {
+      var fullConflictPath = Path.Combine( folder.FullName, conflictPath );
+      logger.Info( $"{LogHelper.Header}{Environment.NewLine}Examining concurrent modification for {fullConflictPath}" );
+
+      var localName = MergeTypeIntegrationExtensions.Local( operation );
+
+      var basePath = fullConflictPath + "_CSMERGE_BASE";
+      var minePath = fullConflictPath + "_CSMERGE_" + localName;
+      var incomingPath = fullConflictPath + "_CSMERGE_" + MergeTypeIntegrationExtensions.Incoming( operation );
+
+      File.WriteAllText( basePath, GitHelper.GetConflictContent( rootFolder, StageLevel.Ancestor, conflictPath ) );
+      File.WriteAllText(
+        minePath,
+        GitHelper.GetConflictContent(
+          rootFolder,
+          localName == MergeTypeIntegrationExtensions.Mine ? StageLevel.Ours : StageLevel.Theirs,
+          conflictPath ) );
+
+      File.WriteAllText(
+        incomingPath,
+        GitHelper.GetConflictContent(
+          rootFolder,
+          localName == MergeTypeIntegrationExtensions.Mine ? StageLevel.Theirs : StageLevel.Ours,
+          conflictPath ) );
+
+      // Use SlnTools
+      // "Four solution files should be provided, in order:\n   SourceBranch.sln\n   DestinationBranch.sln\n   CommonAncestror.sln\n   Result.sln"
+      CWDev.SLNTools.MergeSolutionsCommand command = new CWDev.SLNTools.MergeSolutionsCommand();
+      command.Run(
+        new[] { minePath, incomingPath, basePath, fullConflictPath },
+        new CWDev.SLNTools.MessageBoxErrorReporter() );
+
+      if ( command.MergedHandled ) {
+        using ( var repository = new Repository( rootFolder ) ) {
+          repository.Stage( conflictPath );
+        }
+      }
+
+      File.Delete( basePath );
+      File.Delete( minePath );
+      File.Delete( incomingPath );
     }
 
     private static void ProcessPackagesConfig(
