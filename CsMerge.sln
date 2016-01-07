@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.Core.dll", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.UIKit.dll", "SlnTools\CWDev.SLNTools.UIKit.dll\CWDev.SLNTools.UIKit.dll.csproj", "{71CBD77B-D29A-42F6-B0F1-D0EFFE095CCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLNTools.exe", "SlnTools\SLNTools.exe\SLNTools.exe.csproj", "{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLNTools", "SlnTools\SLNTools.exe\SLNTools.csproj", "{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlnTools", "SlnTools", "{BBB43749-D35B-44AD-8BDD-02F4677811EB}"
 EndProject

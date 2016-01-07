@@ -130,9 +130,9 @@
       <Project>{c3657091-fe14-4695-b531-6cabdaa40fb7}</Project>
       <Name>Project</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SlnTools\SLNTools.exe\SLNTools.exe.csproj">
+    <ProjectReference Include="..\SlnTools\SLNTools.exe\SLNTools.csproj">
       <Project>{00082d4f-899d-4a3b-b8c6-e9a25244e2b3}</Project>
-      <Name>SLNTools.exe</Name>
+      <Name>SLNTools</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
