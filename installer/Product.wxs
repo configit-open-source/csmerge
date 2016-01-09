@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   
-	<Product Id="*" Name="CsMerge" Language="1033" Version="0.0.0.1" 
+	<Product Id="*" Name="CsMerge" Language="1033" Version="0.2.0.0" 
            Manufacturer="Configit A/S" 
            UpgradeCode="4103bf4b-77ea-477a-ab77-0f4279ac7a70">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
