@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Project", "Project\Project.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsUpdate.Core", "CsUpdate.Core\CsUpdate.Core.csproj", "{EE69C9BF-E6E3-4257-AE82-44910C266F37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.Core.dll", "SlnTools\CWDev.SLNTools.Core.dll\CWDev.SLNTools.Core.dll.csproj", "{055CF73F-58D6-4E8F-89B0-3FDDC5CC57F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.Core", "SlnTools\CWDev.SLNTools.Core.dll\CWDev.SLNTools.Core.csproj", "{055CF73F-58D6-4E8F-89B0-3FDDC5CC57F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.UIKit.dll", "SlnTools\CWDev.SLNTools.UIKit.dll\CWDev.SLNTools.UIKit.dll.csproj", "{71CBD77B-D29A-42F6-B0F1-D0EFFE095CCC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWDev.SLNTools.UIKit", "SlnTools\CWDev.SLNTools.UIKit.dll\CWDev.SLNTools.UIKit.csproj", "{71CBD77B-D29A-42F6-B0F1-D0EFFE095CCC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLNTools", "SlnTools\SLNTools.exe\SLNTools.csproj", "{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}"
 EndProject

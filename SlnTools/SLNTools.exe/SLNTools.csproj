@@ -21,7 +21,7 @@
     <OldToolsVersion>3.5</OldToolsVersion>
     <StartupObject>
     </StartupObject>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -48,6 +48,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -57,6 +58,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -80,13 +82,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CWDev.SLNTools.Core.dll\CWDev.SLNTools.Core.dll.csproj">
+    <ProjectReference Include="..\CWDev.SLNTools.Core.dll\CWDev.SLNTools.Core.csproj">
       <Project>{055CF73F-58D6-4E8F-89B0-3FDDC5CC57F5}</Project>
-      <Name>CWDev.SLNTools.Core.dll</Name>
+      <Name>CWDev.SLNTools.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CWDev.SLNTools.UIKit.dll\CWDev.SLNTools.UIKit.dll.csproj">
+    <ProjectReference Include="..\CWDev.SLNTools.UIKit.dll\CWDev.SLNTools.UIKit.csproj">
       <Project>{71CBD77B-D29A-42F6-B0F1-D0EFFE095CCC}</Project>
-      <Name>CWDev.SLNTools.UIKit.dll</Name>
+      <Name>CWDev.SLNTools.UIKit</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

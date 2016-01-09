@@ -85,7 +85,7 @@ namespace CsMerge {
       Logger logger,
       string rootFolder ) {
 
-      foreach ( var conflictPath in conflictPaths.Where( cp => cp.EndsWith( ".sln" ) ) ) {
+      foreach ( var conflictPath in conflictPaths.Where( cp => cp.ToLowerInvariant().EndsWith( ".sln" ) ) ) {
         ProcessSolutionFile( operation, folder, logger, rootFolder, conflictPath );
       }
     }

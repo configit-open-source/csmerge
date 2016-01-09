@@ -49,6 +49,15 @@
       <Component Directory="INSTALLFOLDER">
         <File Source="$(var.CsUpdate.TargetDir)\CsUpdate.Core.dll" />
       </Component>
+      <Component Id="SlnToolsComponent" Directory="INSTALLFOLDER">
+        <File KeyPath="yes" Source="$(var.SLNTools _SlnTools\SLNTools_.TargetPath)" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.SLNTools _SlnTools\SLNTools_.TargetDir)\CWDev.SLNTools.Core.dll" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.SLNTools _SlnTools\SLNTools_.TargetDir)\CWDev.SLNTools.UIKit.dll" />
+      </Component>
       <Component Directory="INSTALLFOLDER">
         <File Source="$(var.CsUpdate.TargetDir)\Project.dll" />
       </Component>
