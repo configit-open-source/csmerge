@@ -25,7 +25,7 @@ Add the following in your repository to `.git\info\attributes`:
     **/packages.config merge=failmerge
     **/*.csproj merge=failmerge
     
-By placing it under `.git\info` it will not be versioned and so will not affect other users of the repositories.
+By placing it under `.git\info` it will not be versioned and so will not affect other users of the repositories. (note, this is a hidden folder)
 
 You can also set it up system wide, see [http://git-scm.com/docs/gitattributes](http://git-scm.com/docs/gitattributes "Git Attributes") for details.
 
