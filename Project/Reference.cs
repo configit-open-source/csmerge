@@ -140,6 +140,9 @@ namespace Project {
     }
 
     private void SetAssemblyName( string include ) {
+      if ( string.IsNullOrEmpty( include ) ) {
+        return;
+      }
       try {
         AssemblyNameReference reference = AssemblyNameReference.Parse( include );
         ReferenceAssemblyVersion = reference.Version;
