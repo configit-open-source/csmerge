@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 using NLog;
@@ -146,15 +147,20 @@ namespace Integration {
 
       logger.Info( "Restoring nuget packages in " + rootFolder );
 
-      var nugetExe = Path.Combine( rootFolder, @".nuget\nuget.exe" );
-      if ( !File.Exists( nugetExe ) ) {
-        throw new Exception( "cannot find " + nugetExe );
-      }
+      var nugetExe = GetNugetExePath();
 
       foreach ( var solutionFile in new DirectoryInfo( rootFolder ).GetFiles( "*.sln", SearchOption.AllDirectories ) ) {
         logger.Info( "Restoring packages for " + solutionFile.FullName );
         RunNugetRestore( rootFolder, logger, nugetExe, solutionFile.FullName );
       }
+    }
+
+    private static string GetNugetExePath() {
+      var nugetExe = Path.Combine( Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location ), "nuget.exe" );
+      if ( !File.Exists( nugetExe ) ) {
+        throw new Exception( "cannot find " + nugetExe );
+      }
+      return nugetExe;
     }
 
     private static void RunNugetRestore(
@@ -191,10 +197,7 @@ namespace Integration {
 
       // TODO: Use NuGet API for this!
       logger.Info( "Installing nuget package " + package.PackageIdentity + " to " + Path.GetFullPath( packagePath ) );
-      var nugetExe = Path.Combine( GitHelper.FindRepoRoot( subFolder ), @".nuget\nuget.exe" );
-      if ( !File.Exists( nugetExe ) ) {
-        throw new Exception( "cannot find " + nugetExe );
-      }
+      var nugetExe = GetNugetExePath();
 
       var processStartInfo = new ProcessStartInfo( nugetExe, "install " + package.PackageIdentity.Id + " -Version " + package.PackageIdentity.Version + " -Pre" );
       processStartInfo.RedirectStandardOutput = true;

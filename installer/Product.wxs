@@ -65,6 +65,9 @@
         <File Source="$(var.CsMerge.TargetDir)\CsMerge.Core.dll" />
       </Component>
       <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.CsMerge.TargetDir)\nuget.exe" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
         <File Source="$(var.CsMerge.TargetDir)\CsMerge.exe.config" />
       </Component>
       <Component Directory="INSTALLFOLDER">
