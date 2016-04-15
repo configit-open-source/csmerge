@@ -77,7 +77,7 @@ namespace Integration {
       while ( !new DirectoryInfo( Path.Combine( current.FullName, ".git" ) ).Exists ) {
         current = current.Parent;
         if ( current == null ) {
-          throw new Exception( "Could not locate \".git\" folder" );
+          throw new Exception( $"The path {folder} must contain a .git folder in order to for CsMerge to run" );
         }
       }
       return current.FullName;

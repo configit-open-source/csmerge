@@ -4,8 +4,21 @@
 	<Product Id="*" Name="CsMerge" Language="1033" Version="0.2.0.0" 
            Manufacturer="Configit A/S" 
            UpgradeCode="4103bf4b-77ea-477a-ab77-0f4279ac7a70">
-		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CsMerge">
+          <Directory Id="NATIVEBIN" Name="NativeBinaries">
+            <Directory Id="NATIVEBINx64" Name="amd64"/>
+            <Directory Id="NATIVEBINx86" Name="x86"/>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 		<MediaTemplate EmbedCab="yes" />
 
@@ -15,29 +28,12 @@
 	</Product>
 
 	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="CsMerge">
-          <Directory Id="NATIVEBIN" Name="NativeBinaries">
-            <Directory Id="NATIVEBINx64" Name="amd64"/>
-            <Directory Id="NATIVEBINx86" Name="x86"/>
-          </Directory>
-        </Directory>
-        </Directory>
-		</Directory>
-    
-    <!-- TODO: UI
-    <Property Id="WixUI_InstallDir" Value="INSTALLFOLDER" />
-    <UIRef Id="WixUI_InstallDir" />-->
-	</Fragment>
-
-	<Fragment>
     <ComponentGroup Id="ProductComponents">
       <Component Id="CsMergeComponent" Directory="INSTALLFOLDER">
         <File KeyPath="yes" Source="$(var.CsMerge.TargetPath)" />
         <Environment Id="PATH"
              Name="PATH"
-             Value="[INSTALLFOLDER]"
+             Value="[INSTALLDIR]"
              Permanent="yes"
              Part="last"
              Action="set"
