@@ -123,7 +123,7 @@ namespace CsUpdate.Core {
 
       XDocument projectXml = XDocument.Load( _projectFile );
 
-      ReplaceItems( projectXml, itemMap );
+      projectXml = ReplaceItems( projectXml, itemMap );
 
       using ( var textWriter = new StreamWriter( _projectFile ) ) {
         logger.Info( "Writing " + _projectFile );
@@ -131,10 +131,10 @@ namespace CsUpdate.Core {
       }
     }
 
-    public static void ReplaceItems( XDocument originalProject, Dictionary<Item, Item> itemMap ) {
+    public static XDocument ReplaceItems( XDocument originalProject, Dictionary<Item, Item> itemMap ) {
       var root = originalProject.Root;
       if ( root == null ) {
-        return;
+        return null;
       }
 
       var xNamespace = root.Name.Namespace;
@@ -164,6 +164,7 @@ namespace CsUpdate.Core {
       var unusedKeys = elementDictionary.Keys.Except( seenKeys ).ToArray();
 
       Debug.Assert( !unusedKeys.Any() );
+      return newProject;
     }
 
     private Reference UpdateReference( string projectFolder, string relativePackageFolder,
