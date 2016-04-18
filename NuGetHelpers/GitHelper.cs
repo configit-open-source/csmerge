@@ -50,6 +50,34 @@ namespace Integration {
       return process.ExitCode;
     }
 
+    public static void SetupMergeDriver( string configFile, ConfigurationLevel level ) {
+      var config = new Configuration( configFile );
+
+      LogManager.GetCurrentClassLogger().Info( "Installing failmerge driver to " + configFile );
+      config.Set( "merge.failmerge.name", "fail merge driver", level );
+      config.Set( "merge.failmerge.driver", "false", level );
+      config.Set( "merge.failmerge.recursive", "binary", level );
+    }
+
+    public static void SetupAttributes( string attribFile, ConfigurationLevel level ) {
+      // TODO: How to set this via git api?
+
+      string attrib = File.ReadAllText( attribFile );
+
+      string packagesPattern = "**/ packages.config failmerge";
+
+      string projectPattern = "**/*.*proj failmerge";
+
+      if ( !attrib.Contains( packagesPattern ) ) {
+        LogManager.GetCurrentClassLogger().Info( "Setting failmerge attribute for " + packagesPattern + " in " + attribFile );
+        File.AppendAllText( attribFile, packagesPattern + "\n" );
+      }
+      if ( !attrib.Contains( projectPattern ) ) {
+        LogManager.GetCurrentClassLogger().Info( "Setting failmerge attribute for " + projectPattern + " in " + attribFile );
+        File.AppendAllText( attribFile, projectPattern + "\n");
+      }
+    }
+
     public static string GetConflictContent( string rootFolder, StageLevel stage, string conflict ) {
       using ( var repository = new Repository( rootFolder ) ) {
         var conflictEntry = repository.Index.Conflicts.FirstOrDefault( c => c.GetPath() == conflict );
