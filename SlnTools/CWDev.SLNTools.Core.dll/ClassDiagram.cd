@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="CWDev.SLNTools.Core.PropertyLine">
+    <Position X="0.5" Y="19.5" Width="6.75" />
+    <Members>
+      <Field Name="m_name" Hidden="true" />
+      <Field Name="m_value" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAAAAAAEAAAAAAQAAAQAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>PropertyLine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.SolutionFileReader">
+    <Position X="7.75" Y="0.5" Width="3.75" />
+    <Members>
+      <Method Name="FindProjectByGuid" Hidden="true" />
+      <Method Name="HandleNestedProjects" Hidden="true" />
+      <Method Name="HandleProjectConfigurationPlatforms" Hidden="true" />
+      <Method Name="HandleVersionControlLines" Hidden="true" />
+      <Field Name="m_currentLineNumber" Hidden="true" />
+      <Field Name="m_reader" Hidden="true" />
+      <Field Name="m_solutionFile" Hidden="true" />
+      <Field Name="ms_patternParseGlobalSection" Hidden="true" />
+      <Field Name="ms_patternParseProject" Hidden="true" />
+      <Field Name="ms_patternParseProjectConfigurationPlatformsName" Hidden="true" />
+      <Field Name="ms_patternParseProjectSection" Hidden="true" />
+      <Field Name="ms_patternParsePropertyLine" Hidden="true" />
+      <Field Name="ms_regexConvertEscapedValues" Hidden="true" />
+      <Field Name="ms_regexParseGlobalSection" Hidden="true" />
+      <Field Name="ms_regexParseProject" Hidden="true" />
+      <Field Name="ms_regexParseProjectConfigurationPlatformsName" Hidden="true" />
+      <Field Name="ms_regexParseProjectSection" Hidden="true" />
+      <Field Name="ms_regexParsePropertyLine" Hidden="true" />
+      <Field Name="ms_regexParseVersionControlName" Hidden="true" />
+      <Method Name="ReadGlobal" Hidden="true" />
+      <Method Name="ReadGlobalSection" Hidden="true" />
+      <Method Name="ReadHeader" Hidden="true" />
+      <Method Name="ReadLine" Hidden="true" />
+      <Method Name="ReadProject" Hidden="true" />
+      <Method Name="ReadProjectSection" Hidden="true" />
+      <Method Name="ReadPropertyLine" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>CEBAIBkIAEAYgEAAAASAAQAIEAgAAAAAgAABIQAAAGg=</HashCode>
+      <FileName>SolutionFileReader.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.SolutionFileWriter">
+    <Position X="7.75" Y="2.5" Width="3.75" />
+    <Members>
+      <Field Name="m_writer" Hidden="true" />
+      <Method Name="WriteGlobal" Hidden="true" />
+      <Method Name="WriteGlobalSections" Hidden="true" />
+      <Method Name="WriteHeader" Hidden="true" />
+      <Method Name="WriteProjects" Hidden="true" />
+      <Method Name="WriteSection" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAACAAAABAAAAAAAAAAAQgAAAABAAAAAAAhAAEAAAA=</HashCode>
+      <FileName>SolutionFileWriter.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.SolutionFile">
+    <Position X="0.5" Y="0.5" Width="6.75" />
+    <Members>
+      <Field Name="m_globalSections" Hidden="true" />
+      <Field Name="m_headers" Hidden="true" />
+      <Field Name="m_projects" Hidden="true" />
+      <Field Name="m_solutionFullPath" Hidden="true" />
+      <Field Name="TagGlobalSection" Hidden="true" />
+      <Field Name="TagHeader" Hidden="true" />
+      <Field Name="TagProject" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AEAAEIAAAAQAAIYAEAgAIAAISAAIAAAEABBAAAQAAQA=</HashCode>
+      <FileName>SolutionFile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.Section">
+    <Position X="0.5" Y="13.5" Width="6.75" />
+    <Members>
+      <Field Name="m_name" Hidden="true" />
+      <Field Name="m_propertyLines" Hidden="true" />
+      <Field Name="m_sectionType" Hidden="true" />
+      <Field Name="m_step" Hidden="true" />
+      <Field Name="TagPropertyLines" Hidden="true" />
+      <Field Name="TagSectionType" Hidden="true" />
+      <Field Name="TagStep" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>OAAAEBAACAAAAAAEAQAAIARAAAAAEAAAIAIABAQAAAA=</HashCode>
+      <FileName>Section.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.KnownProjectTypeGuid">
+    <Position X="7.75" Y="5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>BAAACAAACAAAABAAQAAAAAABAAAAAAIAAAAAAAAAAAA=</HashCode>
+      <FileName>KnownProjectTypeGuid.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.Project">
+    <Position X="0.5" Y="5" Width="6.75" />
+    <Members>
+      <Field Name="m_container" Hidden="true" />
+      <Field Name="m_parentFolderGuid" Hidden="true" />
+      <Field Name="m_projectConfigurationPlatformsLines" Hidden="true" />
+      <Field Name="m_projectGuid" Hidden="true" />
+      <Field Name="m_projectName" Hidden="true" />
+      <Field Name="m_projectSections" Hidden="true" />
+      <Field Name="m_projectTypeGuid" Hidden="true" />
+      <Field Name="m_relativePath" Hidden="true" />
+      <Field Name="m_versionControlLines" Hidden="true" />
+      <Field Name="TagParentFolder" Hidden="true" />
+      <Field Name="TagProjectConfigurationPlatformsLines" Hidden="true" />
+      <Field Name="TagProjectName" Hidden="true" />
+      <Field Name="TagProjectSection" Hidden="true" />
+      <Field Name="TagProjectTypeGuid" Hidden="true" />
+      <Field Name="TagRelativePath" Hidden="true" />
+      <Field Name="TagVersionControlLines" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>CACAEABIAAABAMCECEGAIAgAhABADCYAQAADIIIAIAQ=</HashCode>
+      <FileName>Project.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.ProjectHashList">
+    <Position X="0.5" Y="9.75" Width="6.75" />
+    <Members>
+      <Field Name="m_container" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAARAAAAABACAAAARAAAAAAAAAAQAAAAAAAAMAAA=</HashCode>
+      <FileName>ProjectHashList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.PropertyLineHashList">
+    <Position X="0.5" Y="21.75" Width="6.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAABAAAAABACAAAAAAAAAAAAAAAAAAAAAAAAEAAA=</HashCode>
+      <FileName>PropertyLineHashList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CWDev.SLNTools.Core.SectionHashList">
+    <Position X="0.5" Y="16.75" Width="6.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAABAAAAABACAAAAAAAAAAAAAAAAAAAAAAAAEAAA=</HashCode>
+      <FileName>SectionHashList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

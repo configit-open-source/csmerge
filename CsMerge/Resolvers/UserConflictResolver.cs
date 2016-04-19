@@ -4,6 +4,10 @@ using CsMerge.Core.Resolvers;
 using CsMerge.UserQuestion;
 using LibGit2Sharp;
 
+using Integration;
+
+using Project;
+
 namespace CsMerge.Resolvers {
   public class UserConflictResolver<T>: IConflictResolver<T> where T : class, IConflictableItem {
 
@@ -18,8 +22,8 @@ namespace CsMerge.Resolvers {
       _repositoryRootDirectory = repositoryRootDirectory;
       _itemDescriptionWhenNull = itemDescriptionWhenNull;
 
-      _local = MergeTypeExtensions.Local( operation );
-      _incoming = MergeTypeExtensions.Incoming( operation );
+      _local = MergeTypeIntegrationExtensions.Local( operation );
+      _incoming = MergeTypeIntegrationExtensions.Incoming( operation );
     }
 
     public MergeResult<T> Resolve( Conflict<T> conflict ) {

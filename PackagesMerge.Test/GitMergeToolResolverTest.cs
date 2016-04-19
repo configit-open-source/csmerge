@@ -1,7 +1,15 @@
 ﻿using System.Collections.Generic;
+
 using CsMerge.Core;
 using CsMerge.Resolvers;
+
+using Integration;
+
+using LibGit2Sharp;
+
 using NUnit.Framework;
+
+using Reference = Project.Reference;
 
 namespace PackagesMerge.Test {
 
