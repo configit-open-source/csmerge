@@ -42,6 +42,10 @@ namespace CsMerge {
         return;
       }
 
+      if ( HandleConfigureOptions( options ) ) {
+        return;
+      }
+
       DirectoryInfo folder = new DirectoryInfo( options.InputFolder ?? Directory.GetCurrentDirectory() );
       var logger = LogManager.GetCurrentClassLogger();
 
@@ -56,6 +60,27 @@ namespace CsMerge {
       catch ( Exception exception ) {
         Console.WriteLine( $"An error occurred: {Environment.NewLine}{exception}" );
       }
+    }
+
+    private static bool HandleConfigureOptions( CsMergeOptions options ) {
+      bool configured = false;
+
+      if ( options.ConfigureGitConfig != null ) {
+        ConfigurationLevel level;
+        if ( Enum.TryParse( options.ConfigureGitConfig, out level ) ) {
+          GitHelper.ConfigureGitConfig( level );
+        }
+        else {
+          GitHelper.ConfigureGitConfig( file : options.ConfigureGitConfig );
+        }
+        configured = true;
+      }
+
+      if ( options.ConfigureGitAttributes != null ) {
+        GitHelper.ConfigureGitAttrib( options.ConfigureGitAttributes );
+        configured = true;
+      }
+      return configured;
     }
 
     private static void ProcessMerge( Logger logger, DirectoryInfo folder, string rootFolder ) {

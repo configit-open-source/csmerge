@@ -50,18 +50,20 @@ namespace Integration {
       return process.ExitCode;
     }
 
-    public static void SetupMergeDriver( string configFile, ConfigurationLevel level ) {
-      var config = new Configuration( configFile );
+    public static void ConfigureGitConfig( 
+        ConfigurationLevel level = default(ConfigurationLevel), 
+        string file = null ) {
+      var config = new Configuration( file, file, file );
 
-      LogManager.GetCurrentClassLogger().Info( "Installing failmerge driver to " + configFile );
+      LogManager.GetCurrentClassLogger().Info( "Installing failmerge driver to " + level );
       config.Set( "merge.failmerge.name", "fail merge driver", level );
       config.Set( "merge.failmerge.driver", "false", level );
       config.Set( "merge.failmerge.recursive", "binary", level );
     }
 
-    public static void SetupAttributes( string attribFile, ConfigurationLevel level ) {
+    public static void ConfigureGitAttrib( string attribFile ) {
       // TODO: How to set this via git api?
-
+      
       string attrib = File.ReadAllText( attribFile );
 
       string[] patterns = {

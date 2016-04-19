@@ -2,9 +2,14 @@
 
 using CsMerge.Core;
 using CsMerge.Resolvers;
+
+using Integration;
+
+using LibGit2Sharp;
+
 using NUnit.Framework;
 
-using Project;
+using Reference = Project.Reference;
 
 namespace PackagesMerge.Test {
 
