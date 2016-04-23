@@ -55,7 +55,7 @@ namespace Integration {
         string file = null ) {
       var config = new Configuration( file, file, file );
 
-      LogManager.GetCurrentClassLogger().Info( "Installing failmerge driver to " + level );
+      LogManager.GetCurrentClassLogger().Info( "Installing failmerge driver to " + ( file ?? level.ToString() ) );
       config.Set( "merge.failmerge.name", "fail merge driver", level );
       config.Set( "merge.failmerge.driver", "false", level );
       config.Set( "merge.failmerge.recursive", "binary", level );
