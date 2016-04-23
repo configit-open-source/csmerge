@@ -257,7 +257,7 @@ namespace CsMerge {
         new UserConflictResolver<RawItem>( operation, repositoryRootDirectory: rootFolder ),
         new UserDuplicateResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) );
 
-      foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) ) ) {
+      foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) || p.EndsWith( ".fsproj" ) || p.EndsWith( ".xproj" )) ) {
 
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( $"{LogHelper.Header}{Environment.NewLine}Examining concurrent modification for {fullConflictPath}" );
