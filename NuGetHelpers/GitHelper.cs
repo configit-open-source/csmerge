@@ -51,7 +51,7 @@ namespace Integration {
     }
 
     public static void ConfigureGitConfig( 
-        ConfigurationLevel level = default(ConfigurationLevel), 
+        ConfigurationLevel level = ConfigurationLevel.Global, 
         string file = null ) {
       var config = new Configuration( file, file, file );
 
@@ -66,17 +66,16 @@ namespace Integration {
       
       string attrib = File.ReadAllText( attribFile );
 
-      string packagesPattern = "**/ packages.config failmerge";
+      string[] patterns = {
+        "**/packages.config failmerge",
+        "**/*.csproj failmerge",
+        "**/*.fsproj failmerge",
+        "**/*.xproj failmerge"
+      };
 
-      string projectPattern = "**/*.*proj failmerge";
-
-      if ( !attrib.Contains( packagesPattern ) ) {
-        LogManager.GetCurrentClassLogger().Info( "Setting failmerge attribute for " + packagesPattern + " in " + attribFile );
-        File.AppendAllText( attribFile, packagesPattern + "\n" );
-      }
-      if ( !attrib.Contains( projectPattern ) ) {
-        LogManager.GetCurrentClassLogger().Info( "Setting failmerge attribute for " + projectPattern + " in " + attribFile );
-        File.AppendAllText( attribFile, projectPattern + "\n");
+      foreach ( var pattern in patterns.Where( pattern => !attrib.Contains( pattern ) ) ) {
+        LogManager.GetCurrentClassLogger().Info( "Setting failmerge attribute for " + pattern + " in " + attribFile );
+        File.AppendAllText( attribFile, pattern + "\n" );
       }
     }
 
