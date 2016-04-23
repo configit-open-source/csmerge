@@ -67,7 +67,7 @@ namespace CsMerge {
 
       if ( options.ConfigureGitConfig != null ) {
         ConfigurationLevel level;
-        if ( Enum.TryParse( options.ConfigureGitConfig, out level ) ) {
+        if ( Enum.TryParse( options.ConfigureGitConfig, true, out level ) ) {
           GitHelper.ConfigureGitConfig( level );
         }
         else {
