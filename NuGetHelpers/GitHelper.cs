@@ -51,7 +51,7 @@ namespace Integration {
     }
 
     public static void ConfigureGitConfig( 
-        ConfigurationLevel level = default(ConfigurationLevel), 
+        ConfigurationLevel level = ConfigurationLevel.Global, 
         string file = null ) {
       var config = new Configuration( file, file, file );
 
