@@ -106,12 +106,19 @@ namespace CsMerge {
     private static void ProcessSolutionFiles(
       CurrentOperation operation,
       string[] conflictPaths,
-      DirectoryInfo folder, 
+      DirectoryInfo folder,
       Logger logger,
-      string rootFolder ) {
-
-      foreach ( var conflictPath in conflictPaths.Where( cp => cp.ToLowerInvariant().EndsWith( ".sln" ) ) ) {
-        ProcessSolutionFile( operation, folder, logger, rootFolder, conflictPath );
+      string rootFolder) {
+      foreach (var conflictPath in conflictPaths.Where(cp => cp.ToLowerInvariant().EndsWith(".sln")))
+      {
+        try
+        {
+          ProcessSolutionFile(operation, folder, logger, rootFolder, conflictPath);
+        }
+        catch (Exception e)
+        {
+          logger.Log(LogLevel.Error, e, "Failed to process solution file " + conflictPath);
+        }
       }
     }
 
