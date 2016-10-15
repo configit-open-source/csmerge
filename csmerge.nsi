@@ -1,3 +1,4 @@
+!include "EnvVarUpdate.nsh"
 
 ; The name of the installer
 Name "CsMerge"
@@ -30,5 +31,24 @@ Section "" ;No components page, name is not important
   
   ; Add files
   File /r ".\binaries\Release\*"
+
+  ReadEnvStr $0 "PATH"
+
+  StrLen $1 $0
+  StrLen $2 $INSTDIR
+
+  IntOp $3 $1 - $2
+
+  IntCmp $3 ${NSIS_MAX_STRLEN} toobig ok toobig
+
+  ok:
+    ${EnvVarUpdate} $4 "PATH"  "R" "HKLM" $INSTDIR ; Remove
+    ${EnvVarUpdate} $5 "PATH"  "A" "HKLM" $INSTDIR ; Append
+    Goto done
+  toobig:
+    DetailPrint "Path too big to modify, please add CsMerge to path manually!"
+  done:
+
+  WriteUninstaller "uninstall.exe"
   
 SectionEnd ; end the section
