@@ -10,6 +10,11 @@ namespace CsUpdate.Core {
     public TargetPackage( string cmdLineString ) {
       string[] splits = cmdLineString.Split( ':' );
       IdFilter = splits[0];
+      IsPrefix = IdFilter.Last() == '*';
+      if ( IsPrefix ) {
+        IdFilter = IdFilter.Substring( 0, IdFilter.Length - 1 );
+      }
+
       if ( splits.Length >= 2 ) {
         TargetVersion = NuGetVersion.Parse( splits[1] );
       }
@@ -19,16 +24,14 @@ namespace CsUpdate.Core {
     }
 
     public bool IsPrefix {
-      get {
-        return IdFilter.Last() == '*';
-      }
+      get;
     }
 
-    public string IdFilter { get; private set; }
+    public string IdFilter { get; }
 
-    public NuGetVersion TargetVersion { get; private set; }
+    public NuGetVersion TargetVersion { get; }
 
-    public NuGetFramework TargetFramework { get; private set; }
+    public NuGetFramework TargetFramework { get; }
 
     public PackageReference ReTarget( PackageReference reference ) {
       if ( !IsTargeted( reference.PackageIdentity.Id ) ) {
@@ -45,7 +48,7 @@ namespace CsUpdate.Core {
       if ( string.IsNullOrWhiteSpace( packageId ) ) {
         return false;
       }
-      return IsPrefix ? packageId.StartsWith( IdFilter ) : packageId.Equals( IdFilter );
+      return IsPrefix ? packageId.StartsWith( IdFilter.Replace( "*", "" ) ) : packageId.Equals( IdFilter );
     }
   }
 }
