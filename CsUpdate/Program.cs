@@ -16,11 +16,11 @@ namespace CsUpdate {
         return;
       }
 
-      ProcessAlign( options.InputPath ?? Directory.GetCurrentDirectory(), options  );
+      ProcessAlign( options.InputPath ?? Directory.GetCurrentDirectory(), options );
     }
 
     private static void ProcessAlign( string rootFolder, CsUpdateOptions options ) {
-      if(! Directory.Exists( rootFolder ) ) {
+      if ( !Directory.Exists( rootFolder ) ) {
         LogManager.GetCurrentClassLogger().Error( "Target folder " + rootFolder + " does not exist" );
         return;
       }
@@ -36,7 +36,12 @@ namespace CsUpdate {
       TargetPackageIndex targetPackageIndex = new TargetPackageIndex( projectFiles, options.PackageIds.Select( p => new TargetPackage( p ) ) );
 
       foreach ( var projectFile in projectFiles ) {
-        new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
+        try {
+          new PackageReferenceAligner( projectFile, targetPackageIndex ).AlignReferences();
+        }
+        catch ( Exception e ) {
+          LogManager.GetCurrentClassLogger().Error( e, projectFile );
+        }
       }
     }
   }
