@@ -301,8 +301,7 @@ namespace CsUpdate.Core {
       var logger = LogManager.GetCurrentClassLogger();
 
       foreach ( var package in oldPackagesConfig ) {
-        var newPackage = _packageIndex.GetTarget( package.PackageIdentity.Id );
-
+        var newPackage = _packageIndex.GetTarget( package.PackageIdentity.Id ) ?? package;
 
         updatedPackages.Add( newPackage );
 

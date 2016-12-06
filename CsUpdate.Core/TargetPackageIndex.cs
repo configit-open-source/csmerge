@@ -21,8 +21,12 @@ namespace CsUpdate.Core {
     }
 
     public TargetPackageIndex( IEnumerable<string> projectFiles, IEnumerable<TargetPackage> targets ) {
-      _targets = targets == null ? null : targets.ToArray();
+      _targets = targets?.ToArray() ?? new TargetPackage[0];
 
+      if ( _targets.Any() ) {
+        return;
+      }
+        
       // TODO: Allow targeting a specific sln file
       var packageReferences = GetAllPackageReferences( projectFiles );
 
