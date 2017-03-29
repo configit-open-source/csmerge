@@ -16,7 +16,7 @@ The tool makes certain assumptions about your usage of NuGet packages and versio
 ## Setup
 
 ### Step 1 : Install using CsMerge.Setup.msi (or build from source)
-You can download the latest installer under 'Releases'. You can also build directly from source and simply copy the files to a location that is on your path.
+You can download the latest installer under [Releases](https://github.com/configit-open-source/csmerge/releases). You can also build directly from source and simply copy the files to a location that is on your path.
 
 ### Step 2 : Configure gitconfig
 Once installed you can run
