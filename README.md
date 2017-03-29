@@ -37,7 +37,7 @@ An alternative would be to mark those files as binary, but that will confuse dif
 ### Step 2 : Set attributes for packages.config and project files
 
 ```
-csmerge --configure-gitattrib <path to a config file>
+csmerge --configure-gitattrib <path to a git attribute file>
 ```
 
 This will add the following to the indicated .gitattributes file:
