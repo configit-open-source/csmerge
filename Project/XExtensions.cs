@@ -3,6 +3,12 @@ using System.Xml.Linq;
 
 namespace Project {
   public static class XExtensions {
+    
+    public static void AddElement( this XElement parent, string elementName, object value ) {
+      if ( value != null ) {
+        parent.Add( new XElement( parent.Name.Namespace.GetName( elementName ), value ) );
+      }
+    }
 
     public static XElement SameNsElement( this XElement parent, string name ) {
       return parent.Element( parent.Name.Namespace.GetName( name ) );

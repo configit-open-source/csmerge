@@ -5,15 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
-
 using NLog;
-
-using NuGet.Frameworks;
 using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace Integration {
   public static class NuGetExtensions {
@@ -40,14 +38,10 @@ namespace Integration {
       }
     }
 
-    public static void Write( this IEnumerable<ConfigitPackageReference> packages, Stream stream ) {
-      Write( packages.Select( p => (PackageReference) p ), stream );
-    }
-
     public static void Write( this IEnumerable<PackageReference> packages, Stream stream ) {
-      using ( PackagesConfigWriter writer = new PackagesConfigWriter( stream ) ) {
+      using ( var writer = new PackagesConfigWriter( stream, false ) ) {
         foreach ( var package in packages ) {
-          writer.WritePackageEntry( package );
+          writer.AddPackageEntry( package );
         }
       }
     }
@@ -86,7 +80,7 @@ namespace Integration {
       }
 
       using ( var fs = new FileStream( nupkg.FullName, FileMode.Open ) ) {
-        return new PackageReader( fs ).GetIdentity();
+        return new PackageArchiveReader( fs ).GetIdentity();
       }
     }
 
@@ -109,7 +103,7 @@ namespace Integration {
       var packageFolder = "packages";
 
       if ( File.Exists( configFile ) ) {
-        NuGet.Configuration.Settings settings = new NuGet.Configuration.Settings( Path.Combine( current.FullName, ".nuget" ) );
+        var settings = new NuGet.Configuration.Settings( Path.Combine( current.FullName, ".nuget" ) );
         packageFolder = settings.GetValue( "config", "repositoryPath" ) ?? packageFolder;
       }
 
@@ -125,13 +119,13 @@ namespace Integration {
       fromPath = PrepareForUri( fromPath );
       toPath = PrepareForUri( toPath );
 
-      Uri fromUri = new Uri( fromPath );
-      Uri toUri = new Uri( toPath );
+      var fromUri = new Uri( fromPath );
+      var toUri = new Uri( toPath );
 
       if ( fromUri.Scheme != toUri.Scheme ) { return toPath; } // path can't be made relative.
 
-      Uri relativeUri = fromUri.MakeRelativeUri( toUri );
-      string relativePath = Uri.UnescapeDataString( relativeUri.ToString() );
+      var relativeUri = fromUri.MakeRelativeUri( toUri );
+      var relativePath = Uri.UnescapeDataString( relativeUri.ToString() );
 
       if ( toUri.Scheme.ToUpperInvariant() == "FILE" ) {
         relativePath = relativePath.Replace( Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar );
@@ -193,7 +187,7 @@ namespace Integration {
 
       var logger = LogManager.GetCurrentClassLogger();
 
-      string packagePath = Path.GetFullPath( Path.Combine( subFolder, FindRelativePathOfPackagesFolder( subFolder ) ) );
+      var packagePath = Path.GetFullPath( Path.Combine( subFolder, FindRelativePathOfPackagesFolder( subFolder ) ) );
 
       // TODO: Use NuGet API for this!
       logger.Info( "Installing nuget package " + package.PackageIdentity + " to " + Path.GetFullPath( packagePath ) );

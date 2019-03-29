@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using NuGet.Packaging;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace CsMerge.Core {
 

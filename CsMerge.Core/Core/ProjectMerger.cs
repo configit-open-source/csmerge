@@ -21,8 +21,10 @@ namespace CsMerge.Core {
 
     private readonly CurrentOperation _operation;
     private readonly IConflictResolver<Reference> _referenceResolver;
+    private readonly IConflictResolver<PackageReference> _packageReferenceResolver;
     private readonly IConflictResolver<RawItem> _itemResolver;
     private readonly IDuplicateResolver<Reference> _duplicateReferenceResolver;
+    private readonly IDuplicateResolver<PackageReference> _duplicatePackageReferenceResolver;
     private readonly IConflictResolver<ProjectReference> _projectReferenceResolver;
 
     /// <summary>
@@ -31,27 +33,41 @@ namespace CsMerge.Core {
     /// <param name="operation">The operation being performed</param>
     /// <param name="referenceResolver">An object to resolve reference conflicts that cannot be auto resolved.</param>
     /// <param name="projectReferenceResolver">An object to resolve project reference conflicts that cannot be auto resolved.</param>
+    /// <param name="packageReferenceResolver">An object to resolve package reference conflicts that cannot be auto resolved.</param>
     /// <param name="itemResolver">An object to resolve item conflicts that cannot be auto resolved.</param>
     /// <param name="duplicateReferenceResolver">An object to resolve duplicate references.</param>
+    /// <param name="duplicatePackageReferenceResolver">An object to resolve duplicate package references.</param>
     public ProjectMerger(
       CurrentOperation operation,
       IConflictResolver<ProjectReference> projectReferenceResolver,
       IConflictResolver<Reference> referenceResolver,
+      IConflictResolver<PackageReference> packageReferenceResolver,
       IConflictResolver<RawItem> itemResolver,
-      IDuplicateResolver<Reference> duplicateReferenceResolver ) {
+      IDuplicateResolver<Reference> duplicateReferenceResolver,
+      IDuplicateResolver<PackageReference> duplicatePackageReferenceResolver ) {
 
       _operation = operation;
       _referenceResolver = referenceResolver;
+      _packageReferenceResolver = packageReferenceResolver;
       _itemResolver = itemResolver;
       _duplicateReferenceResolver = duplicateReferenceResolver;
+      _duplicatePackageReferenceResolver = duplicatePackageReferenceResolver;
       _projectReferenceResolver = projectReferenceResolver;
     }
 
-    private IEnumerable<Reference> MergeReferences( string filePath, IEnumerable<Reference> baseRefs, IEnumerable<Reference> localRefs, IEnumerable<Reference> incomingRefs ) {
+    private static IEnumerable<T> MergeReferences<T>(
+      CurrentOperation operation,
+      string filePath, 
+      IEnumerable<T> baseReferences, 
+      IEnumerable<T> localReferences, 
+      IEnumerable<T> incomingReferences,
+      IConflictResolver<T> conflictResolver,
+      IDuplicateResolver<T> duplicateResolver ) 
+      where T: Item {
 
-      var baseRefsList = baseRefs.Distinct().ToList();
-      var localRefsList = localRefs.Distinct().ToList();
-      var incomingRefsList = incomingRefs.Distinct().ToList();
+      var baseRefsList = baseReferences.Distinct().ToList();
+      var localRefsList = localReferences.Distinct().ToList();
+      var incomingRefsList = incomingReferences.Distinct().ToList();
 
       // Identify with duplicates
       var baseDuplicates = baseRefsList.ToDuplicatesDictionary();
@@ -69,20 +85,21 @@ namespace CsMerge.Core {
       }
 
       var mergedDuplicates = duplicateKeys.Any() ?
-        MergeHelper<Reference>.MergeAllDuplicates( filePath, _operation, baseDuplicates, localDuplicates, incomingDuplicates, _referenceResolver, _duplicateReferenceResolver ) :
-        new List<Reference>();
+        MergeHelper<T>.MergeAllDuplicates( filePath, operation, baseDuplicates, localDuplicates, incomingDuplicates, conflictResolver, duplicateResolver ) :
+        new List<T>();
 
       // Discard packages that are no longer installed 
       var baseByName = baseRefsList.Where( r => !duplicateKeys.Contains( r.Key ) ).ToKeyedDictionary();
       var localByName = localRefsList.Where( r => !duplicateKeys.Contains( r.Key ) ).ToKeyedDictionary();
       var theirByName = incomingRefsList.Where( r => !duplicateKeys.Contains( r.Key ) ).ToKeyedDictionary();
 
-      var mergedNonDuplicates = MergeHelper<Reference>.MergeAll( filePath, _operation, baseByName, localByName, theirByName, _referenceResolver );
+      var mergedNonDuplicates = MergeHelper<T>.MergeAll( filePath, operation, baseByName, localByName, theirByName, conflictResolver );
 
       return mergedNonDuplicates.Union( mergedDuplicates );
     }
 
-    private void EnsureDuplicatesPopulated( string duplicateKey, IDictionary<string, IEnumerable<Reference>> duplicatesDictionary, IEnumerable<Reference> allReferences ) {
+    private static void EnsureDuplicatesPopulated<T>( string duplicateKey, IDictionary<string, IEnumerable<T>> duplicatesDictionary, IEnumerable<T> allReferences ) 
+    where T: Item {
       if ( duplicatesDictionary.ContainsKey( duplicateKey ) ) {
         return;
       }
@@ -111,11 +128,14 @@ namespace CsMerge.Core {
       var localProj = CsProjParser.Parse( projFileName, localDocument );
       var theirProj = CsProjParser.Parse( projFileName, incomingDocument );
       var baseProj = CsProjParser.Parse( projFileName, baseDocument );
-
-
+      
       var localRefs = localProj.GetItems<Reference>().ToList();
       var theirRefs = theirProj.GetItems<Reference>().ToList();
       var baseRefs = baseProj.GetItems<Reference>().ToList();
+      
+      var localPackageReferences = localProj.GetItems<PackageReference>().ToList();
+      var theirPackageReferences = theirProj.GetItems<PackageReference>().ToList();
+      var basePackageReferences = baseProj.GetItems<PackageReference>().ToList();
 
       localRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
       theirRefs.ForEach( r => r.ApplyIsResolveOption( projectPackages ) );
@@ -129,14 +149,16 @@ namespace CsMerge.Core {
       var theirItems = theirProj.GetItemsDictionary<RawItem>();
       var baseItems = baseProj.GetItemsDictionary<RawItem>();
 
-      var resolvedItems = MergeHelper<RawItem>.MergeAll( 
-        filePath, _operation, baseItems, localItems, theirItems, _itemResolver );
-      var resolvedReferences = MergeReferences( filePath, baseRefs, localRefs, theirRefs );
+      var resolvedItems = MergeHelper<RawItem>.MergeAll( filePath, _operation, baseItems, localItems, theirItems, _itemResolver );
 
-      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll( 
+      var resolvedReferences = MergeReferences( _operation, filePath, baseRefs, localRefs, theirRefs, _referenceResolver, _duplicateReferenceResolver );
+
+      var resolvedPackageReferences = MergeReferences( _operation, filePath, basePackageReferences, localPackageReferences, theirPackageReferences, _packageReferenceResolver, _duplicatePackageReferenceResolver );
+
+      var resolvedProjectReferences = MergeHelper<ProjectReference>.MergeAll(
         filePath, _operation, baseProjectRefs, localProjectRefs, theirProjectRefs, _projectReferenceResolver );
 
-      return resolvedItems.Cast<Item>().Concat( resolvedReferences ).Concat( resolvedProjectReferences );
+      return resolvedItems.Cast<Item>().Concat( resolvedReferences ).Concat( resolvedPackageReferences ).Concat( resolvedProjectReferences );
     }
   }
 }

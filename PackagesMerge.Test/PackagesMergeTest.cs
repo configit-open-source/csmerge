@@ -5,8 +5,7 @@ using CsMerge.Core;
 using LibGit2Sharp;
 
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using NUnit.Framework;
@@ -14,6 +13,7 @@ using NUnit.Framework;
 using PackagesMerge.Test.Resolvers;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace PackagesMerge.Test {
   [TestFixture]

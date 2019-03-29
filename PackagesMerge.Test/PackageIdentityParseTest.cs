@@ -1,29 +1,17 @@
-﻿using System.IO;
-using System.Text;
-
-using NUnit.Framework;
-
-using NuGet;
+﻿using NUnit.Framework;
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using Integration;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace PackagesMerge.Test {
 
   [TestFixture]
   public class PackageIdentityParseTest {
-
-    public class Utf8StringWriter: StringWriter {
-      public override Encoding Encoding {
-        get { return Encoding.UTF8; }
-      }
-    }
-
     [Test]
     public void PackageNameContainsNumbers() {
       ProjectPackages projectPackages = new ProjectPackages( new[] {

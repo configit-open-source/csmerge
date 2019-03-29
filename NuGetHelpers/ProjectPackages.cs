@@ -8,7 +8,7 @@ using System.Xml.Linq;
 using NLog;
 
 using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 
 namespace Integration {
 

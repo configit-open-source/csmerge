@@ -3,13 +3,13 @@
 using CsMerge;
 
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using NUnit.Framework;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace PackagesMerge.Test {
 
