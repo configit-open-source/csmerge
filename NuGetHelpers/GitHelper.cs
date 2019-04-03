@@ -18,7 +18,18 @@ namespace Integration {
     public static string GetMergeCmdLine( Repository repository ) {
       ConfigurationEntry<string> mergeToolName = repository.Config.Get<string>( "merge.tool" );
       var cmd = repository.Config.Get<string>( "mergetool." + mergeToolName.Value + ".cmd" );
-      return cmd.Value;
+
+      if ( cmd != null ) {
+        return cmd.Value;
+      }
+
+      var path = repository.Config.Get<string>( "mergetool." + mergeToolName.Value + ".path" );
+
+      if ( path != null ) {
+        return $"\"{path.Value}\" \"$REMOTE\" \"$LOCAL\" \"$BASE\" \"$MERGED\"";
+      }
+
+      throw new InvalidOperationException( "Could not identify git merge tool command. Please configure it in git config." );
     }
 
     private static int RunStandardMergetool( Repository repository, string @base, string local, string incoming, string resolved ) {
