@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.539
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsMerge", "CsMerge\CsMerge.csproj", "{4EBE13DA-83CD-4B07-99ED-098EDE83F5E5}"
 EndProject
@@ -24,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLNTools", "SlnTools\SLNTools.exe\SLNTools.csproj", "{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlnTools", "SlnTools", "{BBB43749-D35B-44AD-8BDD-02F4677811EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configit.CsMerge.Test", "CsMerge.Test\Configit.CsMerge.Test.csproj", "{CBB1F300-EDC2-486E-ADAB-70556A4D5500}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -149,6 +151,18 @@ Global
 		{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}.Release|x86.ActiveCfg = Release|Any CPU
 		{00082D4F-899D-4A3B-B8C6-E9A25244E2B3}.Release|x86.Build.0 = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Debug|x86.Build.0 = Debug|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|x86.ActiveCfg = Release|Any CPU
+		{CBB1F300-EDC2-486E-ADAB-70556A4D5500}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -157,5 +171,8 @@ Global
 		{055CF73F-58D6-4E8F-89B0-3FDDC5CC57F5} = {BBB43749-D35B-44AD-8BDD-02F4677811EB}
 		{71CBD77B-D29A-42F6-B0F1-D0EFFE095CCC} = {BBB43749-D35B-44AD-8BDD-02F4677811EB}
 		{00082D4F-899D-4A3B-B8C6-E9A25244E2B3} = {BBB43749-D35B-44AD-8BDD-02F4677811EB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AC619DC7-E31C-4F25-B55C-8EDFEB51FF72}
 	EndGlobalSection
 EndGlobal

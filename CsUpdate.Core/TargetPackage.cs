@@ -2,7 +2,7 @@ using System.Linq;
 
 using NuGet.Frameworks;
 using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 namespace CsUpdate.Core {

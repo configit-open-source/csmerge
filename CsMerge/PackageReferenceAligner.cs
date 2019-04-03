@@ -1,5 +1,4 @@
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,14 +8,13 @@ using System.Xml.Linq;
 using NLog;
 
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using Integration;
 
 using Project;
-
+using PackageReference = NuGet.Packaging.PackageReference;
 using ProjectPackages = Integration.ProjectPackages;
 using SerialisationHelper = CsMerge.Core.SerialisationHelper;
 

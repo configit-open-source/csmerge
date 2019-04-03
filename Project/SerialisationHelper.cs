@@ -21,7 +21,7 @@ namespace Project {
       return itemElement.ParseAsItem();
     }
 
-    public static PackageReference ParseAsPackage( this XElement e ) {
+    public static NuGet.Packaging.PackageReference ParseAsPackage( this XElement e ) {
       var ns = e.Name.Namespace;
 
       var document = new XDocument();
@@ -46,6 +46,9 @@ namespace Project {
       switch ( itemElement.Name.LocalName ) {
         case "Reference":
           return new Reference( itemElement );
+
+        case "PackageReference":
+          return new PackageReference( itemElement );
 
         case "ProjectReference":
           return new ProjectReference( include,

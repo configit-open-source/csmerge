@@ -75,14 +75,16 @@ namespace Project {
       XElement e = new XElement( ns.GetName( Action ) );
 
       e.Add( new XAttribute( "Include", Include ) );
-      AddElement( e, "Name", Name );
-      AddElement( e, "FusionName", FusionName );
-      AddElement( e, "HintPath", HintPath );
-      AddElement( e, "Private", Private );
-      AddElement( e, "EmbedInteropTypes", EmbedInteropTypes );
-      AddElement( e, "Aliases", Aliases );
-      AddElement( e, "SpecificVersion", SpecificVersion );
-      AddElement( e, "RequiredTargetFramework", RequiredTargetFramework );
+
+      e.AddElement( "Name", Name );
+      e.AddElement( "FusionName", FusionName );
+      e.AddElement( "HintPath", HintPath );
+      e.AddElement( "Private", Private );
+      e.AddElement( "EmbedInteropTypes", EmbedInteropTypes );
+      e.AddElement( "Aliases", Aliases );
+      e.AddElement( "SpecificVersion", SpecificVersion );
+      e.AddElement( "RequiredTargetFramework", RequiredTargetFramework );
+      
       return e;
     }
 

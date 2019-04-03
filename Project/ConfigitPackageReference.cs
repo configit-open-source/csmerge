@@ -1,21 +1,18 @@
-﻿using System.Security.Policy;
-using System.Text;
+﻿using System.Text;
 using System.Xml.Linq;
-
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 namespace Project {
   public class ConfigitPackageReference: IConflictableItem {
-    private readonly PackageReference _reference;
+    private readonly NuGet.Packaging.PackageReference _reference;
 
-    public static implicit operator ConfigitPackageReference( PackageReference reference ) {
+    public static implicit operator ConfigitPackageReference( NuGet.Packaging.PackageReference reference ) {
       return new ConfigitPackageReference( reference );
     }
 
-    public static implicit operator PackageReference( ConfigitPackageReference reference ) {
+    public static implicit operator NuGet.Packaging.PackageReference( ConfigitPackageReference reference ) {
       return reference?._reference;
     }
 
@@ -76,13 +73,13 @@ namespace Project {
     }
 
     public ConfigitPackageReference( string id, string version, string targetFramework = null, string allowedVersion = null, bool userInstalled = false ) {
-      _reference = new PackageReference(
+      _reference = new NuGet.Packaging.PackageReference(
         new PackageIdentity( id, new NuGetVersion( version ) ),
         targetFramework == null ? null : new NuGetFramework( targetFramework ),
         userInstalled, false, false, allowedVersion != null ? VersionRange.Parse( allowedVersion ) : null );
     }
 
-    private ConfigitPackageReference( PackageReference reference ) {
+    private ConfigitPackageReference( NuGet.Packaging.PackageReference reference ) {
       _reference = reference;
     }
 

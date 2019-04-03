@@ -3,5 +3,7 @@
 bin
 obj
 packages
+.vs
+binaries
 *.DotSettings.user
 StyleCop.Cache

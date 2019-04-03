@@ -4,7 +4,7 @@ using System.Linq;
 using System.Xml.Linq;
 
 using CsMerge.Core;
-
+using CsMerge.Core.Resolvers;
 using LibGit2Sharp;
 
 using Integration;
@@ -25,13 +25,18 @@ namespace PackagesMerge.Test {
     [Test]
     public void Test() {
 
-      var referenceResolver = new TestConflictResolver<Reference>( ConflictItemType.Local );
+      var referenceUserConflictResolver = new LoggingConflictResolver<Reference>( new SimpleConflictResolver<Reference>( ConflictItemType.Local ) );
+      var packageReferenceUserConflictResolver = new LoggingConflictResolver<PackageReference>( new SimpleConflictResolver<PackageReference>( ConflictItemType.Local ) );
+
+      var referenceResolver = new LoggingConflictResolver<Reference>( new ReferenceConflictResolver( referenceUserConflictResolver ) );
+      var packageReferenceResolver = new LoggingConflictResolver<PackageReference>( new PackageReferenceConflictResolver( packageReferenceUserConflictResolver ) );
       var projectReferenceResolver = new TestConflictResolver<ProjectReference>( ConflictItemType.Local );
       var itemResolver = new TestConflictResolver<RawItem>( ConflictItemType.Local );
       var duplicateResolver = new TestDuplicateResolver<Reference>( ConflictItemType.Local );
+      var packageReferenceDuplicateResolver = new TestDuplicateResolver<PackageReference>( ConflictItemType.Local );
 
-      var projectMerger = new ProjectMerger( CurrentOperation.Merge, projectReferenceResolver, referenceResolver, itemResolver, duplicateResolver );
-      
+      var projectMerger = new ProjectMerger( CurrentOperation.Merge, projectReferenceResolver, referenceResolver, packageReferenceResolver, itemResolver, duplicateResolver, packageReferenceDuplicateResolver );
+
       string packagesConfigPath = Path.GetFullPath( @"..\..\TestFiles\src\Project" );
 
       var projectPackages = new ProjectPackages( packagesConfigPath, @"..\..\Packages" );
@@ -81,7 +86,43 @@ namespace PackagesMerge.Test {
         "Properties\\AssemblyInfo.cs",
         "app.config",
         "packages.config",
-        
+
+
+        "CsMerge.PackageReferences.NoChanges",
+        "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal",
+        "CsMerge.PackageReferences.UpdatedInLocal",
+        "CsMerge.PackageReferences.UpdatedInIncoming",
+        "CsMerge.PackageReferences.UpdatedInBoth.Identical",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardEqual",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsZero",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsWildCard",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionAsElement",
+        "CsMerge.PackageReferences.Duplicate.Identical",
+        "CsMerge.PackageReferences.Duplicate.Different.VersionChangeOnly",
+        "CsMerge.PackageReferences.Duplicate.Different.OtherChanges",
+
+        /* // Should have been removed
+        "CsMerge.PackageReferences.DeletedInBoth",
+        "CsMerge.PackageReferences.DeletedInLocal",
+        "CsMerge.PackageReferences.DeletedInIncoming",
+        "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming", // Deleted by the user resolver
+        */
+
         // References
         "CsMerge.Packages.NoChanges", 
         // "CsMerge.Packages.DeletedInBoth" - should not be in result as auto resolved to deleted.
@@ -99,7 +140,7 @@ namespace PackagesMerge.Test {
         "CsMerge.Packages.Duplicate.Different.OtherChanges" // Appears only once. Resolved by duplicateResolver to local[0]
       };
 
-      Assert.That( itemKeys, Is.EquivalentTo( expectedItems ) );
+      AssertCollectionEquivalent( itemKeys, expectedItems );
 
       AssertReference( items, "CsMerge.Packages.NoChanges", false, true, Version( 1 ) );
       AssertReference( items, "CsMerge.Packages.DeletedInIncomingUpdatedInLocal", false, true, Version( 1, 0, 0, 1 ) );
@@ -111,6 +152,37 @@ namespace PackagesMerge.Test {
       AssertReference( items, "CsMerge.Packages.Duplicate.Identical", false, true, Version( 1 ) );
       AssertReference( items, "CsMerge.Packages.Duplicate.Different.VersionChangeOnly", false, true, Version( 1, 0, 0, 1 ) ); // Resolved by test resolver to local[0]
       AssertReference( items, "CsMerge.Packages.Duplicate.Different.OtherChanges", false, null, Version( 1, 0, 0, 2 ) ); // Resolved by test resolver to local - first valid option.
+
+      var assetsContentFilesOnly = new[] { "contentFiles" };
+      var assetsContentFilesAndNative = new[] { "contentFiles", "native" };
+
+      AssertPackageReference( items, "CsMerge.PackageReferences.NoChanges", "1.0.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal", "1.0.2" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInLocal", "1.0.2" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInIncoming", "1.0.1" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Identical", "1.0.1" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly", "1.0.2" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength", "1.1.1" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges", "1.0.2", "'$(TargetFramework)' == 'Local'" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher", "1.1.*" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower", "1.2.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardEqual", "1.1.*" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsZero", "1.1.*" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsWildCard", "1.1.*" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero", "1.1.1" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different", "1.0.2", expectedIncludeAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equivalent", "1.0.2", expectedIncludeAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equal", "1.0.2", expectedIncludeAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different", "1.0.2", expectedExcludeAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equivalent", "1.0.2", expectedExcludeAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equal", "1.0.2", expectedExcludeAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different", "1.0.2", expectedPrivateAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equivalent", "1.0.2", expectedPrivateAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equal", "1.0.2", expectedPrivateAssets: assetsContentFilesAndNative );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionAsElement", "1.0.2" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.Duplicate.Identical", "1.0.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.Duplicate.Different.VersionChangeOnly", "1.1.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.Duplicate.Different.OtherChanges", "1.1.0", "'$(TargetFramework)' == 'Local1'" );
 
       AssertProjectReference( items, "00000000-0000-0000-0000-000000000001", "CsMerge.OtherProject.UnChanged", @"..\..\OtherProjects\CsMerge.OtherProject.UnChanged.csproj" );
       AssertProjectReference( items, "00000000-0000-0000-0000-000000000005", "CsMerge.OtherProject.DeleteIncomingUpdateLocal.Local", @"..\..\OtherProjects\CsMerge.OtherProject.DeleteIncomingUpdateLocal.csproj" );
@@ -132,12 +204,55 @@ namespace PackagesMerge.Test {
 
       } ) );
 
+      // Remember that some references are resolved because they are the only valid resolution (according to the packages.config file) and so are resolved before reaching the resolver.
       Assert.That( referenceResolver.Resolutions.Keys, Is.EquivalentTo( new[] {
         "CsMerge.Packages.UpdatedInBoth.Different.OtherChanges",
         "CsMerge.Packages.DeletedInIncomingUpdatedInLocal",
         "CsMerge.Packages.DeletedInLocalUpdatedInIncoming"
       } ) );
 
+      Assert.That( referenceUserConflictResolver.Resolutions.Keys, Is.EquivalentTo( new[] {
+        "CsMerge.Packages.UpdatedInBoth.Different.OtherChanges",
+        "CsMerge.Packages.DeletedInIncomingUpdatedInLocal",
+        "CsMerge.Packages.DeletedInLocalUpdatedInIncoming"
+      } ) );
+
+      var keysResolvedByResolver = new[] {
+        "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming",
+        "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsZero",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equivalent",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionAsElement"
+      };
+      
+      AssertCollectionEquivalent( packageReferenceResolver.Resolutions.Keys, keysResolvedByResolver );
+      
+      var keysResolvedByUserResolver = new[] {
+        "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming",
+        "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different"
+      };
+      
+      AssertCollectionEquivalent( packageReferenceUserConflictResolver.Resolutions.Keys, keysResolvedByUserResolver );
+      
       Assert.That( duplicateResolver.Resolutions.Keys, Is.EquivalentTo( new[] {
         //"CsMerge.Packages.Duplicate.Identical" - Auto resolved as duplicates are identical.
         "CsMerge.Packages.Duplicate.Different.VersionChangeOnly",
@@ -145,7 +260,7 @@ namespace PackagesMerge.Test {
       } ) );
     }
 
-    private static void AssertProjectReference( List<Item> items, string key, string expectedName, string expectedPath ) {
+    private static void AssertProjectReference( IEnumerable<Item> items, string key, string expectedName, string expectedPath ) {
       var reference = GetItem<ProjectReference>( items, key );
 
       Assert.That( reference.Name, Is.EqualTo( expectedName ) );
@@ -164,7 +279,46 @@ namespace PackagesMerge.Test {
       Assert.That( reference.Private, Is.EqualTo( isPrivate ), "Unexpected Private value for " + key );
     }
 
-    private static T GetItem<T>( IEnumerable<Item> items, string key ) where T: Item {
+    private static void AssertPackageReference(
+      IEnumerable<Item> items,
+      string key,
+      string expectedVersion,
+      string expectedCondition = null,
+      IEnumerable<string> expectedIncludeAssets = null,
+      IEnumerable<string> expectedExcludeAssets = null,
+      IEnumerable<string> expectedPrivateAssets = null ) {
+
+      var reference = GetItem<PackageReference>( items, key );
+
+      Assert.That( reference.Version, Is.EqualTo( expectedVersion ) );
+      Assert.That( reference.Condition, Is.EqualTo( expectedCondition ) );
+      AssertConditionalCollectionEquivalent( reference.IncludeAssets, expectedIncludeAssets );
+      AssertConditionalCollectionEquivalent( reference.ExcludeAssets, expectedExcludeAssets );
+      AssertConditionalCollectionEquivalent( reference.PrivateAssets, expectedPrivateAssets );
+    }
+
+    private static void AssertConditionalCollectionEquivalent( IReadOnlyCollection<string> actual, IEnumerable<string> expected ) {
+      var expectedList = expected?.ToList() ?? new List<string>();
+      Assert.That( actual, Is.EquivalentTo( expectedList ) );
+    }
+
+    private static void AssertCollectionEquivalent( IEnumerable<string> actual, IEnumerable<string> expected ) {
+      var actualList = actual.ToList();
+      var expectedList = expected.ToList();
+
+      /*
+       * We could do this...
+       *
+       * Assert.That( actualList, Is.EquivalentTo( expectedList ) );
+       *
+       * ...bit it gives a poor message when there are lots of items
+       */
+
+      Assert.That( actualList.Except( expectedList ), Is.Empty, "Items found that were not expected: " );
+      Assert.That( expectedList.Except( actualList ), Is.Empty, "Items not found that were expected: " );
+    }
+
+    private static T GetItem<T>( IEnumerable<Item> items, string key ) where T : Item {
       return items.OfType<T>().Single( i => i.Key == key );
     }
   }

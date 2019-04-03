@@ -46,7 +46,7 @@ namespace CsMerge {
         return;
       }
 
-      DirectoryInfo folder = new DirectoryInfo( options.InputFolder ?? Directory.GetCurrentDirectory() );
+      var folder = new DirectoryInfo( options.InputFolder ?? Directory.GetCurrentDirectory() );
       var logger = LogManager.GetCurrentClassLogger();
 
       try {
@@ -63,15 +63,15 @@ namespace CsMerge {
     }
 
     private static bool HandleConfigureOptions( CsMergeOptions options ) {
-      bool configured = false;
+      var configured = false;
 
       if ( options.ConfigureGitConfig != null ) {
-        ConfigurationLevel level;
-        if ( Enum.TryParse( options.ConfigureGitConfig, true, out level ) ) {
+
+        if ( Enum.TryParse( options.ConfigureGitConfig, true, out ConfigurationLevel level ) ) {
           GitHelper.ConfigureGitConfig( level );
         }
         else {
-          GitHelper.ConfigureGitConfig( file : options.ConfigureGitConfig );
+          GitHelper.ConfigureGitConfig( file: options.ConfigureGitConfig );
         }
         configured = true;
       }
@@ -108,16 +108,13 @@ namespace CsMerge {
       string[] conflictPaths,
       DirectoryInfo folder,
       Logger logger,
-      string rootFolder) {
-      foreach (var conflictPath in conflictPaths.Where(cp => cp.ToLowerInvariant().EndsWith(".sln")))
-      {
-        try
-        {
-          ProcessSolutionFile(operation, folder, logger, rootFolder, conflictPath);
+      string rootFolder ) {
+      foreach ( var conflictPath in conflictPaths.Where( cp => cp.ToLowerInvariant().EndsWith( ".sln" ) ) ) {
+        try {
+          ProcessSolutionFile( operation, folder, logger, rootFolder, conflictPath );
         }
-        catch (Exception e)
-        {
-          logger.Log(LogLevel.Error, e, "Failed to process solution file " + conflictPath);
+        catch ( Exception e ) {
+          logger.Log( LogLevel.Error, e, "Failed to process solution file " + conflictPath );
         }
       }
     }
@@ -154,7 +151,7 @@ namespace CsMerge {
 
       // Use SlnTools
       // "Four solution files should be provided, in order:\n   SourceBranch.sln\n   DestinationBranch.sln\n   CommonAncestror.sln\n   Result.sln"
-      CWDev.SLNTools.MergeSolutionsCommand command = new CWDev.SLNTools.MergeSolutionsCommand();
+      var command = new CWDev.SLNTools.MergeSolutionsCommand();
       command.Run(
         new[] { minePath, incomingPath, basePath, fullConflictPath },
         new CWDev.SLNTools.MessageBoxErrorReporter() );
@@ -196,11 +193,11 @@ namespace CsMerge {
           continue;
         }
 
-        bool resolved = false;
+        var resolved = false;
 
         try {
           var result = packagesConfigMerger.Merge( conflict,
-              baseContent == null ? new ConfigitPackageReference[0]: 
+              baseContent == null ? new ConfigitPackageReference[0] :
                                    NuGetExtensions.ReadPackageReferences( baseContent ),
               NuGetExtensions.ReadPackageReferences( localContent ),
               NuGetExtensions.ReadPackageReferences( incomingContent ) ).ToArray();
@@ -212,13 +209,15 @@ namespace CsMerge {
             resolved = true;
           }
 
-        } catch ( MergeAbortException ) {
+        }
+        catch ( MergeAbortException ) {
           logger.Log( LogLevel.Info, $"Package merge aborted for {conflict}" );
           continue;
         }
         catch ( UserQuitException ) {
           throw;
-        } catch ( Exception exception ) {
+        }
+        catch ( Exception exception ) {
           logger.Log( LogLevel.Error, exception, $"Package merge failed for {conflict}{Environment.NewLine}{exception}" );
         }
 
@@ -226,29 +225,29 @@ namespace CsMerge {
           continue;
         }
 
-          string userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
-          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+        var userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
+        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
 
         if ( !userQuestion.Resolve() ) {
           continue;
         }
 
-        XDocument localDocument = XDocument.Parse( localContent );
-        XDocument theirDocument = XDocument.Parse( incomingContent );
-        XDocument baseDocument = baseContent == null ? new XDocument() : XDocument.Parse( baseContent );
+        var localDocument = XDocument.Parse( localContent );
+        var theirDocument = XDocument.Parse( incomingContent );
+        var baseDocument = baseContent == null ? new XDocument() : XDocument.Parse( baseContent );
 
-            using ( var repository = new Repository( rootFolder ) ) {
-              GitHelper.ResolveWithStandardMergetool(
-                repository,
-                fullConflictPath,
-                baseDocument,
-                localDocument,
-                theirDocument,
-                logger,
-                conflict );
-            }
-          }
+        using ( var repository = new Repository( rootFolder ) ) {
+          GitHelper.ResolveWithStandardMergetool(
+            repository,
+            fullConflictPath,
+            baseDocument,
+            localDocument,
+            theirDocument,
+            logger,
+            conflict );
         }
+      }
+    }
 
     private static void ProcessProjectFiles(
       CurrentOperation operation,
@@ -261,10 +260,12 @@ namespace CsMerge {
         operation,
         new UserConflictResolver<ProjectReference>( operation, repositoryRootDirectory: rootFolder ),
         new ReferenceConflictResolver( new UserConflictResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) ),
+        new PackageReferenceConflictResolver( new UserConflictResolver<PackageReference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) ),
         new UserConflictResolver<RawItem>( operation, repositoryRootDirectory: rootFolder ),
-        new UserDuplicateResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) );
+        new UserDuplicateResolver<Reference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ),
+        new UserDuplicateResolver<PackageReference>( operation, notResolveOptionText: PackageNotInstalledText, repositoryRootDirectory: rootFolder ) );
 
-      foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) || p.EndsWith( ".fsproj" ) || p.EndsWith( ".xproj" )) ) {
+      foreach ( var conflict in conflictPaths.Where( p => p.EndsWith( ".csproj" ) || p.EndsWith( ".fsproj" ) || p.EndsWith( ".xproj" ) ) ) {
 
         var fullConflictPath = Path.Combine( folder.FullName, conflict );
         logger.Info( $"{LogHelper.Header}{Environment.NewLine}Examining concurrent modification for {fullConflictPath}" );
@@ -301,7 +302,7 @@ namespace CsMerge {
 
           var packageIndex = new ProjectPackages( projectFolder, NuGetExtensions.FindRelativePathOfPackagesFolder( projectFolder ), packagesConfig );
 
-          Item[] items = merger.Merge(
+          var items = merger.Merge(
               conflict,
               packageIndex,
               baseDocument,
@@ -326,9 +327,11 @@ namespace CsMerge {
           // Check for any project file changes outside of the references and items. 
           if ( localXml == incomingXml ) {
             resolvedDocument = localDocument;
-          } else if ( baseXml == localXml ) {
+          }
+          else if ( baseXml == localXml ) {
             resolvedDocument = incomingDocument;
-          } else if ( baseXml == incomingXml ) {
+          }
+          else if ( baseXml == incomingXml ) {
             resolvedDocument = localDocument;
           }
 
@@ -343,12 +346,15 @@ namespace CsMerge {
 
             resolved = true;
           }
-}       catch ( MergeAbortException ) {
+        }
+        catch ( MergeAbortException ) {
           logger.Log( LogLevel.Info, $"Project merge aborted for {conflict}" );
           continue;
-        } catch ( UserQuitException ) {
+        }
+        catch ( UserQuitException ) {
           throw;
-        } catch ( Exception exception ) {
+        }
+        catch ( Exception exception ) {
           logger.Log( LogLevel.Error, exception, $"Project merge failed for {conflict}{Environment.NewLine}{exception}" );
         }
 
@@ -356,23 +362,23 @@ namespace CsMerge {
           continue;
         }
 
-          string userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
-          var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+        var userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
+        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
 
-          if ( userQuestion.Resolve() ) {
+        if ( userQuestion.Resolve() ) {
 
-            using ( var repository = new Repository( rootFolder ) ) {
-              GitHelper.ResolveWithStandardMergetool(
-                repository,
-                fullConflictPath,
-                baseDocument,
-                localDocument,
-                incomingDocument,
-                logger,
-                conflict );
-            }
+          using ( var repository = new Repository( rootFolder ) ) {
+            GitHelper.ResolveWithStandardMergetool(
+              repository,
+              fullConflictPath,
+              baseDocument,
+              localDocument,
+              incomingDocument,
+              logger,
+              conflict );
           }
         }
       }
+    }
   }
 }

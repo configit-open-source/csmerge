@@ -226,7 +226,8 @@ namespace CsMerge.Core.Resolvers {
 
       return context.GetKeys()
         .Select( key => Resolve( context, key, conflictResolver ) )
-        .WhereNotNull();
+        .WhereNotNull()
+        .ToList();
     }
 
     public static IEnumerable<T> MergeAllDuplicates(

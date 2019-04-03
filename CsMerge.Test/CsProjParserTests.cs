@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Xml.Linq;
-
-using CsMerge.Core;
-using CsMerge.Core.Parsing;
-
 using NUnit.Framework;
+using Project;
 
 namespace Cpc.CsMerge.Test {
   [TestFixture]
@@ -101,9 +98,9 @@ namespace Cpc.CsMerge.Test {
       var element = reference.ToElement( XNamespace.None );
 
       Assert.That( element.SameNsElement( "HintPath" ).Value, Is.EqualTo( "mypath" ) );
-      Assert.That( element.SameNsElement( "SpecificVersion" ).Value, Is.EqualTo( "True" ) );
+      Assert.That( element.SameNsElement( "SpecificVersion" ).Value, Is.EqualTo( "true" ) );
       Assert.That( element.Attribute( "Include" ).Value, Is.EqualTo( "blah" ) );
-      Assert.That( element.SameNsElement( "Private" ).Value, Is.EqualTo( "True" ) );
+      Assert.That( element.SameNsElement( "Private" ).Value, Is.EqualTo( "true" ) );
     }
 
     //[Test]

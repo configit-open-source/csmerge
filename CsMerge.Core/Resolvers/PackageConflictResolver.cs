@@ -1,13 +1,11 @@
 ﻿using System;
 using NLog;
-
-using NuGet;
-using NuGet.Packaging;
 using NuGet.Versioning;
 
 using Integration;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace CsMerge.Core.Resolvers {
 

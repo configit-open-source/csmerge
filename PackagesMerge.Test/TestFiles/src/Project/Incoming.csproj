@@ -117,6 +117,93 @@
 		</Reference>
 
 	</ItemGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="CsMerge.PackageReferences.NoChanges" Version="1.0.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.DeletedInLocal" Version="1.0.0" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming" Version="1.0.1" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInLocal" Version="1.0.0" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInIncoming" Version="1.0.1" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Identical" Version="1.0.1" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly" Version="1.0.1" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength" Version="1.1.1" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges" Version="1.0.1" Condition="'$(TargetFramework)' == 'net452'" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher" Version="1.1.*" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower" Version="1.1.*" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardEqual" Version="1.1.*" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsZero" Version="1.1.*" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsWildCard" Version="1.1.*" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero" Version="1.1.*" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different" Version="1.0.1" >
+      <IncludeAssets>contentFiles;native</IncludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equivalent" Version="1.0.1" >
+      <IncludeAssets>contentFiles;native</IncludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equal" Version="1.0.1" >
+      <IncludeAssets>contentFiles;native</IncludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different" Version="1.0.1" >
+      <ExcludeAssets>contentFiles;native</ExcludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equivalent" Version="1.0.1" >
+      <ExcludeAssets>contentFiles;native</ExcludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equal" Version="1.0.1" >
+      <ExcludeAssets>contentFiles;native</ExcludeAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different" Version="1.0.1" >
+      <PrivateAssets>contentFiles;native</PrivateAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equivalent" Version="1.0.1" >
+      <PrivateAssets>contentFiles;native</PrivateAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equal" Version="1.0.1" >
+      <PrivateAssets>contentFiles;native</PrivateAssets>
+    </PackageReference>
+    
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionAsElement" >
+      <Version>1.0.1</Version>
+    </PackageReference>
+
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Identical" Version="1.0.0" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Identical" Version="1.0.0" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Different.VersionChangeOnly" Version="1.0.1" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Different.VersionChangeOnly" Version="1.0.2" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Different.OtherChanges" Version="1.0.1" Condition="'$(TargetFramework)' == 'Incoming1'" />
+    
+    <PackageReference Include="CsMerge.PackageReferences.Duplicate.Different.OtherChanges" Version="1.0.1" Condition="'$(TargetFramework)' == 'Incoming2'" />
+    
+  </ItemGroup>
+
 	<ItemGroup>
 	  <Compile Include="NoChange.cs" />
 	  <Compile Include="DeleteInLocal.cs" />

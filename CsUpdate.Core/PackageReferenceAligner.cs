@@ -11,11 +11,11 @@ using Integration;
 using NLog;
 
 using NuGet.Frameworks;
-using NuGet.Packaging;
-using NuGet.PackagingCore;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 using Project;
+using PackageReference = NuGet.Packaging.PackageReference;
 
 namespace CsUpdate.Core {
   public class PackageReferenceAligner {
