@@ -38,8 +38,8 @@ namespace Integration {
       }
     }
 
-    public static void Write( this IEnumerable<PackageReference> packages, Stream stream ) {
-      using ( var writer = new PackagesConfigWriter( stream, false ) ) {
+    private static void Write( this IEnumerable<PackageReference> packages, Stream stream ) {
+      using ( var writer = new PackagesConfigWriter( stream, true ) ) {
         foreach ( var package in packages ) {
           writer.AddPackageEntry( package );
         }
