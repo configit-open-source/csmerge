@@ -51,9 +51,8 @@ namespace Project {
           return new PackageReference( itemElement );
 
         case "ProjectReference":
-          return new ProjectReference( include,
-                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
-                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value, itemElement );
+          return ProjectReference.Deserialize( itemElement );
+
         //case "Compile":
         //  return new FileIncludeItem( itemElement, include );
         default:

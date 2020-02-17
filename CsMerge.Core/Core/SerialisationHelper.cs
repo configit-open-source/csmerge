@@ -51,9 +51,7 @@ namespace CsMerge.Core {
           return new Reference( itemElement );
 
         case "ProjectReference":
-          return new ProjectReference( include,
-                                       Guid.Parse( itemElement.Element( xNamespace.GetName( "Project" ) ).Value ),
-                                       itemElement.Element( xNamespace.GetName( "Name" ) ).Value, itemElement );
+          return ProjectReference.Deserialize( itemElement );
         
         case "PackageReference":
           return new Project.PackageReference( itemElement );
