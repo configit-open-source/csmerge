@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-
 using CsMerge.Core;
 using CsMerge.Core.Exceptions;
 using CsMerge.Core.Resolvers;
@@ -12,11 +11,8 @@ using CsMerge.Resolvers;
 using CsMerge.UserQuestion;
 using LibGit2Sharp;
 using NLog;
-
 using Integration;
-
 using Project;
-
 using LogLevel = NLog.LogLevel;
 using Reference = Project.Reference;
 using SerialisationHelper = CsMerge.Core.SerialisationHelper;
@@ -38,8 +34,13 @@ namespace CsMerge {
       }
 
       var options = new CsMergeOptions();
+
       if ( !CommandLine.Parser.Default.ParseArguments( args, options ) ) {
         return;
+      }
+
+      if ( options.Debug ) {
+        Debugger.Launch();
       }
 
       if ( HandleConfigureOptions( options ) ) {
