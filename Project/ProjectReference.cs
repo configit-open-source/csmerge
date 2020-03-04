@@ -78,7 +78,7 @@ namespace Project {
       : base( element, project?.ToString() ?? csProjPath ) {
       
       if ( string.IsNullOrEmpty( name ) ) {
-        Name = CsProjPath.Contains( "\\" ) ? csProjPath.Substring( csProjPath.LastIndexOf( '\\' ) + 1 ) : csProjPath;
+        Name = csProjPath.Contains( "\\" ) ? csProjPath.Substring( csProjPath.LastIndexOf( '\\' ) + 1 ) : csProjPath;
       }
       else {
         Name = name;
