@@ -100,10 +100,18 @@ namespace CsMerge.UserQuestion {
     /// <summary>
     /// Creates standard Yes/No options.
     /// </summary>
-    public static IEnumerable<IUserQuestionOption<bool>> YesNoOptions() {
-      return new[] {
+    public static IUserQuestionOption<bool>[] YesNoOptions() {
+      return new IUserQuestionOption<bool>[] {
         new UserQuestionLiteralOption<bool>( "y", "Yes", true ),
         new UserQuestionLiteralOption<bool>( "n", "No", false )
+      };
+    }
+
+    public static IUserQuestionOption<bool?>[] YesNoQuitOptions() {
+      return new IUserQuestionOption<bool?>[] {
+        new UserQuestionLiteralOption<bool?>( "y", "Yes", true ),
+        new UserQuestionLiteralOption<bool?>( "n", "No", false ),
+        new UserQuestionLiteralOption<bool?>( "q", "Quit", null )
       };
     }
 

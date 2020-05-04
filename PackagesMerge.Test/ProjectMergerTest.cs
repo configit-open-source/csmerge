@@ -26,7 +26,7 @@ namespace PackagesMerge.Test {
     public void Test() {
 
       var referenceUserConflictResolver = new LoggingConflictResolver<Reference>( new SimpleConflictResolver<Reference>( ConflictItemType.Local ) );
-      var packageReferenceUserConflictResolver = new LoggingConflictResolver<PackageReference>( new SimpleConflictResolver<PackageReference>( ConflictItemType.Local ) );
+      var packageReferenceUserConflictResolver = new LoggingConflictResolver<PackageReference>( new UserPackageReferenceResolver() );
 
       var referenceResolver = new LoggingConflictResolver<Reference>( new ReferenceConflictResolver( referenceUserConflictResolver ) );
       var packageReferenceResolver = new LoggingConflictResolver<PackageReference>( new PackageReferenceConflictResolver( packageReferenceUserConflictResolver ) );
@@ -90,11 +90,18 @@ namespace PackagesMerge.Test {
 
         "CsMerge.PackageReferences.NoChanges",
         "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal",
+        "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming",
         "CsMerge.PackageReferences.UpdatedInLocal",
         "CsMerge.PackageReferences.UpdatedInIncoming",
         "CsMerge.PackageReferences.UpdatedInBoth.Identical",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Alpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Release",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.MajorAlpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Alpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Release",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.MajorAlpha",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower",
@@ -115,14 +122,13 @@ namespace PackagesMerge.Test {
         "CsMerge.PackageReferences.Duplicate.Identical",
         "CsMerge.PackageReferences.Duplicate.Different.VersionChangeOnly",
         "CsMerge.PackageReferences.Duplicate.Different.OtherChanges",
-
+        
         /* // Should have been removed
         "CsMerge.PackageReferences.DeletedInBoth",
         "CsMerge.PackageReferences.DeletedInLocal",
-        "CsMerge.PackageReferences.DeletedInIncoming",
-        "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming", // Deleted by the user resolver
+        "CsMerge.PackageReferences.DeletedInIncoming",        
         */
-
+        
         // References
         "CsMerge.Packages.NoChanges", 
         // "CsMerge.Packages.DeletedInBoth" - should not be in result as auto resolved to deleted.
@@ -156,27 +162,36 @@ namespace PackagesMerge.Test {
       var assetsContentFilesOnly = new[] { "contentFiles" };
       var assetsContentFilesAndNative = new[] { "contentFiles", "native" };
 
+      const string VersionWhenUserResolved = UserPackageReferenceResolver.DummyVersion;
+
       AssertPackageReference( items, "CsMerge.PackageReferences.NoChanges", "1.0.0" );
-      AssertPackageReference( items, "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal", "1.0.2" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal", VersionWhenUserResolved );
+      AssertPackageReference( items, "CsMerge.PackageReferences.DeletedInLocalUpdatedInIncoming", VersionWhenUserResolved );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInLocal", "1.0.2" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInIncoming", "1.0.1" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Identical", "1.0.1" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly", "1.0.2" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength", "1.1.1" );
-      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges", "1.0.2", "'$(TargetFramework)' == 'Local'" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Alpha", "2.0.0-alpha0002" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Release", "2.0.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.MajorAlpha", "3.0.0-alpha0001" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Alpha", "2.0.0-alpha0002" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Release", "2.0.0" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.MajorAlpha", "3.0.0-alpha0001" );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges", VersionWhenUserResolved, "'$(TargetFramework)' == 'Local'" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher", "1.1.*" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower", "1.2.0" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardEqual", "1.1.*" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsZero", "1.1.*" );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsWildCard", "1.1.*" );
-      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero", "1.1.1" );
-      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different", "1.0.2", expectedIncludeAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.VsNonZero", VersionWhenUserResolved );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Different", VersionWhenUserResolved, expectedIncludeAssets: assetsContentFilesOnly );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equivalent", "1.0.2", expectedIncludeAssets: assetsContentFilesAndNative );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.IncludeAssets.Equal", "1.0.2", expectedIncludeAssets: assetsContentFilesAndNative );
-      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different", "1.0.2", expectedExcludeAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Different", VersionWhenUserResolved, expectedExcludeAssets: assetsContentFilesOnly );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equivalent", "1.0.2", expectedExcludeAssets: assetsContentFilesAndNative );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.ExcludeAssets.Equal", "1.0.2", expectedExcludeAssets: assetsContentFilesAndNative );
-      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different", "1.0.2", expectedPrivateAssets: assetsContentFilesOnly );
+      AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Different", VersionWhenUserResolved, expectedPrivateAssets: assetsContentFilesOnly );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equivalent", "1.0.2", expectedPrivateAssets: assetsContentFilesAndNative );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.PrivateAssets.Equal", "1.0.2", expectedPrivateAssets: assetsContentFilesAndNative );
       AssertPackageReference( items, "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionAsElement", "1.0.2" );
@@ -222,6 +237,14 @@ namespace PackagesMerge.Test {
         "CsMerge.PackageReferences.DeletedInIncomingUpdatedInLocal",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength",
+
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Alpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Release",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.MajorAlpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Alpha",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Release",
+        "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.MajorAlpha",
+
         "CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardHigher",
         "CsMerge.PackageReferences.UpdatedInBoth.Different.VersionWildCard.WildCardLower",
@@ -290,16 +313,16 @@ namespace PackagesMerge.Test {
 
       var reference = GetItem<PackageReference>( items, key );
 
-      Assert.That( reference.Version, Is.EqualTo( expectedVersion ) );
-      Assert.That( reference.Condition, Is.EqualTo( expectedCondition ) );
-      AssertConditionalCollectionEquivalent( reference.IncludeAssets, expectedIncludeAssets );
-      AssertConditionalCollectionEquivalent( reference.ExcludeAssets, expectedExcludeAssets );
-      AssertConditionalCollectionEquivalent( reference.PrivateAssets, expectedPrivateAssets );
+      Assert.That( reference.Version, Is.EqualTo( expectedVersion ), $"Unexpected PackageReference Version for '{key}'" );
+      Assert.That( reference.Condition, Is.EqualTo( expectedCondition ), $"Unexpected PackageReference Condition for '{key}'" );
+      AssertConditionalCollectionEquivalent( reference.IncludeAssets, expectedIncludeAssets, $"Unexpected PackageReference IncludeAssets for '{key}'" );
+      AssertConditionalCollectionEquivalent( reference.ExcludeAssets, expectedExcludeAssets, $"Unexpected PackageReference ExcludeAssets for '{key}'" );
+      AssertConditionalCollectionEquivalent( reference.PrivateAssets, expectedPrivateAssets, $"Unexpected PackageReference PrivateAssets for '{key}'" );
     }
 
-    private static void AssertConditionalCollectionEquivalent( IReadOnlyCollection<string> actual, IEnumerable<string> expected ) {
+    private static void AssertConditionalCollectionEquivalent( IReadOnlyCollection<string> actual, IEnumerable<string> expected, string message ) {
       var expectedList = expected?.ToList() ?? new List<string>();
-      Assert.That( actual, Is.EquivalentTo( expectedList ) );
+      Assert.That( actual, Is.EquivalentTo( expectedList ), message );
     }
 
     private static void AssertCollectionEquivalent( IEnumerable<string> actual, IEnumerable<string> expected ) {

@@ -158,6 +158,18 @@
     <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly" Version="1.0.0" />
     
     <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.DifferentLength" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Alpha" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.Release" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.LocalToHigher.MajorAlpha" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Alpha" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.Release" Version="1.0" />
+
+    <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.VersionChangeOnly.IncomingToHigher.MajorAlpha" Version="1.0" />
     
     <PackageReference Include="CsMerge.PackageReferences.UpdatedInBoth.Different.OtherChanges" Version="1.0.0" />
     

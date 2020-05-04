@@ -226,10 +226,18 @@ namespace CsMerge {
           continue;
         }
 
-        var userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
-        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+        var userQuestionOptions = UserQuestion<bool?>.YesNoQuitOptions();
+        var userQuestionText = UserQuestion<bool?>.BuildQuestionText( userQuestionOptions, $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?" );
+        
+        var userQuestion = new UserQuestion<bool?>( userQuestionText, userQuestionOptions );
 
-        if ( !userQuestion.Resolve() ) {
+        var yesNoQuitResult = !userQuestion.Resolve();
+
+        if ( !yesNoQuitResult.HasValue ) {
+          throw new UserQuitException();
+        }
+
+        if ( !yesNoQuitResult.Value ) {
           continue;
         }
 
@@ -362,12 +370,19 @@ namespace CsMerge {
         if ( resolved ) {
           continue;
         }
+        
+        var userQuestionOptions = UserQuestion<bool?>.YesNoQuitOptions();
+        var userQuestionText = UserQuestion<bool?>.BuildQuestionText( userQuestionOptions, $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?" );
+        
+        var userQuestion = new UserQuestion<bool?>( userQuestionText, userQuestionOptions );
 
-        var userQuestionText = $"Could not resolve conflict: {conflict}{Environment.NewLine}Would you like to resolve the conflict with the mergetool?";
-        var userQuestion = new UserQuestion<bool>( userQuestionText, UserQuestion<bool>.YesNoOptions() );
+        var yesNoQuitResult = !userQuestion.Resolve();
 
-        if ( userQuestion.Resolve() ) {
+        if ( !yesNoQuitResult.HasValue ) {
+          throw new UserQuitException();
+        }
 
+        if ( yesNoQuitResult.Value ) {
           using ( var repository = new Repository( rootFolder ) ) {
             GitHelper.ResolveWithStandardMergetool(
               repository,
