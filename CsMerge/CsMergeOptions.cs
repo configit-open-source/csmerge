@@ -15,9 +15,9 @@ namespace CsMerge {
     [Option( "configure-gitconfig", HelpText = "Can either be a path to a git config file or one of 'System', 'Global', 'Xdg', 'Local' to automatically locate the file. Using this flag will add a [merge] entry to the indicated git config file that can be used to always prevent automatic merge. " +
                                                "Its safe to install system-wide or globally for a user as it is only used when enabled through configure-gitattrib" )]
     public string ConfigureGitConfig { get; set; }
+    
     [Option( "configure-gitattrib", HelpText = "Specifies a path to a gitattributes file (for example in git repo or in the user .gitattributes). Using this flag will map packages.config and project files to the merge entry installed by configure-gitconfig. " +
                                                "This prevents these files merging as text (which can corrupt the xml contents)." )]
-
     public string ConfigureGitAttributes { get; set; }
 
     [HelpOption]
