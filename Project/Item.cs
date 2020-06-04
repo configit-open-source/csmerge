@@ -32,7 +32,8 @@ namespace Project {
     public abstract XElement ToElement( XNamespace ns );
 
     public override string ToString() {
-      return Key;
+      var element = ToElement( "" );
+      return element?.ToString() ?? Key;
     }
   }
 }
